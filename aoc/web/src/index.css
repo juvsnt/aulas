@@ -1,0 +1,137 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.75rem;
+
+  /* base neutrals - laboratorio/academico, papel claro, tinta quase-preta */
+  --background: #f7f7f5;
+  --foreground: #12141c;
+  --card: #ffffff;
+  --card-foreground: #12141c;
+  --popover: #ffffff;
+  --popover-foreground: #12141c;
+
+  /* institucional (dk2 do template) */
+  --primary: #223047;
+  --primary-foreground: #f7f7f5;
+  --secondary: #eef0f4;
+  --secondary-foreground: #223047;
+  --muted: #eceef1;
+  --muted-foreground: #5b6270;
+  --accent: #eef0f4;
+  --accent-foreground: #223047;
+
+  --destructive: #b3261e;
+  --destructive-foreground: #f7f7f5;
+  --border: #dfe1e6;
+  --input: #dfe1e6;
+  --ring: #5b9bd5;
+
+  /* as tres categorias pedagogicas - extraidas da paleta do template.pptx,
+     ajustadas para contraste AA (>=4.5:1) sobre branco e sobre o proprio soft */
+  --arch: #2f6fb0;
+  --arch-foreground: #ffffff;
+  --arch-soft: #e6eff9;
+  --org: #b25e25;
+  --org-foreground: #ffffff;
+  --org-soft: #fdf8f3;
+  --depends: #946f00;
+  --depends-foreground: #ffffff;
+  --depends-soft: #fdf9f1;
+
+  --lab-green: #4f8a3d;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-arch: var(--arch);
+  --color-arch-foreground: var(--arch-foreground);
+  --color-arch-soft: var(--arch-soft);
+  --color-org: var(--org);
+  --color-org-foreground: var(--org-foreground);
+  --color-org-soft: var(--org-soft);
+  --color-depends: var(--depends);
+  --color-depends-foreground: var(--depends-foreground);
+  --color-depends-soft: var(--depends-soft);
+  --color-lab-green: var(--lab-green);
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  ::selection {
+    background: var(--arch-soft);
+    color: var(--arch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* modo apresentacao: aumenta escala geral e esconde elementos secundarios */
+.presentation-mode {
+  font-size: 112%;
+}
+.presentation-mode [data-hide-in-presentation="true"] {
+  display: none !important;
+}
