@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "aoc/arqxorg/**"
+      - "aoc/aoc_mips-mars/**"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -38,6 +39,20 @@ jobs:
         working-directory: aoc/arqxorg
         run: npm run build
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: aoc/aoc_mips-mars/package-lock.json
+
+      - name: Install dependencies
+        working-directory: aoc/aoc_mips-mars
+        run: npm ci
+
+      - name: Build
+        working-directory: aoc/aoc_mips-mars
+        run: npm run build
+
       # Monta o site publicado: pagina inicial na raiz + cada aula em
       # aoc/<pasta>/. Para publicar uma nova aula, adicione aqui um bloco
       # equivalente ao de "arqxorg" apontando para a pasta correspondente.
@@ -46,6 +61,7 @@ jobs:
           mkdir -p _site/aoc
           cp pages/index.html _site/index.html
           cp -r aoc/arqxorg/dist _site/aoc/arqxorg
+          cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,98 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+
+  /* Identidade UNEMAT: verde institucional + branco, com acentos para CPU/RAM/ALU */
+  --color-unemat-50: #eef7f1;
+  --color-unemat-100: #d7ecdd;
+  --color-unemat-200: #b0d9bc;
+  --color-unemat-300: #7fbf95;
+  --color-unemat-400: #4a9d6c;
+  --color-unemat-500: #24824d;
+  --color-unemat-600: #146c3c;
+  --color-unemat-700: #0f5730;
+  --color-unemat-800: #0c4527;
+  --color-unemat-900: #0a3820;
+  --color-unemat-950: #041f11;
+
+  --color-accent-reg: #b45309; /* âmbar: registrador ativo */
+  --color-accent-mem: #1d4ed8; /* azul: acesso à RAM */
+  --color-accent-alu: #7c2d92; /* roxo: operação da ALU */
+  --color-accent-flag: #b91c1c; /* vermelho: flag alterada */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: linear-gradient(180deg, var(--color-unemat-50) 0%, #ffffff 320px);
+  color: #0f2a1a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-unemat-200);
+}
+
+/* trilho de rolagem discreto */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-unemat-300);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.font-mono-code {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(20, 108, 60, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(20, 108, 60, 0);
+  }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 1.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flow-dot {
+  from {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  to {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
