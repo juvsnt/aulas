@@ -7,28 +7,78 @@
     <style>
       :root {
         color-scheme: light dark;
+        --bg: #f7f7f2;
+        --surface: #ffffff;
+        --text: #1c1c1a;
+        --text-muted: #5a5a54;
+        --border: #e2e1d8;
+        --green-dark: #1e4d38;
+        --green: #2f7d54;
+        --green-soft: #e8f2ec;
+        --gold: #d99e17;
+        --gold-soft: #fbf0d9;
         font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14231b;
+          --surface: #1b2e23;
+          --text: #f2f1ea;
+          --text-muted: #a9b3ac;
+          --border: #2d4335;
+          --green-dark: #a9d9bd;
+          --green: #4fbf85;
+          --green-soft: #1f3a2b;
+          --gold: #f0c04a;
+          --gold-soft: #33290f;
+        }
+      }
+      * {
+        box-sizing: border-box;
       }
       body {
         margin: 0;
         min-height: 100svh;
+        background: var(--bg);
+        color: var(--text);
         display: flex;
-        align-items: center;
         justify-content: center;
-        padding: 2rem;
+        padding: 0 1.5rem 3rem;
       }
       main {
-        max-width: 32rem;
+        max-width: 34rem;
         width: 100%;
       }
-      h1 {
-        font-size: 1.75rem;
-        margin-bottom: 0.25rem;
+      header.hero {
+        margin: 0 -1.5rem 2rem;
+        padding: 2.5rem 1.5rem 1.75rem;
+        background: var(--green-dark);
+        border-bottom: 4px solid var(--gold);
+        color: #fdfdfa;
       }
-      p.sub {
-        opacity: 0.7;
+      header.hero h1 {
+        font-size: 1.85rem;
+        margin: 0 0 0.35rem;
+        letter-spacing: 0.01em;
+      }
+      header.hero p.sub {
+        margin: 0;
+        opacity: 0.85;
+        font-size: 0.95rem;
+      }
+      h2.discipline {
+        display: inline-block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--green-dark);
+        margin: 2.25rem 0 0.9rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 3px solid var(--gold);
+      }
+      h2.discipline:first-of-type {
         margin-top: 0;
-        margin-bottom: 2rem;
       }
       ul {
         list-style: none;
@@ -38,69 +88,86 @@
         flex-direction: column;
         gap: 0.75rem;
       }
-      a.card {
-        display: block;
+      .card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
         padding: 1rem 1.25rem;
-        border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-        border-radius: 0.75rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--green);
+        border-radius: 0.5rem;
         text-decoration: none;
         color: inherit;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
       }
       a.card:hover {
-        border-color: color-mix(in srgb, currentColor 35%, transparent);
+        border-left-color: var(--gold);
+        box-shadow: 0 2px 10px color-mix(in srgb, var(--green-dark) 12%, transparent);
       }
-      a.card strong {
+      .card-body strong {
         display: block;
-        font-size: 1.05rem;
+        font-size: 1.02rem;
       }
-      a.card span {
-        opacity: 0.7;
-        font-size: 0.9rem;
+      .card-body span {
+        display: block;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        margin-top: 0.15rem;
       }
-      h2.discipline {
-        font-size: 1rem;
+      .badge {
+        flex: 0 0 auto;
+        font-size: 0.72rem;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        opacity: 0.6;
-        margin: 2rem 0 0.75rem;
+        letter-spacing: 0.03em;
+        padding: 0.3rem 0.6rem;
+        border-radius: 999px;
+        white-space: nowrap;
       }
-      h2.discipline:first-of-type {
-        margin-top: 0;
+      .badge.available {
+        background: var(--green-soft);
+        color: var(--green-dark);
+      }
+      .badge.soon {
+        background: var(--gold-soft);
+        color: var(--gold);
       }
       div.card.soon {
-        display: block;
-        padding: 1rem 1.25rem;
-        border: 1px dashed color-mix(in srgb, currentColor 15%, transparent);
-        border-radius: 0.75rem;
-        opacity: 0.5;
-      }
-      div.card.soon strong {
-        display: block;
-        font-size: 1.05rem;
-      }
-      div.card.soon span {
-        font-size: 0.9rem;
+        border-left-style: dashed;
+        border-left-color: var(--border);
+        opacity: 0.85;
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>Aulas</h1>
-      <p class="sub">Materiais de aula em formato web interativo.</p>
+      <header class="hero">
+        <h1>Aulas</h1>
+        <p class="sub">Materiais de aula em formato web interativo.</p>
+      </header>
+
       <!-- Para adicionar uma nova aula: publique o build em <disciplina>/<pasta>/
            via o workflow do GitHub Actions e acrescente um item aqui. -->
       <h2 class="discipline">Arquitetura e Organização de Computadores</h2>
       <ul>
         <li>
           <a class="card" href="aoc/arqxorg/">
-            <strong>Arquitetura ou Organização?</strong>
-            <span>Investigando decisões a partir de placas-mãe reais</span>
+            <span class="card-body">
+              <strong>Arquitetura ou Organização?</strong>
+              <span>Investigando decisões a partir de placas-mãe reais</span>
+            </span>
+            <span class="badge available">Disponível</span>
           </a>
         </li>
         <li>
           <a class="card" href="aoc/aoc_mips-mars/">
-            <strong>Do código C ao hardware</strong>
-            <span>Assembly e ISA com IA-32/x86 e MIPS</span>
+            <span class="card-body">
+              <strong>Do código C ao hardware</strong>
+              <span>Assembly e ISA com IA-32/x86 e MIPS</span>
+            </span>
+            <span class="badge available">Disponível</span>
           </a>
         </li>
       </ul>
@@ -109,8 +176,11 @@
       <ul>
         <li>
           <div class="card soon">
-            <strong>Em breve</strong>
-            <span>Materiais em desenvolvimento</span>
+            <span class="card-body">
+              <strong>Materiais em desenvolvimento</strong>
+              <span>Publicação prevista em breve</span>
+            </span>
+            <span class="badge soon">Em breve</span>
           </div>
         </li>
       </ul>
@@ -119,8 +189,11 @@
       <ul>
         <li>
           <div class="card soon">
-            <strong>Em breve</strong>
-            <span>Materiais em desenvolvimento</span>
+            <span class="card-body">
+              <strong>Materiais em desenvolvimento</strong>
+              <span>Publicação prevista em breve</span>
+            </span>
+            <span class="badge soon">Em breve</span>
           </div>
         </li>
       </ul>
@@ -129,8 +202,11 @@
       <ul>
         <li>
           <div class="card soon">
-            <strong>Em breve</strong>
-            <span>Materiais em desenvolvimento</span>
+            <span class="card-body">
+              <strong>Materiais em desenvolvimento</strong>
+              <span>Publicação prevista em breve</span>
+            </span>
+            <span class="badge soon">Em breve</span>
           </div>
         </li>
       </ul>
@@ -139,8 +215,11 @@
       <ul>
         <li>
           <div class="card soon">
-            <strong>Em breve</strong>
-            <span>Materiais em desenvolvimento</span>
+            <span class="card-body">
+              <strong>Materiais em desenvolvimento</strong>
+              <span>Publicação prevista em breve</span>
+            </span>
+            <span class="badge soon">Em breve</span>
           </div>
         </li>
       </ul>
@@ -149,8 +228,11 @@
       <ul>
         <li>
           <div class="card soon">
-            <strong>Em breve</strong>
-            <span>Materiais em desenvolvimento</span>
+            <span class="card-body">
+              <strong>Materiais em desenvolvimento</strong>
+              <span>Publicação prevista em breve</span>
+            </span>
+            <span class="badge soon">Em breve</span>
           </div>
         </li>
       </ul>
