@@ -57,14 +57,39 @@
         opacity: 0.7;
         font-size: 0.9rem;
       }
+      h2.discipline {
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.6;
+        margin: 2rem 0 0.75rem;
+      }
+      h2.discipline:first-of-type {
+        margin-top: 0;
+      }
+      div.card.soon {
+        display: block;
+        padding: 1rem 1.25rem;
+        border: 1px dashed color-mix(in srgb, currentColor 15%, transparent);
+        border-radius: 0.75rem;
+        opacity: 0.5;
+      }
+      div.card.soon strong {
+        display: block;
+        font-size: 1.05rem;
+      }
+      div.card.soon span {
+        font-size: 0.9rem;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Aulas</h1>
       <p class="sub">Materiais de aula em formato web interativo.</p>
-      <!-- Para adicionar uma nova aula: publique o build em aoc/<pasta>/
+      <!-- Para adicionar uma nova aula: publique o build em <disciplina>/<pasta>/
            via o workflow do GitHub Actions e acrescente um item aqui. -->
+      <h2 class="discipline">Arquitetura e Organização de Computadores</h2>
       <ul>
         <li>
           <a class="card" href="aoc/arqxorg/">
@@ -77,6 +102,56 @@
             <strong>Do código C ao hardware</strong>
             <span>Assembly e ISA com IA-32/x86 e MIPS</span>
           </a>
+        </li>
+      </ul>
+
+      <h2 class="discipline">Sistemas Operacionais</h2>
+      <ul>
+        <li>
+          <div class="card soon">
+            <strong>Em breve</strong>
+            <span>Materiais em desenvolvimento</span>
+          </div>
+        </li>
+      </ul>
+
+      <h2 class="discipline">Sistemas Distribuídos</h2>
+      <ul>
+        <li>
+          <div class="card soon">
+            <strong>Em breve</strong>
+            <span>Materiais em desenvolvimento</span>
+          </div>
+        </li>
+      </ul>
+
+      <h2 class="discipline">Interação Humano-Computador</h2>
+      <ul>
+        <li>
+          <div class="card soon">
+            <strong>Em breve</strong>
+            <span>Materiais em desenvolvimento</span>
+          </div>
+        </li>
+      </ul>
+
+      <h2 class="discipline">Governança de TI</h2>
+      <ul>
+        <li>
+          <div class="card soon">
+            <strong>Em breve</strong>
+            <span>Materiais em desenvolvimento</span>
+          </div>
+        </li>
+      </ul>
+
+      <h2 class="discipline">Introdução à Computação</h2>
+      <ul>
+        <li>
+          <div class="card soon">
+            <strong>Em breve</strong>
+            <span>Materiais em desenvolvimento</span>
+          </div>
         </li>
       </ul>
     </main>
