@@ -64,7 +64,7 @@ export default function Ia32Concepts() {
       </Section>
 
       <Section title="Ciclo de busca, decodificação e execução">
-        <FetchDecodeExecute />
+        <FetchDecodeExecute autoplay={false} />
       </Section>
 
       <Section title="RAM ↔ CPU ↔ Registradores ↔ ALU">
