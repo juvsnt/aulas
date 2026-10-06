@@ -6,6 +6,7 @@ on:
     paths:
       - "aoc/arqxorg/**"
       - "aoc/aoc_mips-mars/**"
+      - "so/quiz-threads/**"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -58,8 +59,9 @@ jobs:
       # equivalente ao de "arqxorg" apontando para a pasta correspondente.
       - name: Assemble Pages site
         run: |
-          mkdir -p _site/aoc
+          mkdir -p _site/aoc _site/so
           cp pages/index.html _site/index.html
+          cp -r so/quiz-threads _site/so/quiz-threads
           cp -r aoc/arqxorg/dist _site/aoc/arqxorg
           cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
 
