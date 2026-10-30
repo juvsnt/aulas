@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terminal de Bolso</title>
+<meta name="description" content="Apostila passo a passo, feita para o celular, para aprender a usar o terminal Linux no servidor do LIAC (UNEMAT, Campus de Alto Araguaia).">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: coluna única de leitura (celular primeiro), barra de progresso fixa no topo, etapas numeradas em sequência real, blocos de terminal como o único "objeto" escuro da página */
+:root{
+  --paper:#EDF1F4;
+  --surface:#FFFFFF;
+  --ink:#15212B;
+  --muted:#52616E;
+  --line:#C9D3DB;
+  --accent:#B85F00;
+  --accent-soft:#F6E6D2;
+  --term-bg:#13202A;
+  --term-fg:#E2ECF2;
+  --term-out:#93AABA;
+  --term-user:#7FD18B;
+  --term-path:#7DB3F0;
+  --ok:#27734A;
+  --warn:#A8261C;
+  --warn-soft:#F7E1DE;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0D141A; --surface:#141E26; --ink:#E1E9EF; --muted:#94A4B1; --line:#26343F;
+    --accent:#F0A04A; --accent-soft:#2E2215; --term-bg:#060B0F; --term-fg:#DCE7EE; --term-out:#7F98A8;
+    --ok:#5DBB86; --warn:#F08A80; --warn-soft:#2E1715;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0D141A; --surface:#141E26; --ink:#E1E9EF; --muted:#94A4B1; --line:#26343F;
+  --accent:#F0A04A; --accent-soft:#2E2215; --term-bg:#060B0F; --term-fg:#DCE7EE; --term-out:#7F98A8;
+  --ok:#5DBB86; --warn:#F08A80; --warn-soft:#2E1715;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:var(--f-body); font-size:17px; line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--paper)}
+.wrap{max-width:40rem;margin:0 auto;padding-block:0 4rem}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.3rem, 9vw, 3.4rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.65rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:600}
+p{margin:0}
+a{color:var(--accent);text-underline-offset:3px}
+code, kbd{font-family:var(--f-mono);font-size:.86em}
+p code, li code, td code{background:var(--accent-soft);padding:.08em .35em;border-radius:4px;overflow-wrap:anywhere}
+kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 .35em;background:var(--surface)}
+.label{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+ul,ol{margin:0;padding-left:1.25rem;display:flex;flex-direction:column;gap:.35rem}
+.small{font-size:.9rem;color:var(--muted)}
+
+/* barra de progresso */
+.bar{
+  position:sticky;top:env(safe-area-inset-top, 0px);z-index:5;
+  background:var(--paper);border-bottom:1px solid var(--line);
+  margin-inline:calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding:.6rem max(16px, env(safe-area-inset-right, 0px)) .6rem max(16px, env(safe-area-inset-left, 0px));
+}
+.bar-in{max-width:40rem;margin:0 auto;display:flex;align-items:center;gap:.8rem}
+.track{flex:1;height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.fill{height:100%;width:0;background:var(--accent);transition:width .4s ease}
+.count{font-family:var(--f-mono);font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.jump{font-family:var(--f-mono);font-size:.8rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:.3rem .5rem;max-width:9.5rem}
+
+/* topo */
+header.hero{padding-block:2rem 1.6rem;display:flex;flex-direction:column;gap:1rem;border-bottom:2px solid var(--ink)}
+.inst{display:flex;align-items:center;gap:.9rem}
+.inst svg{width:44px;height:auto;flex:none;color:var(--ink)}
+.inst p{font-size:.85rem;line-height:1.35;color:var(--muted)}
+.inst p b{color:var(--ink)}
+.hero .cursor{display:inline-block;width:.5em;height:.9em;background:var(--accent);vertical-align:-.05em;margin-left:.08em;animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion: reduce){.hero .cursor{animation:none}.fill{transition:none}}
+.lede{font-size:1.1rem;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;font-size:.92rem}
+.meta span b{font-family:var(--f-mono);font-weight:600}
+
+/* blocos */
+section.etapa{padding-block:2.4rem;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:1.1rem;scroll-margin-top:calc(env(safe-area-inset-top, 0px) + 3.5rem)}
+.ehead{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem;align-items:end}
+.num{font-family:var(--f-display);font-weight:800;font-size:3.6rem;line-height:.85;color:var(--accent);font-variant-numeric:tabular-nums;grid-row:span 2}
+
+.missao{border:1.5px dashed var(--accent);border-radius:10px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;background:var(--surface)}
+.missao .label{color:var(--accent)}
+
+.term{background:var(--term-bg);color:var(--term-fg);border-radius:10px;padding:.85rem 1rem;font-family:var(--f-mono);font-size:.88rem;line-height:1.55;overflow-x:auto}
+.term .l{white-space:pre}
+.term .l::before{content:"$ ";color:var(--accent)}
+.term .o{white-space:pre;color:var(--term-out)}
+.term .c{white-space:pre;color:var(--term-out);font-style:italic}
+.term .u{color:var(--term-user)}
+.term .pa{color:var(--term-path)}
+
+.dica, .alerta{border-radius:10px;padding:.85rem 1rem;font-size:.95rem;display:flex;flex-direction:column;gap:.3rem}
+.dica{background:var(--accent-soft)}
+.alerta{background:var(--warn-soft)}
+.alerta .label{color:var(--warn)}
+
+details{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+summary{cursor:pointer;padding:.8rem 1rem;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:1rem;min-height:44px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--accent);font-size:1.2rem}
+details[open] summary::after{content:"−"}
+details > div{padding:0 1rem 1rem;display:flex;flex-direction:column;gap:.6rem}
+summary:focus-visible, .done:focus-within, button:focus-visible, select:focus-visible, a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.done{display:flex;align-items:center;gap:.8rem;padding:.9rem 1rem;border-radius:10px;border:2px solid var(--line);cursor:pointer;font-weight:700;min-height:52px;background:var(--surface)}
+.done input{width:24px;height:24px;accent-color:var(--ok);margin:0;flex:none}
+.done:has(input:checked){border-color:var(--ok);color:var(--ok)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td:first-child{white-space:nowrap}
+
+/* anatomia do prompt e permissões */
+.anat{display:flex;flex-wrap:wrap;gap:.3rem;font-family:var(--f-mono)}
+.anat div{display:flex;flex-direction:column;align-items:center;gap:.25rem}
+.anat code{background:var(--term-bg);color:var(--term-fg);padding:.25rem .45rem;border-radius:5px;font-size:.92rem}
+.anat small{font-family:var(--f-body);font-size:.75rem;color:var(--muted);text-align:center;max-width:7rem;line-height:1.25}
+
+/* ficha do servidor */
+.ficha{display:grid;grid-template-columns:repeat(auto-fit, minmax(11rem, 1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ficha div{background:var(--surface);padding:.7rem .9rem;display:flex;flex-direction:column;gap:.15rem}
+.ficha b{font-family:var(--f-mono);font-size:.95rem;font-weight:600;font-variant-numeric:tabular-nums}
+.ficha span{font-size:.8rem;color:var(--muted)}
+
+.chk{display:flex;flex-direction:column;gap:.5rem}
+.footer{padding-block:2rem;font-size:.9rem;color:var(--muted);display:flex;flex-direction:column;gap:.6rem}
+button.reset{font:inherit;font-size:.85rem;color:var(--muted);background:none;border:1px solid var(--line);border-radius:6px;padding:.45rem .8rem;align-self:flex-start;cursor:pointer;min-height:40px}
+</style>
+</head>
+<body>
+
+<div class="bar" role="region" aria-label="Seu progresso">
+  <div class="bar-in">
+    <div class="track" aria-hidden="true"><div class="fill" id="fill"></div></div>
+    <span class="count" id="count">0/10 etapas</span>
+    <select class="jump" id="jump" aria-label="Ir para etapa">
+      <option value="">Ir para…</option>
+      <option value="regras">Regras do servidor</option>
+      <option value="e0">0 · Entrando</option>
+      <option value="e1">1 · Primeiro contato</option>
+      <option value="e2">2 · Onde estou?</option>
+      <option value="e3">3 · Montando o projeto</option>
+      <option value="e4">4 · Escrever e ler</option>
+      <option value="e5">5 · Copiar, mover, apagar</option>
+      <option value="e6">6 · Procurar e filtrar</option>
+      <option value="e7">7 · Permissões e scripts</option>
+      <option value="e8">8 · O servidor por dentro</option>
+      <option value="final">Desafio final</option>
+      <option value="problemas">Se algo der errado</option>
+      <option value="cola">Cola de comandos</option>
+    </select>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="inst">
+    <svg version="1.0" xmlns="http://www.w3.org/2000/svg"  role="img" aria-label="Logotipo do LIAC" viewBox="0 0 840.000000 1008.000000"  preserveAspectRatio="xMidYMid meet">  <g transform="translate(0.000000,1008.000000) scale(0.100000,-0.100000)" fill="currentColor" stroke="none"> <path d="M4092 9680 c-114 -21 -252 -85 -655 -306 l-58 -31 65 -5 c91 -8 182 -52 254 -125 48 -48 103 -139 336 -548 525 -921 582 -1019 561 -963 -5 14 -2 16 15 13 36 -7 60 -35 58 -66 -2 -21 -5 -25 -14 -18 -33 27 -18 -19 38 -118 73 -129 73 -128 74 -97 1 13 5 31 8 40 6 15 9 14 25 -5 10 -11 21 -18 25 -14 9 9 -4 74 -21 99 -7 11 -10 24 -6 27 3 4 -1 7 -10 7 -30 0 -18 16 13 18 19 1 30 -2 30 -10 0 -9 3 -8 10 2 9 13 11 13 20 0 6 -10 10 -11 10 -2 0 6 9 12 20 12 11 0 20 -5 20 -11 0 -5 -5 -7 -12 -3 -7 4 -8 3 -4 -4 9 -16 50 1 54 22 2 10 -4 26 -12 35 -15 16 -15 19 -1 31 8 7 15 24 15 39 0 20 -2 23 -10 11 -5 -8 -10 -10 -10 -4 0 6 8 22 18 35 30 42 43 69 37 80 -4 5 0 31 9 57 10 31 14 80 13 142 -1 52 2 107 6 122 5 17 2 31 -6 40 -8 7 -16 20 -19 28 -3 10 -6 11 -12 2 -3 -6 1 -19 12 -29 12 -13 16 -27 12 -43 -4 -15 -9 -20 -13 -13 -4 6 -4 18 -1 27 5 12 2 15 -9 10 -13 -5 -15 2 -11 40 3 39 2 45 -12 39 -14 -5 -14 -3 -3 16 8 11 24 21 36 21 17 0 23 6 23 23 0 18 -2 19 -10 7 -6 -9 -10 -10 -10 -3 0 6 5 15 10 18 6 4 8 11 5 16 -3 5 1 6 10 3 9 -4 21 -18 26 -32 13 -33 24 -20 21 23 -2 26 1 35 13 35 11 0 15 11 15 44 0 35 -4 45 -20 49 -12 3 -20 14 -20 27 0 11 5 18 10 15 6 -3 10 3 10 14 0 12 -6 21 -12 21 -9 0 -10 3 -2 8 6 4 10 15 9 24 -2 9 3 22 11 29 8 6 14 21 14 32 0 11 3 17 7 14 3 -4 17 3 30 15 13 12 23 16 23 10 0 -7 7 -12 15 -12 8 0 15 5 15 10 0 6 -4 10 -10 10 -5 0 -9 3 -9 8 3 19 -2 32 -12 29 -6 -1 -14 4 -17 12 -3 9 0 11 8 6 8 -5 11 -4 6 3 -4 6 -13 9 -21 6 -8 -4 -13 -10 -10 -14 3 -5 1 -11 -5 -15 -5 -3 -10 -16 -9 -28 1 -20 2 -20 8 3 7 24 7 24 13 3 7 -25 -6 -32 -42 -23 -21 5 -25 13 -28 45 -2 26 1 35 6 27 7 -11 11 -7 16 13 4 14 4 30 1 36 -4 5 1 12 10 15 18 7 30 -18 -179 352 -151 267 -169 294 -240 360 -116 105 -255 162 -416 167 -58 2 -129 0 -158 -5z m947 -1192 c0 -24 -3 -36 -6 -28 -3 8 -10 18 -15 21 -8 5 10 49 19 49 2 0 3 -19 2 -42z m-12 -80 c-3 -8 -6 -5 -6 6 -1 11 2 17 5 13 3 -3 4 -12 1 -19z m48 13 c3 -5 2 -12 -3 -15 -5 -3 -9 1 -9 9 0 17 3 19 12 6z m-190 -700 c3 -5 1 -12 -4 -15 -5 -3 -11 1 -15 9 -6 16 9 21 19 6z m-131 -116 c3 -8 1 -15 -3 -15 -5 0 -11 7 -15 15 -3 8 -1 15 3 15 5 0 11 -7 15 -15z m126 6 c0 -6 -4 -13 -10 -16 -5 -3 -10 1 -10 9 0 9 5 16 10 16 6 0 10 -4 10 -9z m-122 -186 c-3 -3 -9 2 -12 12 -6 14 -5 15 5 6 7 -7 10 -15 7 -18z"/> <path d="M2239 8788 c-184 -101 -358 -200 -386 -221 -93 -68 -173 -180 -221 -309 l-27 -73 -3 -1305 c-2 -938 0 -1325 8 -1378 68 -432 410 -812 872 -967 189 -63 219 -65 955 -65 l662 0 20 26 c12 15 21 35 21 46 0 11 -68 139 -151 286 -83 147 -185 327 -226 400 -41 73 -85 139 -96 147 -18 12 -72 15 -312 15 -159 0 -317 5 -350 10 -131 21 -242 105 -302 228 l-28 57 -5 1615 c-4 1246 -8 1620 -17 1636 -13 23 -33 34 -62 34 -9 0 -168 -82 -352 -182z"/> <path d="M5206 8547 c3 -8 11 -14 18 -14 8 0 12 6 9 14 -3 7 -11 13 -19 13 -7 0 -11 -6 -8 -13z"/> <path d="M3955 7437 c-59 -20 -84 -35 -138 -86 -155 -145 -161 -378 -12 -526 57 -58 122 -91 203 -106 155 -29 321 55 399 203 26 48 28 62 28 158 0 101 -1 108 -34 168 -39 71 -101 131 -176 170 -41 21 -67 26 -140 29 -56 2 -105 -2 -130 -10z"/> <path d="M4801 7358 c-1 -25 2 -34 12 -30 5 1 7 -3 4 -10 -4 -13 38 -108 48 -108 3 0 -2 14 -10 30 -9 17 -13 36 -9 42 4 7 3 8 -5 4 -8 -6 -10 -1 -6 17 5 17 2 28 -8 34 -8 4 -17 15 -20 23 -4 12 -6 11 -6 -2z"/> <path d="M4881 7180 c14 -31 19 -36 19 -24 0 6 -7 19 -16 30 -14 18 -14 18 -3 -6z"/> <path d="M3939 6536 c-102 -27 -171 -87 -218 -186 -25 -53 -26 -61 -26 -245 0 -250 3 -261 189 -587 79 -139 196 -345 259 -458 64 -113 133 -232 153 -265 85 -135 214 -237 369 -292 l80 -28 420 -1 c231 0 380 2 330 6 -49 3 -74 7 -55 9 l35 3 -30 10 c-16 5 -46 13 -65 17 -23 4 -35 12 -35 23 0 9 -4 20 -8 24 -4 4 -7 17 -7 28 0 12 -14 37 -30 56 -16 19 -30 41 -30 48 0 7 -4 10 -10 7 -6 -4 -10 13 -10 45 0 35 -4 49 -11 44 -8 -4 -9 0 -4 15 4 14 1 23 -9 27 -9 3 -16 15 -16 26 0 28 -42 86 -59 80 -10 -3 -12 0 -8 12 4 9 1 21 -7 28 -7 7 -11 21 -9 32 3 12 -5 31 -16 43 -14 14 -21 36 -21 61 0 31 -6 42 -30 60 -16 13 -30 31 -30 42 0 11 -4 20 -10 20 -5 0 -10 9 -10 20 0 22 -16 27 -23 8 -2 -7 -8 -10 -12 -5 -5 4 -2 18 5 32 15 27 5 49 -11 25 -8 -12 -9 -9 -8 10 1 14 -3 36 -8 49 -10 24 -10 24 -16 -8 -7 -33 -29 -35 -26 -3 4 40 0 45 -18 31 -15 -12 -16 -12 -8 1 8 13 7 13 -8 1 -14 -11 -21 -7 -16 12 0 1 -5 15 -11 31 -9 25 -8 32 11 49 16 15 18 21 8 28 -7 4 -17 5 -23 2 -5 -4 -7 1 -3 11 5 14 3 17 -8 12 -8 -3 -15 0 -15 6 0 6 -3 8 -6 5 -4 -3 -20 12 -36 35 -22 30 -28 47 -24 67 4 14 9 57 11 94 3 42 10 74 20 83 11 12 12 20 5 35 -11 19 -40 27 -40 9 0 -5 -13 -8 -30 -7 -21 1 -30 7 -30 20 0 9 -6 17 -14 17 -18 0 -30 31 -15 40 6 4 8 17 5 28 -6 17 -3 20 24 18 28 -2 29 -1 17 18 -8 12 -37 64 -67 116 -133 237 -180 294 -291 354 -106 58 -298 83 -410 52z m616 -306 c4 -6 10 -8 14 -5 5 2 13 -7 20 -21 7 -16 7 -23 1 -19 -6 4 -17 2 -25 -5 -11 -9 -18 -7 -34 9 -11 11 -18 27 -15 36 7 17 30 20 39 5z"/> <path d="M4884 5672 c-6 -4 -13 -15 -17 -24 -4 -13 -2 -16 11 -12 14 5 14 3 -2 -10 -26 -21 -16 -28 16 -12 15 8 30 11 34 8 3 -4 -1 8 -10 26 -18 36 -17 34 -32 24z"/> <path d="M5015 5494 c2 -11 4 -30 4 -44 1 -20 7 -26 27 -28 22 -2 24 1 19 19 -6 16 -4 20 6 14 15 -8 12 -5 -33 34 -23 20 -26 21 -23 5z"/> <path d="M523 3646 l-28 -24 -3 -519 c-2 -360 0 -536 8 -578 26 -133 108 -242 227 -298 l68 -32 549 -3 549 -3 23 22 c30 28 40 80 24 120 -27 63 -11 61 -542 60 -555 -2 -571 -1 -634 63 -25 24 -46 58 -53 81 -7 27 -11 209 -11 558 l0 519 -29 29 c-39 39 -106 41 -148 5z"/> <path d="M2771 3644 l-31 -26 0 -689 0 -690 25 -24 c19 -20 34 -25 75 -25 41 0 56 5 75 25 l25 24 0 685 c0 376 -3 692 -6 701 -9 23 -57 45 -98 45 -23 0 -45 -9 -65 -26z"/> <path d="M4532 3655 c-84 -37 -84 -36 -587 -955 -65 -118 -141 -255 -168 -305 -60 -107 -65 -146 -23 -181 34 -30 113 -33 144 -6 18 15 111 182 540 965 74 134 135 235 149 244 22 15 26 15 43 -3 19 -19 173 -290 497 -879 91 -165 176 -310 190 -322 18 -18 36 -23 74 -23 61 0 99 31 99 81 0 30 -98 216 -352 667 -38 67 -93 166 -122 220 -155 280 -239 429 -254 446 -27 30 -113 66 -157 66 -22 -1 -55 -7 -73 -15z"/> <path d="M6644 3655 c-177 -38 -339 -159 -428 -318 -103 -185 -124 -484 -50 -707 73 -216 243 -374 459 -425 46 -11 147 -15 442 -15 210 0 389 3 398 6 47 18 59 116 20 162 l-25 30 -383 4 c-431 5 -439 6 -549 81 -77 53 -139 140 -170 240 -31 96 -33 319 -4 412 47 155 132 252 270 309 48 20 75 21 443 26 392 5 393 5 415 28 18 18 23 34 23 78 0 49 -4 59 -28 80 l-28 24 -372 -1 c-269 0 -389 -4 -433 -14z"/> <path d="M7000 2944 c-10 -11 -11 -20 -3 -32 9 -15 34 -17 189 -19 98 -1 170 2 159 5 -13 5 -20 16 -20 32 l0 25 -156 3 c-134 2 -158 0 -169 -14z"/> <path d="M7453 2948 c-15 -24 -10 -58 9 -58 10 0 18 -6 18 -12 0 -9 4 -8 10 2 8 12 10 12 10 1 0 -8 2 -12 4 -10 3 3 0 24 -6 47 -10 41 -29 54 -45 30z"/> <path d="M4524 2632 c-75 -35 -119 -134 -95 -213 48 -161 265 -185 339 -39 43 85 23 175 -51 234 -49 39 -131 46 -193 18z"/> <path d="M2310 1660 c0 -7 472 -10 1395 -10 923 0 1395 3 1395 10 0 7 -472 10 -1395 10 -923 0 -1395 -3 -1395 -10z"/> <path d="M3095 1170 c-14 -15 -15 -20 -4 -20 15 1 49 23 49 34 0 13 -28 5 -45 -14z"/> <path d="M6853 1183 c-7 -3 -13 -10 -13 -17 0 -8 17 -12 47 -11 39 0 48 3 52 20 3 16 1 17 -12 7 -10 -8 -22 -10 -38 -4 -13 5 -30 7 -36 5z"/> <path d="M894 1117 c-2 -7 -3 -60 -2 -118 l3 -104 78 -3 c64 -2 77 0 77 13 0 12 -13 15 -60 15 l-60 0 0 99 c0 80 -3 100 -15 105 -9 3 -18 0 -21 -7z"/> <path d="M1237 1103 c-17 -32 -87 -201 -87 -208 0 -3 7 -5 15 -5 8 0 21 14 30 30 14 28 19 30 71 30 52 0 56 -2 65 -30 7 -20 18 -30 31 -30 11 0 18 4 16 8 -92 221 -115 256 -141 205z m62 -110 c1 -9 -13 -13 -39 -13 -44 0 -43 -6 -9 78 l11 27 18 -40 c10 -22 19 -46 19 -52z"/> <path d="M1844 1115 c-82 -42 -85 -168 -4 -210 68 -35 146 -3 170 70 32 97 -74 187 -166 140z m114 -51 c31 -36 29 -79 -7 -115 -33 -32 -65 -37 -99 -13 -33 23 -45 60 -31 101 21 63 91 78 137 27z"/> <path d="M2513 1118 c-12 -16 -93 -206 -93 -219 0 -21 29 -7 40 21 12 28 15 30 70 30 55 0 58 -2 70 -30 12 -29 40 -42 40 -17 -1 22 -95 220 -106 224 -6 2 -15 -2 -21 -9z m41 -88 c9 -22 16 -43 16 -45 0 -3 -18 -5 -40 -5 -22 0 -40 2 -40 5 0 14 33 85 40 85 4 0 15 -18 24 -40z"/> <path d="M3033 1110 c-41 -24 -53 -48 -53 -102 0 -71 50 -118 126 -118 28 0 44 8 70 34 29 29 34 41 34 83 0 58 -19 90 -66 109 -45 19 -73 18 -111 -6z m125 -46 c12 -14 22 -38 22 -55 0 -39 -48 -89 -85 -89 -33 0 -85 50 -85 82 1 85 92 124 148 62z"/> <path d="M3853 1115 c-66 -29 -86 -134 -34 -185 34 -34 68 -45 115 -36 103 19 120 172 25 222 -35 17 -64 17 -106 -1z m115 -51 c12 -14 22 -38 22 -55 0 -39 -48 -89 -85 -89 -33 0 -85 50 -85 82 1 85 92 124 148 62z"/> <path d="M4698 1122 l-78 -3 0 -114 0 -115 85 0 c68 0 85 3 85 15 0 11 -16 15 -67 17 l-68 3 -3 33 -3 32 61 0 c53 0 61 2 58 18 -2 13 -16 18 -58 22 -51 5 -55 7 -58 33 l-3 27 65 0 c60 0 90 12 70 28 -5 4 -44 6 -86 4z"/> <path d="M5613 1116 c-79 -36 -85 -160 -11 -206 71 -43 155 -11 179 69 28 95 -75 179 -168 137z m115 -52 c31 -36 29 -79 -7 -115 -35 -34 -68 -37 -104 -9 -49 39 -42 119 13 147 33 17 70 8 98 -23z"/> <path d="M6543 1115 c-64 -28 -85 -128 -38 -184 14 -16 34 -33 44 -36 23 -7 35 -45 15 -45 -8 0 -14 -4 -14 -10 0 -5 11 -10 24 -10 25 0 39 20 30 44 -4 10 4 16 25 21 37 8 59 31 43 47 -7 7 -17 6 -33 -6 -52 -36 -120 1 -122 66 -2 72 55 114 115 84 30 -16 48 -14 48 5 0 12 -62 39 -87 39 -10 -1 -32 -7 -50 -15z"/> <path d="M6882 1121 c-12 -7 -102 -204 -102 -222 0 -21 29 -6 40 21 12 28 15 30 70 30 55 0 58 -2 70 -30 7 -18 20 -30 31 -30 16 0 14 9 -18 83 -19 45 -41 96 -49 114 -16 37 -25 45 -42 34z m31 -86 c24 -50 22 -55 -24 -55 -35 0 -40 3 -34 18 4 9 12 29 17 45 13 36 21 34 41 -8z"/> <path d="M7160 1118 c-32 -17 -70 -74 -70 -105 0 -39 30 -93 61 -108 92 -48 194 27 175 129 -13 69 -105 116 -166 84z m81 -28 c23 0 49 -42 49 -80 0 -80 -82 -119 -135 -65 -33 32 -34 93 -2 122 26 24 47 33 65 27 8 -2 18 -4 23 -4z"/> <path d="M1490 1005 l0 -115 59 0 c74 0 108 12 123 45 10 22 8 30 -10 54 -14 20 -18 31 -10 39 14 14 13 59 -2 77 -9 11 -33 15 -86 15 l-74 0 0 -115z m135 55 c0 -23 -4 -25 -52 -28 l-53 -3 0 31 0 31 53 -3 c48 -3 52 -5 52 -28z m-11 -70 c28 -10 34 -38 14 -58 -7 -7 -34 -12 -60 -12 -48 0 -48 0 -48 33 0 19 3 37 7 40 9 10 58 8 87 -3z"/> <path d="M2130 1004 c0 -103 2 -115 17 -112 12 2 18 15 21 43 5 49 4 47 35 40 14 -4 37 -24 51 -46 16 -24 34 -39 47 -39 19 0 18 3 -10 43 l-29 43 24 21 c16 15 24 32 24 56 0 52 -24 67 -108 67 l-72 0 0 -116z m144 64 c18 -29 -5 -52 -58 -58 l-46 -6 0 44 0 43 46 -3 c31 -2 51 -9 58 -20z"/> <path d="M2710 1105 c0 -10 11 -15 35 -15 l34 0 3 -97 c3 -84 6 -98 21 -101 15 -3 17 7 17 97 l0 101 35 0 c24 0 35 5 35 15 0 12 -17 15 -90 15 -73 0 -90 -3 -90 -15z"/> <path d="M3330 1005 c0 -96 3 -115 15 -115 11 0 15 11 15 40 0 39 1 40 33 40 26 -1 37 -8 59 -40 15 -22 35 -40 43 -40 20 0 19 5 -10 48 l-25 37 25 23 c29 26 33 67 9 100 -13 19 -24 22 -90 22 l-74 0 0 -115z m140 65 c20 -37 -3 -60 -60 -60 l-50 0 0 40 0 40 50 0 c39 0 52 -4 60 -20z"/> <path d="M3635 1008 c0 -99 2 -113 18 -116 15 -3 17 7 17 112 0 104 -2 116 -17 116 -16 0 -18 -12 -18 -112z"/> <path d="M4300 1005 l0 -115 50 0 c101 0 150 40 150 123 0 40 -5 53 -29 78 -27 27 -35 29 -100 29 l-71 0 0 -115z m149 59 c48 -61 2 -144 -78 -144 l-41 0 0 85 0 85 49 0 c42 0 53 -4 70 -26z"/> <path d="M5070 1005 c0 -96 3 -115 15 -115 12 0 15 19 15 115 0 96 -3 115 -15 115 -12 0 -15 -19 -15 -115z"/> <path d="M5240 1005 c0 -96 3 -115 15 -115 12 0 15 16 15 86 l0 87 66 -87 c36 -47 72 -86 80 -86 11 0 14 23 14 115 0 94 -3 115 -15 115 -11 0 -15 -18 -17 -82 l-3 -83 -63 83 c-35 45 -69 82 -77 82 -12 0 -15 -21 -15 -115z"/> <path d="M5919 1006 c32 -82 51 -116 62 -116 9 0 19 6 22 13 30 71 87 211 87 214 0 1 -8 3 -17 3 -13 0 -28 -25 -55 -93 -27 -68 -39 -87 -43 -72 -3 11 -19 52 -34 90 -20 51 -34 71 -48 73 -19 3 -16 -7 26 -112z"/> <path d="M6257 1113 c-9 -14 -97 -213 -97 -218 0 -3 7 -5 15 -5 8 0 21 14 30 30 15 28 19 30 73 30 55 0 58 -1 69 -30 6 -16 18 -30 27 -30 9 0 16 3 16 6 0 4 -21 56 -47 115 -34 77 -53 109 -65 109 -9 0 -19 -3 -21 -7z m43 -79 c11 -26 20 -48 20 -50 0 -2 -18 -4 -40 -4 -22 0 -40 3 -40 7 0 10 32 93 36 93 2 0 12 -21 24 -46z"/> <path d="M2918 642 c-11 -14 -10 -15 11 -9 13 3 32 2 42 -3 20 -11 49 -3 49 14 0 18 -87 17 -102 -2z"/> <path d="M510 485 l0 -115 85 0 c69 0 85 3 85 15 0 12 -14 15 -65 15 l-65 0 0 35 0 34 57 3 c81 4 85 28 4 28 l-61 0 0 35 0 35 65 0 c51 0 65 3 65 15 0 12 -16 15 -85 15 l-85 0 0 -115z"/> <path d="M1021 581 c-12 -21 -91 -203 -91 -208 0 -2 8 -3 18 -3 10 0 22 12 28 28 10 26 13 27 71 24 55 -3 62 -6 67 -28 4 -15 14 -24 26 -24 18 0 17 6 -16 83 -20 45 -42 97 -49 115 -16 36 -39 42 -54 13z m57 -116 c-3 -4 -22 -5 -41 -3 l-34 3 19 45 20 45 21 -42 c11 -24 18 -45 15 -48z"/> <path d="M1260 485 c0 -108 1 -115 20 -115 16 0 20 7 20 34 0 33 1 34 48 41 56 7 65 12 81 42 17 34 13 62 -14 88 -21 22 -33 25 -90 25 l-65 0 0 -115z m135 65 c15 -17 16 -24 7 -45 -10 -21 -18 -25 -57 -25 l-45 0 0 45 0 45 38 0 c26 0 45 -7 57 -20z"/> <path d="M1542 485 l-1 -115 80 0 c64 0 79 3 79 15 0 12 -13 15 -60 15 l-60 0 0 100 c0 90 -2 100 -18 100 -17 0 -18 -11 -20 -115z"/> <path d="M1810 485 c0 -103 2 -115 18 -115 15 0 17 11 14 115 -3 92 -6 115 -18 115 -11 0 -14 -22 -14 -115z"/> <path d="M1994 566 c-28 -28 -34 -41 -34 -77 0 -61 29 -105 77 -118 60 -16 143 13 116 40 -6 6 -22 4 -44 -5 -89 -37 -159 77 -87 144 24 22 77 27 95 9 12 -12 43 -6 43 9 0 15 -49 32 -91 32 -33 0 -48 -7 -75 -34z"/> <path d="M2301 498 c-24 -57 -46 -109 -48 -115 -3 -8 3 -13 14 -13 12 0 23 11 30 30 10 28 15 30 63 30 46 0 53 -3 68 -30 9 -16 24 -30 34 -30 13 0 7 21 -33 113 -64 148 -71 149 -128 15z m77 25 c5 -16 13 -35 17 -44 5 -12 -2 -18 -25 -23 -18 -3 -36 -4 -40 -1 -9 5 21 95 31 95 4 0 12 -12 17 -27z"/> <path d="M2594 566 c-28 -28 -34 -42 -34 -75 0 -54 22 -96 60 -113 16 -7 30 -16 30 -20 0 -3 3 -13 6 -21 3 -10 -1 -17 -13 -20 -17 -4 -17 -4 0 -12 23 -10 50 13 43 37 -3 12 2 21 12 25 38 11 62 27 62 40 0 17 -9 16 -51 -1 -93 -39 -157 79 -81 148 21 18 27 18 106 4 10 -2 21 2 23 8 5 16 -42 34 -88 34 -33 0 -48 -7 -75 -34z"/> <path d="M2890 571 c-77 -76 -32 -203 73 -205 112 -3 167 129 85 206 -25 23 -39 28 -80 28 -41 0 -54 -5 -78 -29z m135 -26 c31 -30 33 -82 4 -119 -28 -36 -86 -36 -119 -1 -74 79 40 196 115 120z"/> <path d="M3200 485 l0 -115 80 0 c64 0 80 3 80 15 0 12 -14 15 -65 15 l-65 0 0 35 0 35 60 0 c47 0 60 3 60 15 0 12 -13 15 -60 15 l-60 0 0 35 0 35 65 0 c51 0 65 3 65 15 0 12 -16 15 -80 15 l-80 0 0 -115z"/> <path d="M3487 582 c-10 -10 -17 -33 -17 -50 0 -25 6 -35 30 -47 16 -8 35 -15 43 -15 8 0 25 -8 38 -19 21 -16 22 -21 9 -36 -13 -16 -30 -17 -104 -3 -29 5 -29 -17 0 -32 64 -35 144 -6 144 51 0 35 -21 56 -68 69 -51 14 -65 24 -60 46 4 22 56 31 87 15 14 -8 22 -8 27 0 22 36 -99 55 -129 21z"/> <path d="M3941 586 c-34 -19 -50 -54 -51 -107 0 -58 27 -95 80 -109 41 -11 99 4 114 29 10 15 -23 26 -37 12 -6 -6 -28 -11 -48 -11 -29 0 -43 6 -59 28 -28 34 -22 98 10 124 25 20 80 24 97 7 7 -7 20 -8 30 -5 17 7 16 9 -6 27 -27 22 -94 25 -130 5z"/> <path d="M4228 583 c-34 -21 -48 -53 -48 -108 0 -35 6 -49 30 -73 36 -37 69 -46 120 -32 93 25 114 146 35 208 -34 27 -98 29 -137 5z m121 -30 c29 -24 38 -85 18 -117 -52 -79 -176 -22 -153 70 15 59 89 85 135 47z"/> <path d="M4520 486 c0 -109 1 -116 20 -116 18 0 20 7 20 83 l1 82 35 -57 c20 -32 39 -58 44 -58 5 0 23 26 42 58 l33 57 3 -82 c2 -65 6 -83 17 -83 12 0 15 21 15 115 0 104 -2 115 -18 115 -12 0 -30 -22 -53 -65 -18 -36 -36 -65 -39 -65 -3 0 -21 29 -40 63 -24 43 -42 63 -58 65 -22 3 -22 2 -22 -112z"/> <path d="M4880 485 c0 -96 3 -115 15 -115 10 0 15 10 15 34 0 32 2 34 45 38 68 8 95 30 95 78 0 59 -28 80 -107 80 l-63 0 0 -115z m124 69 c19 -19 21 -48 4 -62 -7 -6 -31 -12 -53 -14 l-40 -3 -3 48 -3 47 40 0 c23 0 46 -7 55 -16z"/> <path d="M5158 508 c3 -77 7 -97 24 -115 27 -28 63 -36 104 -23 49 16 64 52 64 150 0 73 -2 80 -20 80 -18 0 -20 -7 -20 -84 0 -95 -11 -116 -60 -116 -49 0 -60 21 -60 116 0 73 -2 84 -17 84 -16 0 -18 -10 -15 -92z"/> <path d="M5450 585 c0 -10 11 -15 35 -15 l35 0 0 -100 c0 -82 3 -100 15 -100 12 0 15 18 15 100 l0 100 40 0 c29 0 40 4 40 15 0 12 -17 15 -90 15 -73 0 -90 -3 -90 -15z"/> <path d="M5773 583 c-3 -10 -25 -62 -49 -115 -37 -87 -40 -98 -24 -98 11 0 25 12 32 27 12 24 19 27 67 27 48 1 54 -1 67 -26 12 -24 44 -40 44 -22 0 3 -21 55 -47 115 -35 81 -52 109 -65 109 -10 0 -21 -8 -25 -17z m49 -77 c9 -24 14 -47 11 -50 -10 -10 -73 -7 -73 4 0 16 32 90 39 90 4 0 14 -20 23 -44z"/> <path d="M6042 584 c-35 -24 -55 -72 -49 -117 7 -48 39 -84 88 -98 31 -10 43 -9 76 7 39 19 44 41 8 36 -93 -14 -92 -14 -114 9 -30 32 -29 98 2 127 25 24 66 28 98 11 12 -6 28 -8 37 -4 15 6 14 9 -7 26 -29 24 -107 26 -139 3z"/> <path d="M6300 485 c0 -108 1 -115 20 -115 19 0 20 7 20 115 0 108 -1 115 -20 115 -19 0 -20 -7 -20 -115z"/> <path d="M6489 572 c-26 -23 -33 -38 -36 -79 -5 -47 -3 -54 29 -88 30 -33 41 -38 81 -39 85 -2 139 71 117 156 -21 77 -129 106 -191 50z m131 -20 c13 -10 23 -33 27 -59 5 -35 2 -45 -20 -67 -43 -43 -107 -35 -133 16 -42 81 56 167 126 110z"/> <path d="M6798 485 c-3 -104 -1 -115 15 -115 15 0 17 11 17 87 l0 86 65 -86 c36 -48 72 -87 80 -87 12 0 15 20 15 115 0 94 -3 115 -15 115 -11 0 -15 -18 -17 -85 l-3 -85 -63 85 c-35 47 -70 85 -77 85 -11 0 -15 -27 -17 -115z"/> <path d="M7146 493 c-25 -60 -46 -111 -46 -115 0 -20 31 -4 46 23 12 24 20 30 37 25 12 -3 36 -6 53 -6 23 0 34 -6 42 -25 10 -22 42 -36 42 -18 0 4 -21 56 -47 115 -33 73 -53 108 -64 108 -11 0 -31 -34 -63 -107z m86 12 l17 -45 -41 0 c-34 0 -39 3 -33 18 4 9 12 29 17 45 5 15 13 27 17 27 4 0 14 -20 23 -45z"/> <path d="M7430 485 c0 -96 3 -115 15 -115 12 0 15 19 15 115 0 96 -3 115 -15 115 -12 0 -15 -19 -15 -115z"/> <path d="M7597 582 c-21 -23 -22 -66 -2 -86 9 -9 33 -20 53 -26 51 -14 65 -24 60 -46 -4 -23 -66 -31 -99 -14 -14 8 -24 9 -31 2 -16 -16 40 -47 84 -46 49 2 78 27 78 69 0 39 -11 49 -66 64 -23 6 -47 18 -54 26 -27 33 34 60 80 35 13 -7 21 -7 25 0 23 38 -96 58 -128 22z"/> </g> </svg>
+    <p><b>LIAC</b> · Laboratório de Inovação e Aplicações Computacionais<br>UNEMAT · Campus de Alto Araguaia · Bacharelado em Ciência da Computação</p>
+  </div>
+  <h1>Terminal de Bolso<span class="cursor" aria-hidden="true"></span></h1>
+  <p class="lede">Roteiro passo a passo para aprender a usar o Linux pelo terminal, no servidor do LIAC, direto do navegador do seu celular.</p>
+  <div class="meta">
+    <span>Duração: <b>60–90 min</b></span>
+    <span>Pré-requisito: <b>ter feito o 1º acesso</b></span>
+    <span>Endereço: <b>terminal.liac-lab.dev</b></span>
+  </div>
+</header>
+
+<section class="etapa">
+  <span class="label">O cenário</span>
+  <h2>Você é o novo monitor do LIAC</h2>
+  <p>O LIAC mantém um servidor Linux de verdade, um <b>Dell XPS 8900</b> chamado <code>labhw-XPS-8900</code>. Ele fica no laboratório, sem monitor nem mouse em uso, e você chega até ele pela internet, pelo navegador. Sua conta pessoal já existe nele.</p>
+  <p>Como monitor(a), sua missão tem duas partes: <b>investigar o servidor</b> (que máquina é essa, quanta memória tem, por que você não enxerga os colegas) e <b>montar nele a pasta de projeto da sua disciplina</b>, com documentação, dados e um script que gera um relatório automático.</p>
+  <p>Cada etapa é uma missão. Leia, digite os comandos, compare a saída com a esperada e marque a etapa como concluída. Seu progresso nesta página fica salvo neste celular. Os arquivos que você criar ficam salvos <b>no servidor</b>: você pode parar e continuar outro dia.</p>
+  <div class="ficha" aria-label="Ficha do servidor">
+    <div><b>labhw-XPS-8900</b><span>nome da máquina</span></div>
+    <div><b>Linux Mint 22.3</b><span>sistema (base Ubuntu 24.04)</span></div>
+    <div><b>Core i7-6700</b><span>4 núcleos, 8 threads</span></div>
+    <div><b>~15 GiB RAM</b><span>memória total</span></div>
+    <div><b>/srv/alunos/você</b><span>sua pasta pessoal</span></div>
+    <div><b>50 MB</b><span>seu espaço em disco</span></div>
+  </div>
+  <p class="small">Nas etapas 1 e 8 você vai confirmar cada item desta ficha com seus próprios comandos.</p>
+</section>
+
+<!-- REGRAS -->
+<section class="etapa" id="regras">
+  <span class="label">Antes de começar</span>
+  <h2>Regras do servidor</h2>
+  <p>O servidor é compartilhado pela turma. Algumas proteções foram ligadas de propósito, e você vai esbarrar nelas durante o roteiro. Isso é esperado.</p>
+  <ul>
+    <li><b>A conta é pessoal.</b> Não compartilhe os códigos de acesso nem o seu e-mail.</li>
+    <li><b>Use o servidor só para as atividades da disciplina.</b></li>
+    <li><b>Seu espaço é de 50 MB</b> (aviso aos 40 MB) e até 5000 arquivos.</li>
+    <li><b>Sem internet:</b> <code>ping</code>, <code>curl</code>, <code>apt</code> e <code>pip</code> não funcionam.</li>
+    <li><b>Sem administrador:</b> não tente usar <code>sudo</code> ou <code>su</code>. As tentativas são registradas e geram alerta para o professor.</li>
+    <li><b>Ao sair, digite <code>exit</code>.</b> Programas que ficarem rodando são encerrados quando você sai.</li>
+    <li><b>Celular ou computador de outra pessoa?</b> Use uma aba anônima e feche ao terminar. Na aba comum, o acesso fica aberto por até 24 horas.</li>
+  </ul>
+</section>
+
+<!-- ETAPA 0 -->
+<section class="etapa" id="e0">
+  <div class="ehead"><span class="num">0</span><span class="label">Preparação · 5 min</span><h2>Entrando no servidor</h2></div>
+  <ol>
+    <li>Abra <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal.liac-lab.dev</a> <b>em uma nova aba</b>. Assim você alterna entre a apostila e o terminal pelas abas do navegador.</li>
+    <li>Na tela <b>Log in to Terminal Linux do LIAC</b>, digite seu e-mail <b>@unemat.br</b> e toque em <b>Send login code</b>.</li>
+    <li>Digite o código que chegou no seu e-mail (veja também o spam). Ele expira em poucos minutos.</li>
+    <li>O terminal abre direto na sua conta, com a mensagem de boas-vindas do LIAC.</li>
+  </ol>
+  <div class="term">
+    <div class="o"> Bem-vindo(a) ao terminal Linux do LIAC - UNEMAT, Campus de Alto Araguaia.</div>
+    <div class="o"> </div>
+    <div class="o"> Seus arquivos ficam na sua pasta pessoal (limite de 50 MB).</div>
+    <div class="o"> ...</div>
+    <div class="o"> Para sair do terminal: exit</div>
+    <div class="o"> </div>
+    <div class="o"><span class="u">maria.silva@labhw-XPS-8900</span>:<span class="pa">~</span>$ _</div>
+  </div>
+  <p class="small">No lugar de <code>maria.silva</code> aparece o seu usuário: a parte do seu e-mail antes do @.</p>
+
+  <div class="alerta">
+    <span class="label">Ajuste o teclado do celular</span>
+    <ul>
+      <li><b>Desligue a letra maiúscula automática.</b> O Linux diferencia maiúsculas de minúsculas: <code>ls</code> funciona, <code>Ls</code> não. Este é o erro mais comum no LIAC.</li>
+      <li><b>Desligue a correção automática</b> para o celular não trocar <code>cd</code> por “CD” ou <code>cat</code> por “gato”.</li>
+      <li><b>iPhone:</b> em Ajustes › Geral › Teclado, desligue <b>Pontuação Inteligente</b>. Ela troca as aspas retas <code>'</code> e <code>"</code> por aspas curvas, e os comandos deixam de funcionar.</li>
+    </ul>
+  </div>
+  <div class="dica">
+    <span class="label">Dicas para o celular</span>
+    <ul>
+      <li>Vire o celular <b>na horizontal</b> no terminal: cabem linhas maiores.</li>
+      <li>Os símbolos <code>|</code> <code>&gt;</code> <code>~</code> <code>/</code> ficam na tela de símbolos do teclado (no Android, <kbd>?123</kbd> e depois <kbd>=\&lt;</kbd>).</li>
+      <li>Nesta apostila, como no tutorial de primeiro acesso, o <b style="color:var(--accent)">$</b> marca o comando. <b>Não digite o $</b>, só o que vem depois dele, e toque em <kbd>Enter</kbd>.</li>
+      <li>Se a página mostrar erro de conexão, aguarde um pouco e recarregue. Seus arquivos não se perdem.</li>
+    </ul>
+  </div>
+  <label class="done"><input type="checkbox" id="ck-e0" data-step="e0"> Entrei no terminal e ajustei o teclado</label>
+</section>
+
+<!-- ETAPA 1 -->
+<section class="etapa" id="e1">
+  <div class="ehead"><span class="num">1</span><span class="label">Primeiro contato · 8 min</span><h2>Quem sou eu? Que máquina é esta?</h2></div>
+  <p>O terminal funciona como uma conversa: você digita um <b>comando</b>, aperta <kbd>Enter</kbd>, a máquina responde e mostra o <b>prompt</b> de novo, esperando a próxima ordem.</p>
+  <span class="label">Anatomia do prompt</span>
+  <div class="anat" aria-label="usuário, arroba, nome da máquina, dois pontos, til, cifrão">
+    <div><code>maria.silva</code><small>seu usuário</small></div>
+    <div><code>@</code><small>“em”</small></div>
+    <div><code>labhw-XPS-8900</code><small>nome da máquina</small></div>
+    <div><code>:~</code><small>pasta atual (~ é a sua pasta pessoal)</small></div>
+    <div><code>$</code><small>$ = usuário comum · # = administrador</small></div>
+  </div>
+  <p>Digite um comando de cada vez:</p>
+  <div class="term">
+    <div class="l">whoami</div>
+    <div class="o">maria.silva</div>
+    <div class="l">hostname</div>
+    <div class="o">labhw-XPS-8900</div>
+    <div class="l">date</div>
+    <div class="o">qui 30 out 2026 14:02:11 -04</div>
+    <div class="l">uname -r</div>
+    <div class="o">6.8.0-...-generic</div>
+    <div class="l">grep PRETTY /etc/os-release</div>
+    <div class="o">PRETTY_NAME="Linux Mint 22.3"</div>
+    <div class="l">id</div>
+    <div class="o">uid=20xx(maria.silva) gid=...  grupos=...,alunos_liac</div>
+    <div class="l">clear</div>
+  </div>
+  <p class="small">Os números e a data na sua tela vão ser diferentes. O que importa é o formato.</p>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>whoami</code></td><td>Mostra com qual usuário você está logado (“who am I?”).</td></tr>
+    <tr><td><code>hostname</code></td><td>Mostra o nome da máquina.</td></tr>
+    <tr><td><code>date</code></td><td>Mostra data e hora do servidor (horário de Mato Grosso, -04).</td></tr>
+    <tr><td><code>uname -r</code></td><td>Mostra a versão do <b>kernel</b> Linux. O <code>-r</code> é uma <b>opção</b>: muda o comportamento do comando.</td></tr>
+    <tr><td><code>id</code></td><td>Mostra seu número de usuário (UID) e seus grupos. Todas as contas de alunos ficam no grupo <code>alunos_liac</code>.</td></tr>
+    <tr><td><code>clear</code></td><td>Limpa a tela.</td></tr>
+  </table></div>
+  <p>Repare no formato que se repete em quase todo comando Linux:</p>
+  <div class="term"><div class="c">comando  -opções  argumentos</div><div class="c">ls       -l       /etc</div></div>
+  <div class="dica">
+    <span class="label">Como pedir ajuda</span>
+    <p>Quase todo comando aceita <code>--help</code> (experimente <code>ls --help</code>). Para o manual completo, use <code>man ls</code>: role com o dedo ou com as setas e aperte <kbd>q</kbd> para sair.</p>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 1</span>
+    <p>Confirme os dois primeiros itens da ficha do servidor (nome da máquina e sistema). Depois responda no caderno: por que o seu prompt termina em <code>$</code> e não em <code>#</code>?</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <p><code>hostname</code> mostra <code>labhw-XPS-8900</code> e o <code>grep</code> no <code>/etc/os-release</code> mostra Linux Mint 22.3. O <code>$</code> indica <b>usuário comum</b>. O <code>#</code> aparece só para o administrador (root), que pode tudo, inclusive apagar o sistema. Num servidor compartilhado, ninguém trabalha como root no dia a dia.</p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e1" data-step="e1"> Concluí a etapa 1</label>
+</section>
+
+<!-- ETAPA 2 -->
+<section class="etapa" id="e2">
+  <div class="ehead"><span class="num">2</span><span class="label">Navegação · 10 min</span><h2>Onde estou?</h2></div>
+  <p>No Linux, todos os arquivos ficam numa única árvore que começa na <b>raiz</b>, escrita <code>/</code>. Não existe “C:” nem “D:”. Este é o pedaço da árvore que interessa a você no servidor do LIAC:</p>
+  <div class="term">
+    <div class="c">/                     raiz: o topo de tudo</div>
+    <div class="c">├── bin  usr           programas</div>
+    <div class="c">├── etc                configurações do sistema</div>
+    <div class="c">├── home               pastas dos administradores</div>
+    <div class="c">├── tmp                temporários (o seu é privado)</div>
+    <div class="c">└── srv</div>
+    <div class="c">    └── alunos         uma partição só para os alunos</div>
+    <div class="c">        └── maria.silva     sua pasta pessoal (~)</div>
+    <div class="c">            └── atividades</div>
+  </div>
+  <div class="term">
+    <div class="l">pwd</div>
+    <div class="o">/srv/alunos/maria.silva</div>
+    <div class="l">ls</div>
+    <div class="o">atividades  teste.txt</div>
+    <div class="l">ls -l</div>
+    <div class="l">ls -a</div>
+    <div class="o">.  ..  .bash_logout  .bashrc  .profile  atividades  teste.txt</div>
+    <div class="l">cd /</div>
+    <div class="l">ls</div>
+    <div class="o">bin  boot  dev  etc  home  lib  ...  srv  tmp  usr  var</div>
+    <div class="l">cd etc</div>
+    <div class="l">pwd</div>
+    <div class="o">/etc</div>
+    <div class="l">cd ..</div>
+    <div class="l">pwd</div>
+    <div class="o">/</div>
+    <div class="l">cd ~</div>
+    <div class="l">pwd</div>
+    <div class="o">/srv/alunos/maria.silva</div>
+  </div>
+  <p class="small">O <code>teste.txt</code> é o arquivo que você criou no primeiro acesso. Se não aparecer, tudo bem.</p>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>pwd</code></td><td>Mostra a pasta atual (“print working directory”).</td></tr>
+    <tr><td><code>ls</code></td><td>Lista o conteúdo da pasta.</td></tr>
+    <tr><td><code>ls -l</code></td><td>Lista em formato longo: permissões, dono, tamanho, data.</td></tr>
+    <tr><td><code>ls -a</code></td><td>Mostra também os arquivos ocultos (os que começam com ponto).</td></tr>
+    <tr><td><code>cd pasta</code></td><td>Entra numa pasta (“change directory”).</td></tr>
+    <tr><td><code>cd ..</code></td><td>Sobe um nível. <code>..</code> significa “a pasta de cima”.</td></tr>
+    <tr><td><code>cd ~</code> ou <code>cd</code></td><td>Volta para a sua pasta pessoal.</td></tr>
+  </table></div>
+  <div class="dica">
+    <span class="label">Caminho absoluto × relativo</span>
+    <p><code>/srv/alunos/maria.silva/atividades</code> é um caminho <b>absoluto</b>: começa na raiz e funciona de qualquer lugar. <code>atividades</code> é <b>relativo</b>: só funciona se você já estiver na sua pasta pessoal. <code>~/atividades</code> é um atalho para o absoluto.</p>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 2</span>
+    <p>Tente espiar a pasta dos colegas com <code>ls /srv/alunos</code>. O que acontece? Depois entre na sua pasta <code>atividades</code> usando o caminho absoluto e volte para casa.</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term">
+      <div class="l">ls /srv/alunos</div>
+      <div class="o">ls: não foi possível abrir o diretório '/srv/alunos': Permissão negada</div>
+      <div class="l">cd /srv/alunos/maria.silva/atividades</div>
+      <div class="l">cd</div>
+    </div>
+    <p>A recusa é proposital: o servidor não deixa você listar quem tem conta nem abrir a pasta de outra pessoa. Na etapa 7 você vai descobrir exatamente qual permissão faz isso.</p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e2" data-step="e2"> Concluí a etapa 2</label>
+</section>
+
+<!-- ETAPA 3 -->
+<section class="etapa" id="e3">
+  <div class="ehead"><span class="num">3</span><span class="label">Criando · 8 min</span><h2>Montando a pasta do projeto</h2></div>
+  <p>Todo projeto organizado separa documentação, código, dados e entregas. Vamos criar essa estrutura dentro da sua pasta <code>atividades</code>.</p>
+  <div class="term">
+    <div class="l">cd ~/atividades</div>
+    <div class="l">mkdir projeto</div>
+    <div class="l">cd projeto</div>
+    <div class="l">mkdir docs src dados entregas</div>
+    <div class="l">ls</div>
+    <div class="o">dados  docs  entregas  src</div>
+    <div class="l">touch src/principal.txt</div>
+    <div class="l">ls -l src</div>
+    <div class="o">-rw-r--r-- 1 maria.silva ... 0 out 30 14:10 principal.txt</div>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>mkdir nome</code></td><td>Cria uma pasta (“make directory”). Aceita vários nomes de uma vez.</td></tr>
+    <tr><td><code>mkdir -p a/b/c</code></td><td>Cria a pasta e todas as intermediárias que faltarem.</td></tr>
+    <tr><td><code>touch arquivo</code></td><td>Cria um arquivo vazio (ou atualiza a data de um que já existe).</td></tr>
+  </table></div>
+  <div class="alerta">
+    <span class="label">Evite espaços e acentos nos nomes</span>
+    <p><code>mkdir meu projeto</code> cria <b>duas</b> pastas: “meu” e “projeto”. Use <code>meu_projeto</code> ou <code>meu-projeto</code>.</p>
+  </div>
+  <div class="dica">
+    <span class="label">Atalho do bash</span>
+    <p>O terminal do LIAC usa o <b>bash</b>, que expande chaves: <code>mkdir docs/{aulas,listas}</code> é o mesmo que <code>mkdir docs/aulas docs/listas</code>.</p>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 3</span>
+    <p>Dentro de <code>entregas</code>, crie com <b>um único comando</b> as pastas <code>2026/trabalho1</code>. Confira com <code>ls entregas/2026</code>.</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term"><div class="l">mkdir -p entregas/2026/trabalho1</div><div class="l">ls entregas/2026</div><div class="o">trabalho1</div></div>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e3" data-step="e3"> Concluí a etapa 3</label>
+</section>
+
+<!-- ETAPA 4 -->
+<section class="etapa" id="e4">
+  <div class="ehead"><span class="num">4</span><span class="label">Conteúdo · 15 min</span><h2>Escrevendo e lendo arquivos</h2></div>
+  <p>Há duas formas de escrever em arquivos no terminal: com um <b>editor</b> (o <code>nano</code>, que você usou no primeiro acesso) ou com <b>redirecionamento</b>, mandando a saída de um comando direto para um arquivo.</p>
+  <h3>Com o nano</h3>
+  <div class="term">
+    <div class="l">cd ~/atividades/projeto</div>
+    <div class="l">nano docs/LEIAME.txt</div>
+  </div>
+  <p>Escreva três linhas: <b>Projeto da disciplina</b>, <b>Monitor: seu nome</b> e <b>Disciplina: nome da sua disciplina</b>. Depois salve e saia:</p>
+  <div class="tbl"><table>
+    <tr><th>Ação</th><th>No celular</th><th>Com teclado</th></tr>
+    <tr><td>Salvar</td><td>Toque em <b>^O Gravar</b> na barra inferior, depois <kbd>Enter</kbd></td><td><kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd></td></tr>
+    <tr><td>Sair</td><td>Toque em <b>^X Sair</b></td><td><kbd>Ctrl</kbd>+<kbd>X</kbd></td></tr>
+  </table></div>
+  <p class="small">Se o toque na barra não funcionar, tecle <kbd>Esc</kbd> duas vezes e depois a letra: <kbd>Esc</kbd> <kbd>Esc</kbd> <kbd>o</kbd> equivale a Ctrl+O.</p>
+  <h3>Com redirecionamento</h3>
+  <p>O comando <code>echo</code> repete o texto que você der a ele. Com <code>&gt;</code> ou <code>&gt;&gt;</code>, o texto vai para um arquivo em vez da tela.</p>
+  <div class="tbl"><table>
+    <tr><th>Símbolo</th><th>Efeito</th></tr>
+    <tr><td><code>&gt;</code></td><td>Envia a saída para o arquivo, <b>apagando</b> o que havia antes.</td></tr>
+    <tr><td><code>&gt;&gt;</code></td><td>Envia a saída para o <b>final</b> do arquivo, mantendo o conteúdo.</td></tr>
+  </table></div>
+  <p>Crie uma pequena planilha de dados (formato CSV: valores separados por vírgula). Se preferir, crie o mesmo arquivo pelo nano.</p>
+  <div class="term">
+    <div class="l">echo "nome,nota" &gt; dados/notas.csv</div>
+    <div class="l">echo "Ana,8.5" &gt;&gt; dados/notas.csv</div>
+    <div class="l">echo "Bruno,6.0" &gt;&gt; dados/notas.csv</div>
+    <div class="l">echo "Carla,9.5" &gt;&gt; dados/notas.csv</div>
+    <div class="l">echo "Davi,4.5" &gt;&gt; dados/notas.csv</div>
+    <div class="l">echo "Elis,7.0" &gt;&gt; dados/notas.csv</div>
+    <div class="l">echo "Ana,8.5" &gt;&gt; dados/notas.csv</div>
+    <div class="l">cat dados/notas.csv</div>
+    <div class="l">head -n 3 dados/notas.csv</div>
+    <div class="l">tail -n 2 dados/notas.csv</div>
+    <div class="l">wc -l dados/notas.csv</div>
+    <div class="o">7 dados/notas.csv</div>
+  </div>
+  <p class="small">A linha “Ana” repetida é proposital. Ela vai ser útil na etapa 6.</p>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>cat arq</code></td><td>Mostra o arquivo inteiro.</td></tr>
+    <tr><td><code>head -n 3 arq</code></td><td>Mostra as 3 primeiras linhas.</td></tr>
+    <tr><td><code>tail -n 2 arq</code></td><td>Mostra as 2 últimas linhas. Muito usado para ler o fim de arquivos de log.</td></tr>
+    <tr><td><code>wc -l arq</code></td><td>Conta as linhas (“word count”). Sem <code>-l</code>, mostra linhas, palavras e bytes.</td></tr>
+  </table></div>
+  <div class="dica">
+    <span class="label">Errou a digitação?</span>
+    <p>A seta <kbd>↑</kbd>, se o seu teclado tiver, traz de volta o comando anterior para você corrigir. Se estragou o CSV, recomece com <code>&gt;</code> (que apaga) na primeira linha, ou corrija pelo <code>nano dados/notas.csv</code>.</p>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 4</span>
+    <p>Sem abrir o nano, acrescente ao <code>LEIAME.txt</code> uma quarta linha com a data de hoje. Quantas linhas o arquivo tem agora?</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term"><div class="l">echo "Criado em 30/10/2026" &gt;&gt; docs/LEIAME.txt</div><div class="l">wc -l docs/LEIAME.txt</div><div class="o">4 docs/LEIAME.txt</div></div>
+    <p>Se deu 1, você usou <code>&gt;</code> no lugar de <code>&gt;&gt;</code> e apagou as linhas anteriores. Abra o nano e reescreva.</p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e4" data-step="e4"> Concluí a etapa 4</label>
+</section>
+
+<!-- ETAPA 5 -->
+<section class="etapa" id="e5">
+  <div class="ehead"><span class="num">5</span><span class="label">Organização · 10 min</span><h2>Copiar, mover, renomear, apagar</h2></div>
+  <div class="term">
+    <div class="l">cd ~/atividades/projeto</div>
+    <div class="l">cp dados/notas.csv dados/notas_backup.csv</div>
+    <div class="l">ls dados</div>
+    <div class="o">notas_backup.csv  notas.csv</div>
+    <div class="l">mv src/principal.txt src/main.txt</div>
+    <div class="l">mv dados/notas_backup.csv entregas/</div>
+    <div class="l">ls src entregas</div>
+    <div class="l">touch lixo.txt</div>
+    <div class="l">rm lixo.txt</div>
+    <div class="l">mkdir temporaria</div>
+    <div class="l">rmdir temporaria</div>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>cp origem destino</code></td><td>Copia. Para copiar pastas: <code>cp -r</code>.</td></tr>
+    <tr><td><code>mv origem destino</code></td><td>Move. Se o destino for um nome novo na mesma pasta, <b>renomeia</b>.</td></tr>
+    <tr><td><code>rm arquivo</code></td><td>Apaga um arquivo.</td></tr>
+    <tr><td><code>rmdir pasta</code></td><td>Apaga uma pasta <b>vazia</b>.</td></tr>
+    <tr><td><code>rm -r pasta</code></td><td>Apaga a pasta e tudo dentro dela.</td></tr>
+  </table></div>
+  <div class="alerta">
+    <span class="label">No terminal não existe lixeira</span>
+    <p>O que o <code>rm</code> apaga some de vez, e aqui os arquivos são reais: ninguém vai recuperar o seu trabalho. Antes de um <code>rm -r</code>, rode <code>pwd</code> e <code>ls</code> para ter certeza de onde você está. A boa notícia: você só consegue apagar o que é seu.</p>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 5</span>
+    <p>Faça uma cópia da pasta <code>docs</code> inteira chamada <code>docs_v1</code> dentro de <code>entregas</code>. Depois apague a cópia de backup do CSV que está em <code>entregas</code>.</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term"><div class="l">cp -r docs entregas/docs_v1</div><div class="l">rm entregas/notas_backup.csv</div><div class="l">ls entregas</div><div class="o">2026  docs_v1</div></div>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e5" data-step="e5"> Concluí a etapa 5</label>
+</section>
+
+<!-- ETAPA 6 -->
+<section class="etapa" id="e6">
+  <div class="ehead"><span class="num">6</span><span class="label">Superpoder · 12 min</span><h2>Procurar, filtrar e encadear</h2></div>
+  <p>Aqui está a ideia mais poderosa do terminal: o <b>pipe</b> <code>|</code>. Ele pega a saída de um comando e entrega como entrada para o próximo. Comandos pequenos, encaixados, resolvem problemas grandes.</p>
+  <div class="term">
+    <div class="l">cd ~/atividades/projeto</div>
+    <div class="l">grep Ana dados/notas.csv</div>
+    <div class="o">Ana,8.5</div>
+    <div class="o">Ana,8.5</div>
+    <div class="l">grep -c Ana dados/notas.csv</div>
+    <div class="o">2</div>
+    <div class="l">grep -i bruno dados/notas.csv</div>
+    <div class="o">Bruno,6.0</div>
+    <div class="l">sort dados/notas.csv</div>
+    <div class="l">sort dados/notas.csv | uniq</div>
+    <div class="l">cut -d, -f1 dados/notas.csv</div>
+    <div class="c">(só a 1ª coluna)</div>
+    <div class="l">sort -t, -k2 -n dados/notas.csv</div>
+    <div class="c">(ordena pela 2ª coluna, como número)</div>
+    <div class="l">find ~ -name "*.txt"</div>
+    <div class="o">/srv/alunos/maria.silva/teste.txt</div>
+    <div class="o">/srv/alunos/maria.silva/atividades/projeto/docs/LEIAME.txt</div>
+    <div class="o">...</div>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que faz</th></tr>
+    <tr><td><code>grep texto arq</code></td><td>Mostra as linhas que contêm o texto. <code>-i</code> ignora maiúsculas, <code>-c</code> conta, <code>-v</code> inverte.</td></tr>
+    <tr><td><code>sort</code></td><td>Ordena linhas. <code>-n</code> numérico, <code>-r</code> reverso, <code>-t,</code> separador vírgula, <code>-k2</code> 2ª coluna.</td></tr>
+    <tr><td><code>uniq</code></td><td>Remove linhas repetidas <b>vizinhas</b> (por isso vem depois do <code>sort</code>).</td></tr>
+    <tr><td><code>cut -d, -f1</code></td><td>Recorta colunas: separador vírgula, campo 1.</td></tr>
+    <tr><td><code>find lugar -name "padrão"</code></td><td>Procura arquivos pelo nome. O <code>*</code> significa “qualquer coisa”.</td></tr>
+    <tr><td><code>a | b</code></td><td>Pipe: a saída de <code>a</code> vira a entrada de <code>b</code>.</td></tr>
+  </table></div>
+  <div class="missao">
+    <span class="label">Missão 6</span>
+    <p>Usando pipes, descubra <b>quantos alunos diferentes</b> existem no CSV (sem contar o cabeçalho e sem contar a Ana duas vezes). Dica: <code>grep -v nome</code> remove o cabeçalho.</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term"><div class="l">grep -v nome dados/notas.csv | sort | uniq | wc -l</div><div class="o">5</div></div>
+    <p>Leia da esquerda para a direita: tire o cabeçalho, ordene, remova repetidos, conte as linhas. Bônus: quem tirou a maior nota? <code>sort -t, -k2 -n dados/notas.csv | tail -n 1</code></p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e6" data-step="e6"> Concluí a etapa 6</label>
+</section>
+
+<!-- ETAPA 7 -->
+<section class="etapa" id="e7">
+  <div class="ehead"><span class="num">7</span><span class="label">Segurança e automação · 15 min</span><h2>Permissões e seu primeiro script</h2></div>
+  <p>Rode <code>ls -l</code> e olhe a primeira coluna. Aqueles dez caracteres dizem quem pode fazer o quê com cada arquivo.</p>
+  <div class="anat" aria-label="Permissões: tipo, dono, grupo, outros">
+    <div><code>-</code><small>tipo: - arquivo, d pasta</small></div>
+    <div><code>rwx</code><small>dono</small></div>
+    <div><code>r-x</code><small>grupo</small></div>
+    <div><code>r--</code><small>outros</small></div>
+  </div>
+  <p><b>r</b> = ler (read), <b>w</b> = escrever (write), <b>x</b> = executar (execute), <b>-</b> = não pode. Numa <b>pasta</b>, <b>r</b> é listar o conteúdo e <b>x</b> é poder entrar nela.</p>
+  <p>Agora resolva o mistério da etapa 2. O <code>-d</code> mostra a permissão da própria pasta, não do que tem dentro:</p>
+  <div class="term">
+    <div class="l">ls -ld /srv/alunos</div>
+    <div class="o">drwx--x--x ... root root ... /srv/alunos</div>
+    <div class="l">ls -ld ~</div>
+    <div class="o">drwx------ ... maria.silva ... /srv/alunos/maria.silva</div>
+  </div>
+  <ul>
+    <li><code>/srv/alunos</code> é <code>rwx--x--x</code>: os outros podem <b>atravessar</b> a pasta (x) para chegar à própria, mas <b>não podem listar</b> (falta o r). Por isso ninguém descobre quem tem conta.</li>
+    <li>A sua pasta é <code>rwx------</code>: só você entra, lê e escreve. Os colegas não veem nada.</li>
+  </ul>
+  <h3>Seu primeiro script</h3>
+  <p>Um <b>script</b> é um arquivo com uma lista de comandos que o computador executa em sequência. Crie com o nano:</p>
+  <div class="term">
+    <div class="l">cd ~/atividades/projeto</div>
+    <div class="l">nano src/relatorio.sh</div>
+  </div>
+  <p>Digite exatamente estas linhas e salve (<b>^O Gravar</b>, <kbd>Enter</kbd>, <b>^X Sair</b>):</p>
+  <div class="term">
+    <div class="o" style="color:var(--term-fg)">#!/bin/bash</div>
+    <div class="o" style="color:var(--term-fg)">echo "=== Relatorio do projeto ==="</div>
+    <div class="o" style="color:var(--term-fg)">echo "Gerado por: $(whoami) em $(date)"</div>
+    <div class="o" style="color:var(--term-fg)">echo "Arquivos .txt no projeto:"</div>
+    <div class="o" style="color:var(--term-fg)">find ~/atividades/projeto -name "*.txt" | wc -l</div>
+    <div class="o" style="color:var(--term-fg)">echo "Alunos no CSV:"</div>
+    <div class="o" style="color:var(--term-fg)">grep -v nome ~/atividades/projeto/dados/notas.csv | sort | uniq | wc -l</div>
+    <div class="o" style="color:var(--term-fg)">echo "Espaco usado:"</div>
+    <div class="o" style="color:var(--term-fg)">du -sh ~</div>
+  </div>
+  <p>Agora tente executar:</p>
+  <div class="term">
+    <div class="l">./src/relatorio.sh</div>
+    <div class="o">bash: ./src/relatorio.sh: Permissão negada</div>
+    <div class="l">ls -l src/relatorio.sh</div>
+    <div class="o">-rw-r--r-- 1 maria.silva ... relatorio.sh</div>
+    <div class="l">chmod +x src/relatorio.sh</div>
+    <div class="l">ls -l src/relatorio.sh</div>
+    <div class="o">-rwxr-xr-x 1 maria.silva ... relatorio.sh</div>
+    <div class="l">./src/relatorio.sh</div>
+    <div class="o">=== Relatorio do projeto ===</div>
+    <div class="o">Gerado por: maria.silva em qui 30 out 2026 14:40:02 -04</div>
+    <div class="o">Arquivos .txt no projeto:</div>
+    <div class="o">3</div>
+    <div class="o">Alunos no CSV:</div>
+    <div class="o">5</div>
+    <div class="o">Espaco usado:</div>
+    <div class="o">72K	/srv/alunos/maria.silva</div>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Peça</th><th>Significado</th></tr>
+    <tr><td><code>#!/bin/bash</code></td><td>Primeira linha do script (“shebang”): diz qual programa vai interpretá-lo.</td></tr>
+    <tr><td><code>$(comando)</code></td><td>Executa o comando e coloca o resultado no lugar.</td></tr>
+    <tr><td><code>chmod +x</code></td><td>Dá permissão de execução (“change mode”).</td></tr>
+    <tr><td><code>./arquivo</code></td><td>Executa um programa que está num caminho específico, não nas pastas do sistema.</td></tr>
+  </table></div>
+  <p>O <code>Permissão negada</code> no meio do caminho foi proposital: agora você sabe o que ele significa e como resolver.</p>
+  <div class="missao">
+    <span class="label">Missão 7</span>
+    <p>Acrescente ao final do script uma linha que mostre a maior nota do CSV. Rode de novo. Depois responda: se você der <code>chmod 777</code> na sua pasta pessoal, um colega passa a conseguir listá-la?</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <div class="term"><div class="l">echo 'sort -t, -k2 -n ~/atividades/projeto/dados/notas.csv | tail -n 1' &gt;&gt; src/relatorio.sh</div><div class="l">./src/relatorio.sh</div></div>
+    <p>Não precisa de <code>chmod</code> de novo: a permissão continua no arquivo. Sobre o <code>chmod 777</code>: o colega ainda não conseguiria <b>descobrir</b> sua pasta listando <code>/srv/alunos</code>, mas quem souber o seu usuário entraria direto. Não faça isso. Permissões abertas são a falha de segurança mais comum em servidores reais.</p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e7" data-step="e7"> Concluí a etapa 7</label>
+</section>
+
+<!-- ETAPA 8 -->
+<section class="etapa" id="e8">
+  <div class="ehead"><span class="num">8</span><span class="label">Investigação · 12 min</span><h2>O servidor por dentro</h2></div>
+  <p>Hora de confirmar o resto da ficha do servidor e descobrir quanto dele é seu.</p>
+  <div class="term">
+    <div class="l">grep -m1 "model name" /proc/cpuinfo</div>
+    <div class="o">model name	: Intel(R) Core(TM) i7-6700 CPU @ 3.40GHz</div>
+    <div class="l">nproc</div>
+    <div class="o">8</div>
+    <div class="l">free -h</div>
+    <div class="o">               total     usada     livre  ...</div>
+    <div class="o">Mem.:            15Gi      ...</div>
+    <div class="l">df -h ~</div>
+    <div class="o">Sist. Arq.  Tam.  Usado Disp. Uso% Montado em</div>
+    <div class="o">/dev/sdb2   ...G   ...   ...    ..% /srv/alunos</div>
+    <div class="l">quota -s</div>
+    <div class="o">... blocks   quota   limit ...  files  quota  limit</div>
+    <div class="o">       72K     40M     50M ...     14      0   5000</div>
+    <div class="l">ps aux</div>
+    <div class="o">USER         PID ... COMMAND</div>
+    <div class="o">maria.s+    4321 ... -bash</div>
+    <div class="o">maria.s+    4400 ... ps aux</div>
+    <div class="l">top</div>
+    <div class="c">(tela que se atualiza sozinha; aperte q para sair)</div>
+    <div class="l">ping -c 1 8.8.8.8</div>
+    <div class="c">(deve falhar: os alunos não têm acesso à rede)</div>
+    <div class="l">history</div>
+  </div>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>O que mostra</th></tr>
+    <tr><td><code>/proc/cpuinfo</code></td><td>Um “arquivo” gerado pelo kernel com dados do processador. Em <code>/proc</code>, tudo é informação viva do sistema.</td></tr>
+    <tr><td><code>nproc</code></td><td>Quantos processadores lógicos a máquina tem.</td></tr>
+    <tr><td><code>free -h</code></td><td>Memória RAM total, usada e livre. <code>-h</code> = tamanhos legíveis (K, M, G).</td></tr>
+    <tr><td><code>df -h</code></td><td>Espaço nos discos.</td></tr>
+    <tr><td><code>quota -s</code></td><td>Quanto do <b>seu</b> limite de 50 MB você já usou.</td></tr>
+    <tr><td><code>ps aux</code> / <code>top</code></td><td>Processos (programas em execução). Cada um tem um número, o <b>PID</b>. <kbd>q</kbd> sai do <code>top</code>.</td></tr>
+    <tr><td><code>history</code></td><td>Os comandos que você já digitou.</td></tr>
+  </table></div>
+  <div class="dica">
+    <span class="label">O que o servidor esconde de você</span>
+    <ul>
+      <li>O servidor roda dezenas de processos, mas o <code>ps aux</code> mostra só os <b>seus</b>. Cada aluno enxerga apenas os próprios processos.</li>
+      <li>O <code>nproc</code> diz 8 e o <code>free</code> diz 15 GiB, mas a sua conta pode usar no máximo o equivalente a <b>1 núcleo</b>, <b>1 GB de RAM</b> e <b>200 processos</b>. É assim que 30 pessoas dividem uma máquina sem uma travar a outra.</li>
+      <li>O <code>df</code> mostra a partição inteira dos alunos, com muitos gigabytes. O <code>quota</code> mostra o que vale para você: 50 MB.</li>
+    </ul>
+  </div>
+  <div class="missao">
+    <span class="label">Missão 8</span>
+    <p>Responda no caderno: (a) quantos núcleos físicos e quantos lógicos tem o i7-6700, e por que o <code>nproc</code> mostra 8? (b) Que porcentagem do seu limite de disco você já usou?</p>
+  </div>
+  <details><summary>Conferir resposta</summary><div>
+    <p>(a) O i7-6700 tem <b>4 núcleos físicos</b> com <b>Hyper-Threading</b>: cada núcleo executa duas threads, e o sistema enxerga 8 processadores lógicos. Confirme com <code>lscpu</code>, nas linhas de threads por núcleo e núcleos por soquete. (b) Divida o valor da coluna de blocos do <code>quota -s</code> por 50 MB. Com 72K, é cerca de 0,14%.</p>
+  </div></details>
+  <label class="done"><input type="checkbox" id="ck-e8" data-step="e8"> Concluí a etapa 8</label>
+</section>
+
+<!-- FINAL -->
+<section class="etapa" id="final">
+  <div class="ehead"><span class="num" style="font-size:2.6rem">✓</span><span class="label">Avaliação · 10 min</span><h2>Desafio final e entrega</h2></div>
+  <p>Hora de provar que a pasta do projeto está pronta e que ela sobrevive entre um acesso e outro. Sem olhar as respostas:</p>
+  <ol>
+    <li>Digite <code>exit</code> para sair do terminal.</li>
+    <li>Entre de novo em <b>terminal.liac-lab.dev</b>. Se pedir, informe o e-mail e o novo código.</li>
+    <li>Vá para <code>~/atividades/projeto</code> e crie a pasta <code>logs</code>.</li>
+    <li>Execute o script e salve a saída num arquivo: <code>./src/relatorio.sh &gt; logs/relatorio.txt</code></li>
+    <li>Acrescente ao CSV a linha <code>Seu_nome,10.0</code> (com o seu nome).</li>
+    <li>Rode o script de novo, agora acrescentando a saída ao mesmo log com <code>&gt;&gt;</code>.</li>
+    <li>Mostre o log com <code>cat logs/relatorio.txt</code>.</li>
+  </ol>
+  <div class="missao">
+    <span class="label">Para entregar</span>
+    <p>Tire um <b>print da tela</b> do terminal com o conteúdo de <code>logs/relatorio.txt</code>, mostrando os dois relatórios (o segundo deve indicar 6 alunos). Envie pelo canal combinado da disciplina. No fim, digite <code>exit</code>.</p>
+  </div>
+  <span class="label">Autoavaliação: eu consigo…</span>
+  <div class="chk">
+    <label class="done"><input type="checkbox" id="sk-1"> Explicar o que o prompt mostra e navegar com <code>cd</code>, <code>pwd</code>, <code>ls</code></label>
+    <label class="done"><input type="checkbox" id="sk-2"> Criar, editar, copiar, mover e apagar arquivos e pastas</label>
+    <label class="done"><input type="checkbox" id="sk-3"> Diferenciar <code>&gt;</code> de <code>&gt;&gt;</code> e ler arquivos com <code>cat</code>, <code>head</code>, <code>tail</code></label>
+    <label class="done"><input type="checkbox" id="sk-4"> Encadear comandos com <code>|</code> para responder perguntas sobre dados</label>
+    <label class="done"><input type="checkbox" id="sk-5"> Ler permissões, explicar por que não vejo a pasta dos colegas e executar um script</label>
+    <label class="done"><input type="checkbox" id="sk-6"> Dizer quanto de CPU, memória e disco o servidor tem e quanto é meu</label>
+  </div>
+  <label class="done"><input type="checkbox" id="ck-final" data-step="final"> Concluí o desafio final</label>
+</section>
+
+<!-- PROBLEMAS -->
+<section class="etapa" id="problemas">
+  <span class="label">Suporte</span>
+  <h2>Se algo der errado</h2>
+  <div class="tbl"><table>
+    <tr><th>O que aconteceu</th><th>O que fazer</th></tr>
+    <tr><td>O código não chegou</td><td>Confira o spam e se digitou o e-mail @unemat.br certo. Peça um novo código. Se continuar, avise o professor.</td></tr>
+    <tr><td>Access denied</td><td>Seu e-mail não está na lista da turma. Avise o professor.</td></tr>
+    <tr><td>Erro de conexão ou “origin has unexpectedly closed the connection”</td><td>Aguarde alguns minutos e recarregue. Seus arquivos continuam lá.</td></tr>
+    <tr><td><code>comando não encontrado</code></td><td>Confira maiúsculas, espaços e a letra trocada pelo corretor do celular.</td></tr>
+    <tr><td><code>Arquivo ou diretório inexistente</code></td><td>Você está na pasta errada ou digitou o nome errado. Rode <code>pwd</code> e <code>ls</code>.</td></tr>
+    <tr><td><code>Permissão negada</code></td><td>Você tentou abrir algo que não é seu, ou executar um arquivo sem <code>x</code> (veja a etapa 7).</td></tr>
+    <tr><td><code>Quota de disco excedida</code></td><td>Você passou de 50 MB. Veja o que ocupa espaço com <code>du -sh ~/*</code> e apague o que não precisa.</td></tr>
+    <tr><td>O terminal parou de responder</td><td>Um programa está esperando. Tente <kbd>q</kbd>, depois <kbd>Ctrl</kbd>+<kbd>C</kbd> se tiver. Em último caso, recarregue a página.</td></tr>
+  </table></div>
+</section>
+
+<!-- COLA -->
+<section class="etapa" id="cola">
+  <span class="label">Para consulta rápida</span>
+  <h2>Cola de comandos</h2>
+  <div class="tbl"><table>
+    <tr><th>Comando</th><th>Para quê</th></tr>
+    <tr><td><code>pwd</code></td><td>Onde estou?</td></tr>
+    <tr><td><code>ls -la</code></td><td>O que tem aqui (tudo, em detalhe)?</td></tr>
+    <tr><td><code>cd caminho</code></td><td>Ir para uma pasta (<code>..</code> sobe, <code>~</code> casa, <code>/</code> raiz)</td></tr>
+    <tr><td><code>mkdir -p a/b</code></td><td>Criar pastas</td></tr>
+    <tr><td><code>nano arq</code></td><td>Editar (^O Gravar, ^X Sair)</td></tr>
+    <tr><td><code>echo "x" &gt; arq</code></td><td>Escrever (substitui)</td></tr>
+    <tr><td><code>echo "x" &gt;&gt; arq</code></td><td>Escrever no final</td></tr>
+    <tr><td><code>cat / head / tail</code></td><td>Ler tudo / início / fim</td></tr>
+    <tr><td><code>wc -l arq</code></td><td>Contar linhas</td></tr>
+    <tr><td><code>cp -r / mv / rm -r</code></td><td>Copiar / mover ou renomear / apagar</td></tr>
+    <tr><td><code>grep -i texto arq</code></td><td>Buscar texto</td></tr>
+    <tr><td><code>sort | uniq</code></td><td>Ordenar e remover repetidos</td></tr>
+    <tr><td><code>find ~ -name "*.txt"</code></td><td>Achar arquivos</td></tr>
+    <tr><td><code>chmod +x arq</code></td><td>Tornar executável</td></tr>
+    <tr><td><code>ls -ld pasta</code></td><td>Ver a permissão de uma pasta</td></tr>
+    <tr><td><code>quota -s</code> / <code>du -sh ~</code></td><td>Meu espaço usado</td></tr>
+    <tr><td><code>ps aux / top / free -h</code></td><td>Processos e memória</td></tr>
+    <tr><td><code>man cmd</code> / <code>cmd --help</code></td><td>Pedir ajuda (q sai do man)</td></tr>
+    <tr><td><code>exit</code></td><td>Sair do terminal</td></tr>
+  </table></div>
+</section>
+
+<div class="footer">
+  <p>LIAC · UNEMAT, Campus de Alto Araguaia · Prof. Me. Juvenal Silva Neto · <a href="../../">Todas as aulas</a></p>
+  <p>O progresso desta apostila fica guardado só neste navegador. Os arquivos que você criou ficam no servidor.</p>
+  <button class="reset" id="reset" type="button">Recomeçar o progresso</button>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var KEY = "terminal-de-bolso-liac-v1";
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch(e) { state = {}; }
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("input[type=checkbox]"));
+  var steps = boxes.filter(function(b){ return b.dataset.step; });
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e) {} }
+  function render(){
+    var n = steps.filter(function(b){ return b.checked; }).length;
+    document.getElementById("fill").style.width = (n / steps.length * 100) + "%";
+    document.getElementById("count").textContent = n + "/" + steps.length + " etapas";
+  }
+  boxes.forEach(function(b){
+    if (state[b.id]) b.checked = true;
+    b.addEventListener("change", function(){ state[b.id] = b.checked; save(); render(); });
+  });
+  document.getElementById("jump").addEventListener("change", function(e){
+    var el = document.getElementById(e.target.value);
+    if (el) el.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"});
+    e.target.value = "";
+  });
+  var reset = document.getElementById("reset"), armed = false;
+  reset.addEventListener("click", function(){
+    if (!armed) { armed = true; reset.textContent = "Toque de novo para confirmar"; setTimeout(function(){ armed = false; reset.textContent = "Recomeçar o progresso"; }, 4000); return; }
+    state = {}; save(); boxes.forEach(function(b){ b.checked = false; }); render();
+    armed = false; reset.textContent = "Progresso apagado";
+  });
+  render();
+})();
+</script>
+</body>
+</html>

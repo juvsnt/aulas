@@ -7,6 +7,7 @@ on:
       - "aoc/arqxorg/**"
       - "aoc/aoc_mips-mars/**"
       - "so/quiz-threads/**"
+      - "so/terminal-de-bolso/**"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -57,6 +58,7 @@ jobs:
       # Monta o site publicado: pagina inicial na raiz + cada aula em
       # aoc/<pasta>/. Para publicar uma nova aula, adicione aqui um bloco
       # equivalente ao de "arqxorg" apontando para a pasta correspondente.
+      # Aulas em HTML estatico (sem build) sao copiadas direto da pasta.
       - name: Assemble Pages site
         run: |
           mkdir -p _site/aoc _site/so
@@ -64,6 +66,7 @@ jobs:
           cp -r so/quiz-threads _site/so/quiz-threads
           cp -r aoc/arqxorg/dist _site/aoc/arqxorg
           cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
+          cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
 
       - uses: actions/upload-pages-artifact@v3
         with:
