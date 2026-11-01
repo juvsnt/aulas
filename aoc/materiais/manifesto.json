@@ -1,0 +1,47 @@
+[
+  {
+    "arquivo": "unidade_1/un01t01-fundamentos_da_arq_a_logica.pdf",
+    "destino": "pdfs/un01t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_2/un02t01-conjunto_de_instrucoes_e_ling_de_maquina.pdf",
+    "destino": "pdfs/un02t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_2/u02t02-fundamentos_linguagem_assembly.pdf",
+    "destino": "pdfs/un02t02.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_2/un02t03 - CISC x RISC.pdf",
+    "destino": "pdfs/un02t03.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_3/un03t01-dentro-da-cpu.pdf",
+    "destino": "pdfs/un03t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_4/un04t01-hierarquia_de_memoria.pdf",
+    "destino": "pdfs/un04t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_5/un05t01-io_interface_barramentos.pdf",
+    "destino": "pdfs/un05t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_6/un06t01-Pipeline_and_Performance_Analysis.pdf",
+    "destino": "pdfs/un06t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade_7/un07t01-arquiteturas_paralelas_nao_convencionais.pdf",
+    "destino": "pdfs/un07t01.pdf",
+    "paginas": 15
+  }
+]

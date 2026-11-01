@@ -9,6 +9,7 @@ on:
       - "so/quiz-threads/**"
       - "so/terminal-de-bolso/**"
       - "so/materiais/**"
+      - "aoc/materiais/**"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -69,6 +70,7 @@ jobs:
           cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
           cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
           cp -r so/materiais _site/so/materiais
+          cp -r aoc/materiais _site/aoc/materiais
 
       - uses: actions/upload-pages-artifact@v3
         with:
