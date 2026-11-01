@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Materiais teóricos de Sistemas Operacionais do Prof. Juvenal Silva Neto, UNEMAT. Slides em PDF organizados em cinco unidades e acesso à playlist de videoaulas.">
+  <meta name="theme-color" content="#173f32">
+  <title>Sistemas Operacionais · Materiais teóricos | Prof. Juvenal Silva Neto</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body id="inicio">
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <a class="brand" href="../../" aria-label="Página inicial do professor"><span class="brand-mark" aria-hidden="true">JN<span>.</span></span><span>Prof. Juvenal Silva Neto<small>UNEMAT · Ciência da Computação</small></span></a>
+    <a class="back-link" href="../../#so"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg> Portal de aulas</a>
+  </header>
+  <main id="conteudo">
+    <section class="hero" aria-labelledby="titulo">
+      <div class="hero-copy"><p class="eyebrow">BACHARELADO EM CIÊNCIA DA COMPUTAÇÃO</p><h1 id="titulo">Sistemas<br><em>Operacionais.</em></h1><p class="hero-lead">Entenda o que acontece<br class="desktop-break"> entre o seu código e o hardware.</p><p class="hero-description">Os materiais teóricos da disciplina, organizados em um percurso de estudo: dos fundamentos do sistema à gerência dos recursos da máquina.</p><div class="hero-actions"><a class="button button-gold" href="#unidade-1">Explorar os materiais <span aria-hidden="true">↓</span></a><a class="hero-video" href="https://www.youtube.com/playlist?list=PLNRkr0ifREJA" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 10 6-10 6Z"/></svg> Assistir às videoaulas <span class="sr-only">no YouTube (nova aba)</span></a></div></div>
+      <div class="system-map" role="img" aria-label="O sistema operacional faz a mediação entre aplicações e hardware, gerenciando processos, memória, arquivos e entrada e saída.">
+        <div class="map-caption"><span class="status-dot"></span> UMA VISÃO DO SISTEMA</div><div class="map-apps"><span>Navegador</span><span>Editor</span><span>Terminal</span></div><div class="map-connector"><span>aplicações</span><span aria-hidden="true">↓ &nbsp; ↓ &nbsp; ↓</span></div><div class="kernel"><span class="kernel-label">A CAMADA QUE CONECTA TUDO</span><strong>Sistema operacional</strong><div class="kernel-modules"><span>Processos</span><span>Memória</span><span>Arquivos</span><span>Entrada/Saída</span></div></div><div class="map-connector"><span aria-hidden="true">↓ &nbsp; ↓ &nbsp; ↓</span><span>hardware</span></div><div class="map-hardware"><span>CPU</span><span>RAM</span><span>Dispositivos</span></div><p class="map-footnote">Abstrair a complexidade. Gerenciar os recursos.</p>
+      </div>
+      <div class="hero-footer"><span><strong>05</strong> unidades temáticas</span><span><strong>26</strong> materiais em PDF</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6c-3-2-6-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V5c-4-1-7-1-10 1Zm0 0v15"/></svg> Teoria para acompanhar as aulas</span></div>
+    </section>
+    <div class="course-layout">
+      <aside class="course-nav" aria-label="Navegação da disciplina"><div class="nav-inner"><p class="nav-label">PERCURSO DA DISCIPLINA</p><nav aria-label="Unidades"><a href="#unidade-1" data-unit="1"><span class="nav-number">01</span><span>Fundamentos de Sistemas Operacionais</span></a>
+<a href="#unidade-2" data-unit="2"><span class="nav-number">02</span><span>Processos e Concorrência</span></a>
+<a href="#unidade-3" data-unit="3"><span class="nav-number">03</span><span>Gerenciamento de Memória</span></a>
+<a href="#unidade-4" data-unit="4"><span class="nav-number">04</span><span>Sistemas de Arquivos</span></a>
+<a href="#unidade-5" data-unit="5"><span class="nav-number">05</span><span>Entrada/Saída e Armazenamento</span></a></nav><a class="nav-playlist" href="https://www.youtube.com/playlist?list=PLNRkr0ifREJA" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 10 6-10 6Z"/></svg> Playlist de videoaulas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg><span class="sr-only">(nova aba)</span></a><p class="nav-note">Leia os slides na ordem indicada e use as videoaulas para complementar o estudo.</p></div></aside>
+      <div class="course-content"><div class="reading-note"><span class="note-symbol" aria-hidden="true">i</span><p><strong>Seu material, sempre à mão.</strong> Abra os PDFs em uma nova aba ou baixe os arquivos para estudar offline.</p></div>
+      <section class="unit" id="unidade-1" aria-labelledby="titulo-unidade-1">
+        <div class="unit-kicker"><span>UNIDADE 01</span><span>4 materiais</span></div>
+        <div class="unit-intro">
+          <div><h2 id="titulo-unidade-1">Fundamentos de Sistemas Operacionais</h2><p class="unit-tagline">O sistema por trás dos programas.</p><p class="unit-summary">Comece pelo papel do sistema operacional: oferecer abstrações para o hardware e gerenciar os recursos da máquina. A unidade acompanha a evolução desses sistemas e apresenta o kernel, os modos de execução, as chamadas de sistema e as diferentes arquiteturas de organização interna.</p><ul class="topics" aria-label="Temas da unidade"><li>Abstração e recursos</li><li>Kernel e privilégios</li><li>Arquiteturas de SO</li></ul></div>
+          <figure class="unit-cover"><img src="capas/un01.webp" width="800" height="447" loading="lazy" alt="Capa dos slides: Visão geral dos sistemas operacionais"><figcaption>Um olhar sobre os slides da unidade</figcaption></figure>
+        </div>
+        <h3 class="materials-heading">Materiais para estudo <span>Na sequência das aulas</span></h3>
+        <ol class="materials">
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">01</span>
+            <div class="material-body"><h4>Visão geral dos sistemas operacionais</h4><p>O papel do SO entre as aplicações e o hardware.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 14 páginas <span aria-hidden="true">·</span> 2,0 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un01t01.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Visão geral dos sistemas operacionais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un01t01.pdf" download aria-label="Baixar PDF: Visão geral dos sistemas operacionais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">02</span>
+            <div class="material-body"><h4>Evolução dos sistemas operacionais</h4><p>Da execução em lote à diversidade dos sistemas atuais.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 13 páginas <span aria-hidden="true">·</span> 1,8 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un01t02.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Evolução dos sistemas operacionais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un01t02.pdf" download aria-label="Baixar PDF: Evolução dos sistemas operacionais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">03</span>
+            <div class="material-body"><h4>Modo kernel e modo usuário</h4><p>Privilégios, proteção e a interface das chamadas de sistema.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,4 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un01t03.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Modo kernel e modo usuário (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un01t03.pdf" download aria-label="Baixar PDF: Modo kernel e modo usuário" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">04</span>
+            <div class="material-body"><h4>Arquiteturas de sistemas operacionais</h4><p>Organização monolítica, em camadas, modular, híbrida e microkernel.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,9 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un01t04.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Arquiteturas de sistemas operacionais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un01t04.pdf" download aria-label="Baixar PDF: Arquiteturas de sistemas operacionais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+        </ol>
+      </section>
+      <section class="unit" id="unidade-2" aria-labelledby="titulo-unidade-2">
+        <div class="unit-kicker"><span>UNIDADE 02</span><span>8 materiais</span></div>
+        <div class="unit-intro">
+          <div><h2 id="titulo-unidade-2">Processos e Concorrência</h2><p class="unit-tagline">Como os programas ganham vida.</p><p class="unit-summary">Com a estrutura do SO em vista, passe ao programa em execução. Estude como processos e threads são criados e gerenciados, como disputam o tempo da CPU e por que o compartilhamento de recursos exige sincronização. A sequência termina com os mecanismos de coordenação e o problema do deadlock.</p><ul class="topics" aria-label="Temas da unidade"><li>Processos e threads</li><li>Escalonamento</li><li>Sincronização</li></ul></div>
+          <figure class="unit-cover"><img src="capas/un02.webp" width="800" height="447" loading="lazy" alt="Capa dos slides: Processos: conceito e representação"><figcaption>Um olhar sobre os slides da unidade</figcaption></figure>
+        </div>
+        <h3 class="materials-heading">Materiais para estudo <span>Na sequência das aulas</span></h3>
+        <ol class="materials">
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">01</span>
+            <div class="material-body"><h4>Processos: conceito e representação</h4><p>Programa e processo, estados e transições durante a execução.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 1,9 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t01.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Processos: conceito e representação (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t01.pdf" download aria-label="Baixar PDF: Processos: conceito e representação" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">02</span>
+            <div class="material-body"><h4>Execução e gerenciamento de processos</h4><p>Concorrência, troca de contexto e observação de processos no Linux.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 14 páginas <span aria-hidden="true">·</span> 2,3 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t02.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Execução e gerenciamento de processos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t02.pdf" download aria-label="Baixar PDF: Execução e gerenciamento de processos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">03</span>
+            <div class="material-body"><h4>Criação e controle de processos no Unix/Linux</h4><p>Criação de processos, execução de programas e ciclo de vida.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,0 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t03.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Criação e controle de processos no Unix/Linux (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t03.pdf" download aria-label="Baixar PDF: Criação e controle de processos no Unix/Linux" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">04</span>
+            <div class="material-body"><h4>Threads e multithreading</h4><p>Fluxos de execução, recursos compartilhados e modelos de threads.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t04.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Threads e multithreading (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t04.pdf" download aria-label="Baixar PDF: Threads e multithreading" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">05</span>
+            <div class="material-body"><h4>Fundamentos do escalonamento de processos</h4><p>Decisões de alocação da CPU e métricas de desempenho.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,3 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t05.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Fundamentos do escalonamento de processos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t05.pdf" download aria-label="Baixar PDF: Fundamentos do escalonamento de processos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">06</span>
+            <div class="material-body"><h4>Algoritmos de escalonamento de processos</h4><p>Estratégias de escalonamento e comparação de seus resultados.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 11 páginas <span aria-hidden="true">·</span> 1,4 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t06.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Algoritmos de escalonamento de processos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t06.pdf" download aria-label="Baixar PDF: Algoritmos de escalonamento de processos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">07</span>
+            <div class="material-body"><h4>Concorrência em sistemas operacionais</h4><p>Condições de corrida, região crítica e operações atômicas.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,9 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t07.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Concorrência em sistemas operacionais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t07.pdf" download aria-label="Baixar PDF: Concorrência em sistemas operacionais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">08</span>
+            <div class="material-body"><h4>Sincronização e deadlock</h4><p>Coordenação do acesso a recursos e condições para o impasse.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,5 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un02t08.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Sincronização e deadlock (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un02t08.pdf" download aria-label="Baixar PDF: Sincronização e deadlock" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+        </ol>
+      </section>
+      <section class="unit" id="unidade-3" aria-labelledby="titulo-unidade-3">
+        <div class="unit-kicker"><span>UNIDADE 03</span><span>6 materiais</span></div>
+        <div class="unit-intro">
+          <div><h2 id="titulo-unidade-3">Gerenciamento de Memória</h2><p class="unit-tagline">Um espaço para cada processo.</p><p class="unit-summary">Depois de entender quem executa, investigue onde a execução acontece. A unidade apresenta os espaços de endereçamento e as técnicas de alocação, avança para a tradução de endereços por paginação e examina os custos dessas estruturas. Por fim, relaciona memória virtual, substituição de páginas e desempenho.</p><ul class="topics" aria-label="Temas da unidade"><li>Endereçamento</li><li>Paginação e TLB</li><li>Memória virtual</li></ul></div>
+          <figure class="unit-cover"><img src="capas/un03.webp" width="800" height="447" loading="lazy" alt="Capa dos slides: Memória e espaço de endereçamento"><figcaption>Um olhar sobre os slides da unidade</figcaption></figure>
+        </div>
+        <h3 class="materials-heading">Materiais para estudo <span>Na sequência das aulas</span></h3>
+        <ol class="materials">
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">01</span>
+            <div class="material-body"><h4>Memória e espaço de endereçamento</h4><p>Hierarquia de memória, isolamento e fundamentos de alocação.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t01.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Memória e espaço de endereçamento (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t01.pdf" download aria-label="Baixar PDF: Memória e espaço de endereçamento" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">02</span>
+            <div class="material-body"><h4>Técnicas de gerenciamento de memória</h4><p>Organização da RAM, alocação, fragmentação e swapping.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 14 páginas <span aria-hidden="true">·</span> 1,9 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t02.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Técnicas de gerenciamento de memória (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t02.pdf" download aria-label="Baixar PDF: Técnicas de gerenciamento de memória" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">03</span>
+            <div class="material-body"><h4>Fundamentos da paginação</h4><p>Páginas, quadros e tradução de endereços com MMU e TLB.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,3 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t03.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Fundamentos da paginação (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t03.pdf" download aria-label="Baixar PDF: Fundamentos da paginação" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">04</span>
+            <div class="material-body"><h4>Paginação: estruturas e custos</h4><p>Tabelas de páginas, otimização e custos de tradução.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,4 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t04.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Paginação: estruturas e custos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t04.pdf" download aria-label="Baixar PDF: Paginação: estruturas e custos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">05</span>
+            <div class="material-body"><h4>Fundamentos da memória virtual</h4><p>Espaço lógico, carregamento sob demanda e papel do swap.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,6 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t05.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Fundamentos da memória virtual (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t05.pdf" download aria-label="Baixar PDF: Fundamentos da memória virtual" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">06</span>
+            <div class="material-body"><h4>Substituição de páginas em memória virtual</h4><p>Algoritmos de substituição, anomalias e controle do thrashing.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un03t06.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Substituição de páginas em memória virtual (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un03t06.pdf" download aria-label="Baixar PDF: Substituição de páginas em memória virtual" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+        </ol>
+      </section>
+      <section class="unit" id="unidade-4" aria-labelledby="titulo-unidade-4">
+        <div class="unit-kicker"><span>UNIDADE 04</span><span>4 materiais</span></div>
+        <div class="unit-intro">
+          <div><h2 id="titulo-unidade-4">Sistemas de Arquivos</h2><p class="unit-tagline">Da informação aos dados persistentes.</p><p class="unit-summary">A execução precisa de dados que permaneçam disponíveis. Explore a abstração de arquivo, as operações de acesso, os diretórios e as permissões. Em seguida, acompanhe como o sistema transforma essa visão lógica em blocos de armazenamento, gerencia o espaço livre e organiza sistemas de arquivos reais.</p><ul class="topics" aria-label="Temas da unidade"><li>Arquivos e diretórios</li><li>Proteção</li><li>Alocação e espaço livre</li></ul></div>
+          <figure class="unit-cover"><img src="capas/un04.webp" width="800" height="447" loading="lazy" alt="Capa dos slides: Arquivos e sistemas de arquivos"><figcaption>Um olhar sobre os slides da unidade</figcaption></figure>
+        </div>
+        <h3 class="materials-heading">Materiais para estudo <span>Na sequência das aulas</span></h3>
+        <ol class="materials">
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">01</span>
+            <div class="material-body"><h4>Arquivos e sistemas de arquivos</h4><p>Abstrações, operações e descritores de arquivos no kernel.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,0 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un04t01.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Arquivos e sistemas de arquivos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un04t01.pdf" download aria-label="Baixar PDF: Arquivos e sistemas de arquivos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">02</span>
+            <div class="material-body"><h4>Diretórios e proteção</h4><p>Organização de nomes, hierarquia e permissões de acesso.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,3 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un04t02.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Diretórios e proteção (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un04t02.pdf" download aria-label="Baixar PDF: Diretórios e proteção" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">03</span>
+            <div class="material-body"><h4>Implementação de sistemas de arquivos</h4><p>Da visão lógica aos blocos físicos e métodos de alocação.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,9 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un04t03.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Implementação de sistemas de arquivos (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un04t03.pdf" download aria-label="Baixar PDF: Implementação de sistemas de arquivos" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">04</span>
+            <div class="material-body"><h4>Gerenciamento e sistemas de arquivos reais</h4><p>Espaço livre, organização dos dados e exemplos de sistemas reais.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un04t04.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Gerenciamento e sistemas de arquivos reais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un04t04.pdf" download aria-label="Baixar PDF: Gerenciamento e sistemas de arquivos reais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+        </ol>
+      </section>
+      <section class="unit" id="unidade-5" aria-labelledby="titulo-unidade-5">
+        <div class="unit-kicker"><span>UNIDADE 05</span><span>4 materiais</span></div>
+        <div class="unit-intro">
+          <div><h2 id="titulo-unidade-5">Entrada/Saída e Armazenamento</h2><p class="unit-tagline">A conexão com o mundo físico.</p><p class="unit-summary">Feche o percurso conectando o sistema operacional aos dispositivos. Estude controladores, barramentos e técnicas de entrada e saída, compreenda a função dos drivers e relacione essas camadas à organização do armazenamento. A unidade aproxima as abstrações de software das características e dos limites do hardware.</p><ul class="topics" aria-label="Temas da unidade"><li>Dispositivos e E/S</li><li>Device drivers</li><li>Armazenamento</li></ul></div>
+          <figure class="unit-cover"><img src="capas/un05.webp" width="800" height="447" loading="lazy" alt="Capa dos slides: Gerência de entrada e saída"><figcaption>Um olhar sobre os slides da unidade</figcaption></figure>
+        </div>
+        <h3 class="materials-heading">Materiais para estudo <span>Na sequência das aulas</span></h3>
+        <ol class="materials">
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">01</span>
+            <div class="material-body"><h4>Gerência de entrada e saída</h4><p>Dispositivos, controladores, barramentos e comunicação com o hardware.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,8 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un05t01.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Gerência de entrada e saída (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un05t01.pdf" download aria-label="Baixar PDF: Gerência de entrada e saída" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">02</span>
+            <div class="material-body"><h4>Gerência de dispositivos e técnicas de E/S</h4><p>Sondagem, interrupções, DMA, buffers e cache.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un05t02.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Gerência de dispositivos e técnicas de E/S (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un05t02.pdf" download aria-label="Baixar PDF: Gerência de dispositivos e técnicas de E/S" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">03</span>
+            <div class="material-body"><h4>Arquitetura de device drivers</h4><p>A interface entre o SO e os dispositivos, com proteção e isolamento.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,2 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un05t03.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Arquitetura de device drivers (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un05t03.pdf" download aria-label="Baixar PDF: Arquitetura de device drivers" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+          <li class="material">
+            <span class="lesson-number" aria-hidden="true">04</span>
+            <div class="material-body"><h4>Armazenamento em sistemas operacionais</h4><p>Organização, desempenho, particionamento, formatação e montagem.</p><span class="file-meta">PDF <span aria-hidden="true">·</span> 15 páginas <span aria-hidden="true">·</span> 2,4 MB</span></div>
+            <div class="file-actions"><a class="open-pdf" href="pdfs/un05t04.pdf" target="_blank" rel="noopener" aria-label="Abrir PDF: Armazenamento em sistemas operacionais (nova aba)">Abrir PDF <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a class="download-pdf" href="pdfs/un05t04.pdf" download aria-label="Baixar PDF: Armazenamento em sistemas operacionais" title="Baixar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg></a></div>
+          </li>
+        </ol>
+      </section>
+      <section class="video-section" id="videoaulas" aria-labelledby="titulo-videos"><div><p class="eyebrow">CONTINUE O ESTUDO</p><h2 id="titulo-videos">Outra forma de<br>acompanhar o conteúdo.</h2><p>Retome os conceitos com as explicações em vídeo da disciplina. Acesse a playlist completa no YouTube e escolha o tema que deseja revisar.</p><a class="button button-green" href="https://www.youtube.com/playlist?list=PLNRkr0ifREJA" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 10 6-10 6Z"/></svg> Acessar playlist no YouTube <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg><span class="sr-only">(nova aba)</span></a></div><div class="video-art" aria-hidden="true"><span class="play-circle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 10 6-10 6Z"/></svg></span><span>SISTEMAS OPERACIONAIS</span><span class="video-line"></span><span class="video-line short"></span></div></section>
+      <section class="practice-section" aria-labelledby="titulo-praticas"><div><p class="eyebrow">DA TEORIA À PRÁTICA</p><h2 id="titulo-praticas">Experimente os conceitos.</h2><p>Continue com as atividades de Sistemas Operacionais disponíveis no portal.</p></div><div class="practice-links"><a href="../terminal-de-bolso/"><span><strong>Terminal de Bolso</strong><small>Primeiros passos no terminal Linux</small></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a><a href="../quiz-threads/"><span><strong>Quiz de Threads</strong><small>Revise e verifique sua compreensão</small></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a></div></section>
+      <a class="back-top" href="#inicio">Voltar ao início <span aria-hidden="true">↑</span></a></div>
+    </div>
+  </main>
+  <footer class="site-footer"><div><strong>Prof. Me. Juvenal Silva Neto</strong><p>Sistemas Operacionais · Bacharelado em Ciência da Computação<br>Universidade do Estado de Mato Grosso · Campus de Alto Araguaia</p></div><a href="mailto:juvenalneto@unemat.br">juvenalneto@unemat.br <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a></footer>
+</body>
+</html>
