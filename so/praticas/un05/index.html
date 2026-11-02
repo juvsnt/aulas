@@ -1,0 +1,90 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Práticas de Sistemas Operacionais em C para o terminal Linux do LIAC, organizadas pelas cinco unidades conceituais."><meta name="theme-color" content="#13202a"><title>Quem entrega os bytes ao serviço? · Laboratório SO | LIAC</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../index.html">Percurso das práticas</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav><header class="hero"><p class="label">LIAC · UNEMAT · Sistemas Operacionais</p><h1>Quem entrega os bytes ao serviço?</h1><p class="lede">Entrada/saída, dispositivos, drivers e armazenamento</p><div class="meta"><span><b>2 encontros</b> de 60 min</span><span><b>C11 + Linux</b></span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas salvas apenas neste navegador quando permitido; baixe antes de sair.</p><p id="progress-count">0/2 etapas</p><progress max="2" value="0" aria-label="Práticas concluídas"></progress></header><main id="conteudo"><section class="etapa"><h2>O mesmo serviço, cinco perspectivas</h2><p><a href="../../materiais/#unidade-5">Retomar os materiais teóricos da unidade 5</a></p><p>Um serviço do LIAC lê quatro valores, calcula um total e escreve um relatório. O problema acompanha as investigações de kernel, processos, memória, arquivos e E/S. Os dados são didáticos; não há sensor conectado.</p><p>Use C11 e GCC no Linux. Bash organiza arquivos e executa comandos; não é necessário Python. As rotinas de apoio são fornecidas: explique as operações relacionadas a SO, sem precisar dominar toda a implementação. Recompile sempre que modificar um fonte.</p><p>O planejamento anterior reserva uma hora de laboratório por encontro. Cada P abaixo é um bloco de 60 minutos: 5 para prever, 35 para executar, 15 para interpretar e modificar e 5 para registrar. Em cada unidade, faça apenas a prática indicada pelo professor naquele encontro.</p></section><section class="etapa"><h2>Prepare sua pasta</h2><p>Entre com sua conta pessoal no terminal. Cole um bloco por vez, sem o símbolo $ do prompt. Esta unidade é independente nos arquivos; as práticas dentro dela usam a mesma pasta. Os blocos criam ou substituem apenas arquivos com os nomes indicados.</p><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/so-servico/un05
+cd ~/atividades/so-servico/un05
+pwd
+command -v bash gcc</code></pre></div><p>O caminho deve terminar em <code>/atividades/so-servico/un05</code>. Se faltar GCC, avise o professor. Os arquivos e processos são executados no servidor; os campos de resposta ficam no aparelho. Não amplie tamanhos ou repetições para forçar lentidão.</p></section><nav class="steps-nav" aria-label="Práticas desta unidade"><a href="#p12">P12</a> <a href="#p13">P13</a> </nav><section class="etapa" id="p12"><p class="label">P12 · encontro de 60 minutos · E/S POSIX real e inventário</p><h2>Compare pedidos pequenos e pedidos em lote</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un05t01.pdf" target="_blank" rel="noopener">Tema 1 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un05t02.pdf" target="_blank" rel="noopener">Tema 2 (PDF, nova aba)</a>.</p><p>Quatro bytes representam um lote já coletado; não há sensor físico conectado. Compare quatro solicitações de um byte com uma solicitação de quatro bytes, identificando o buffer da aplicação e as camadas abaixo dela.</p><div class="question"><label for="p12-previsao">O conteúdo será o mesmo? Quatro chamadas read significam necessariamente quatro acessos ao dispositivo?</label><textarea id="p12-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar entrada_saida.c</span><button class="copy" type="button" aria-label="Copiar: Criar entrada_saida.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; entrada_saida.c &lt;&lt;&#x27;FIM&#x27;
+#define _POSIX_C_SOURCE 200809L
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;string.h&gt;
+/* Chamadas POSIX em arquivos da propria pasta. Nao usa discos brutos. */
+static int transferir(int fd,unsigned char *p,size_t n,int gravar,int *chamadas) {
+    while (n) {
+        (*chamadas)++;
+        ssize_t k=gravar?write(fd,p,n):read(fd,p,n);
+        if (k&lt;0 &amp;&amp; errno==EINTR) continue;
+        if (k&lt;=0) return 0;
+        p+=k; n-=(size_t)k;
+    }
+    return 1;
+}
+int main(void) {
+    unsigned char origem[]={12,18,24,30}, unidades[4], lote[4];
+    int fd=open(&quot;leituras.bin&quot;,O_WRONLY|O_CREAT|O_TRUNC,0600), chamadas=0;
+    if (fd&lt;0) { perror(&quot;open&quot;); return 1; }
+    int ok=transferir(fd,origem,4,1,&amp;chamadas);
+    if (close(fd)) ok=0;
+    if (!ok) return 1;
+    int pequenas=0, grandes=0;
+    fd=open(&quot;leituras.bin&quot;,O_RDONLY); if (fd&lt;0) return 1;
+    for (int i=0;i&lt;4;i++) if (!transferir(fd,&amp;unidades[i],1,0,&amp;pequenas)) { close(fd); return 1; }
+    if (close(fd)) return 1;
+    fd=open(&quot;leituras.bin&quot;,O_RDONLY); if (fd&lt;0) return 1;
+    ok=transferir(fd,lote,4,0,&amp;grandes);
+    if (close(fd)) ok=0;
+    if (!ok) return 1;
+    int total=0; for (int i=0;i&lt;4;i++) total+=lote[i];
+    printf(&quot;Chamadas read: unitarias=%d lote=%d\n&quot;,pequenas,grandes);
+    printf(&quot;Mesmo conteudo=%s Total=%d\n&quot;,memcmp(unidades,lote,4)?&quot;nao&quot;:&quot;sim&quot;,total);
+    puts(&quot;Contagens incluem eventuais repeticoes; nao contam acessos fisicos ao disco.&quot;);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic entrada_saida.c -o entrada_saida
+./entrada_saida</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>od -An -tu1 leituras.bin
+ls /sys/class
+ls /sys/block</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">Chamadas read: unitarias=4 lote=1 (caso usual, sem repetição)
+Mesmo conteudo=sim Total=84
+12 18 24 30
+Dispositivos e classes variam conforme o ambiente.</pre></div><p>O contador é incrementado por tentativa de read; a rotina trata interrupções e leituras parciais. Não usamos stdio para ler os bytes, mas isso não elimina a cache de páginas do kernel. Uma leitura de arquivo pode ser satisfeita em RAM. Listar sysfs identifica objetos expostos pelo kernel, não comprova DMA. Se o inventário estiver indisponível, registre o limite.</p><div class="diagram">Modelo: 4 bytes; polling com 3 consultas por byte → 12 consultas. Interrupção por byte → 4 avisos. DMA por lote → 1 configuração e 1 aviso final.</div><p>Essas contagens de transferência são hipóteses didáticas, não eventos medidos pelo programa. Buffering reúne dados; caching mantém cópias para reuso; spooling organiza trabalhos pendentes para um dispositivo. Em sistemas reais podem existir lotes de interrupções e mecanismos híbridos.</p><div class="question"><label for="p12-resposta">Relacione arquivo, descritor, buffer, kernel e controlador. Compare as contagens reais do programa com as hipotéticas de polling/interrupção/DMA. Qual parte do percurso não foi observada?</label><textarea id="p12-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> No modelo, dobre o lote para oito bytes mantendo três consultas por byte: preveja as contagens. Proponha quando o serviço precisaria buffering, caching ou spooling. Não transforme contagem de read em medição de IRQ ou DMA.</div><label class="done"><input type="checkbox" id="feito-12" data-step="12">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p13"><p class="label">P13 · encontro de 60 minutos · Inventário real e modelo de HDD</p><h2>Reconstrua o caminho até o driver</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un05t03.pdf" target="_blank" rel="noopener">Tema 3 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un05t04.pdf" target="_blank" rel="noopener">Tema 4 (PDF, nova aba)</a>.</p><p>Escolha um dispositivo efetivamente listado em /sys/block. O exemplo usa identificação automática do primeiro bloco disponível, sem assumir sda ou nvme. A consulta é de leitura; não carrega módulos nem altera dispositivos.</p><div class="question"><label for="p13-previsao">Driver e controlador são a mesma coisa? Todo objeto de /dev corresponde a um dispositivo físico?</label><textarea id="p13-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>for caminho in /sys/block/*; do
+  if [ -e &quot;$caminho&quot; ]; then
+    printf &#x27;Objeto escolhido: %s\n&#x27; &quot;$caminho&quot;
+    readlink -f &quot;$caminho&quot;
+    if [ -e &quot;$caminho/device/driver&quot; ]; then
+      readlink -f &quot;$caminho/device/driver&quot;
+    else
+      printf &#x27;Driver nao exposto nesse caminho.\n&#x27;
+    fi
+    break
+  fi
+done
+ls -l /dev/null</code></pre></div><p>O primeiro objeto pode ser virtual, como loop ou um dispositivo composto. Se o caminho device/driver não existir, isso não demonstra ausência de driver. Não invente o vínculo; use o caminho completo e documentação fornecida. /dev/null é um dispositivo de caractere sem periférico físico correspondente. Nem todo dispositivo é representado por um arquivo /dev, por exemplo interfaces de rede.</p><details><summary>Extensão: módulos e inventário, se disponíveis</summary><div><div class="command"><div class="command-head"><span>Opcional · consulta de módulos e blocos</span><button class="copy" type="button" aria-label="Copiar: Opcional · consulta de módulos e blocos">Copiar</button></div><pre tabindex="0"><code>command -v lsblk lsmod modinfo
+lsblk -o NAME,TYPE,SIZE,ROTA
+lsmod | head -n 8</code></pre></div><p>O professor pode indicar um módulo listado para consultar com modinfo NOME. Um driver pode estar integrado ao kernel e não aparecer em lsmod. Se dmesg, /proc/interrupts, lsusb ou lspci estiverem bloqueados ou ausentes, não são requisitos; use inventário permitido ou documentação, explicitando a origem.</p></div></details><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar disco.c</span><button class="copy" type="button" aria-label="Copiar: Criar disco.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; disco.c &lt;&lt;&#x27;FIM&#x27;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+/* Cilindros hipoteticos; custo = distancia, sem chegadas durante o servico. */
+int main(int argc,char **argv) {
+    const char *modo=argc&gt;1?argv[1]:&quot;fcfs&quot;;
+    int sstf=!strcmp(modo,&quot;sstf&quot;);
+    if (argc&gt;2 || (!sstf &amp;&amp; strcmp(modo,&quot;fcfs&quot;))) return 1;
+    int pedidos[]={10,80,20,70}, feito[4]={0}, cabeca=50, total=0;
+    for (int i=0;i&lt;4;i++) {
+        int p=i;
+        if (sstf) {
+            p=-1;
+            for (int j=0;j&lt;4;j++)
+                if (!feito[j] &amp;&amp; (p&lt;0 || abs(pedidos[j]-cabeca)&lt;abs(pedidos[p]-cabeca))) p=j;
+        }
+        int distancia=abs(pedidos[p]-cabeca);
+        printf(&quot;%d -&gt; %d distancia=%d\n&quot;,cabeca,pedidos[p],distancia);
+        total+=distancia; cabeca=pedidos[p]; feito[p]=1;
+    }
+    printf(&quot;Deslocamento total=%d cilindros hipoteticos\n&quot;,total);
+    puts(&quot;Nao mede latencia de HDD, SSD ou o escalonador real do Linux.&quot;);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic disco.c -o disco
+./disco fcfs</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./disco sstf</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">FCFS: deslocamento total=220 cilindros hipotéticos
+SSTF: deslocamento total=100 cilindros hipotéticos</pre></div><p>O modelo começa no cilindro 50 e atende [10,80,20,70], sem novos pedidos; empates escolhem o primeiro ainda pendente. Deslocamento é um custo didático de HDD. SSD não tem cabeça mecânica; o resultado não prova que SSTF é melhor no servidor. RAID pode atender disponibilidade ou desempenho conforme o nível; não substitui backup e não foi configurado aqui.</p><div class="question"><label for="p13-resposta">Entregue o caminho observado do dispositivo, indique os elos documentais e os não confirmados e diferencie controlador de driver. Calcule os deslocamentos das duas políticas e discuta starvation se chegassem novos pedidos próximos da cabeça.</label><textarea id="p13-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Mude a posição inicial para 0, recompile e compare as rotas. Para o serviço com pequenos relatórios, explique por que não basta escolher armazenamento pelo menor deslocamento desse modelo. Compare HDD, SSD e uma opção de redundância sem configurar discos.</div><label class="done"><input type="checkbox" id="feito-13" data-step="13">Concluí a investigação e expliquei os resultados</label></section><section class="etapa"><h2>Confira antes de entregar</h2><ul><li>Registrou a previsão antes de conferir a referência?</li><li>Explicou a saída e distinguiu inventário, execução real e modelo?</li><li>Realizou a mudança proposta ou justificou uma limitação?</li><li>Relacionou a descoberta ao serviço?</li></ul><p>Baixe as respostas pelo botão no início e envie pelo canal definido pelo professor. O arquivo é baixado no aparelho que abriu o roteiro, não no servidor. Os registros são locais ao navegador, não comprovam presença e não são enviados automaticamente. Guarde os programas na pasta da unidade. Ao terminar a sessão, digite <code>exit</code>.</p><details><summary>Se algo der errado</summary><div><p><b>Ferramenta ausente:</b> registre e avise o professor; não instale pacotes nem use sudo.</p><p><b>Prompt &gt;:</b> o shell espera o fim do bloco. Digite FIM sozinho numa linha ou interrompa com Ctrl+C e copie novamente.</p><p><b>Erro de compilação:</b> confira se copiou o bloco inteiro, incluindo chaves e cabeçalhos. A compilação bem-sucedida normalmente não imprime nada; só execute após corrigir erros.</p><p><b>Permissão, quota ou criação de processo/thread bloqueada:</b> registre a mensagem e use a alternativa documental ou o modelo no papel indicado pelo professor, sem contornar as políticas.</p><p><b>Dados variáveis:</b> PIDs, endereços e contadores não precisam coincidir com exemplos. Não substitua os seus por números esperados.</p><p><b>Sem JavaScript:</b> comandos, fontes e navegação continuam disponíveis. Responda em texto por outro meio; botões, progresso e download dependem de JavaScript.</p></div></details></section></main><nav class="footer-nav" aria-label="Sequência"><a href="../un04/">← Anterior</a><a href="../sintese/">Próxima →</a></nav><footer>Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia<br><a href="../professor.html">Guia docente e referências</a></footer></div></body></html>

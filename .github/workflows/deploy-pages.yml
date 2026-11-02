@@ -9,6 +9,7 @@ on:
       - "so/quiz-threads/**"
       - "so/terminal-de-bolso/**"
       - "so/materiais/**"
+      - "so/praticas/**"
       - "aoc/materiais/**"
       - "aoc/praticas/**"
       - "sd/materiais/**"
@@ -79,6 +80,7 @@ jobs:
           cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
           cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
           cp -r so/materiais _site/so/materiais
+          cp -r so/praticas _site/so/praticas
           cp -r aoc/materiais _site/aoc/materiais
           cp -r aoc/praticas _site/aoc/praticas
           cp -r sd/materiais _site/sd/materiais

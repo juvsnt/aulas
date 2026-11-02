@@ -1,0 +1,127 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Práticas de Sistemas Operacionais em C para o terminal Linux do LIAC, organizadas pelas cinco unidades conceituais."><meta name="theme-color" content="#13202a"><title>Quem executa o lote e em que ordem? · Laboratório SO | LIAC</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un02"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../index.html">Percurso das práticas</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav><header class="hero"><p class="label">LIAC · UNEMAT · Sistemas Operacionais</p><h1>Quem executa o lote e em que ordem?</h1><p class="lede">Processos, threads, escalonamento, sincronização e deadlock</p><div class="meta"><span><b>4 encontros</b> de 60 min</span><span><b>C11 + Linux</b></span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas salvas apenas neste navegador quando permitido; baixe antes de sair.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Práticas concluídas"></progress></header><main id="conteudo"><section class="etapa"><h2>O mesmo serviço, cinco perspectivas</h2><p><a href="../../materiais/#unidade-2">Retomar os materiais teóricos da unidade 2</a></p><p>Um serviço do LIAC lê quatro valores, calcula um total e escreve um relatório. O problema acompanha as investigações de kernel, processos, memória, arquivos e E/S. Os dados são didáticos; não há sensor conectado.</p><p>Use C11 e GCC no Linux. Bash organiza arquivos e executa comandos; não é necessário Python. As rotinas de apoio são fornecidas: explique as operações relacionadas a SO, sem precisar dominar toda a implementação. Recompile sempre que modificar um fonte.</p><p>O planejamento anterior reserva uma hora de laboratório por encontro. Cada P abaixo é um bloco de 60 minutos: 5 para prever, 35 para executar, 15 para interpretar e modificar e 5 para registrar. Em cada unidade, faça apenas a prática indicada pelo professor naquele encontro.</p></section><section class="etapa"><h2>Prepare sua pasta</h2><p>Entre com sua conta pessoal no terminal. Cole um bloco por vez, sem o símbolo $ do prompt. Esta unidade é independente nos arquivos; as práticas dentro dela usam a mesma pasta. Os blocos criam ou substituem apenas arquivos com os nomes indicados.</p><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/so-servico/un02
+cd ~/atividades/so-servico/un02
+pwd
+command -v bash gcc</code></pre></div><p>O caminho deve terminar em <code>/atividades/so-servico/un02</code>. Se faltar GCC, avise o professor. Os arquivos e processos são executados no servidor; os campos de resposta ficam no aparelho. Não amplie tamanhos ou repetições para forçar lentidão.</p></section><nav class="steps-nav" aria-label="Práticas desta unidade"><a href="#p03">P03</a> <a href="#p04">P04</a> <a href="#p05">P05</a> <a href="#p06">P06</a> </nav><section class="etapa" id="p03"><p class="label">P03 · encontro de 60 minutos · Execução e observação reais</p><h2>Observe e controle um processo próprio</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un02t01.pdf" target="_blank" rel="noopener">Tema 1 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un02t02.pdf" target="_blank" rel="noopener">Tema 2 (PDF, nova aba)</a>.</p><p>Um programa armazenado não é o mesmo que uma execução em andamento. Crie uma espera curta como substituto observável de um serviço bloqueado. O bloco inteiro encerra o processo, inclusive após a suspensão.</p><div class="question"><label for="p03-previsao">Qual será a relação entre o shell e o processo em segundo plano? O que espera observar após STOP e CONT?</label><textarea id="p03-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>sleep 2 &amp;
+pid_lote=$!
+kill -STOP &quot;$pid_lote&quot;
+ps -p &quot;$pid_lote&quot; -o pid,ppid,stat,ni,comm
+kill -CONT &quot;$pid_lote&quot;
+wait &quot;$pid_lote&quot;
+printf &#x27;Processo acompanhado e recolhido.\n&#x27;</code></pre></div><p><code>&amp;</code> inicia em segundo plano; <code>$!</code> guarda seu PID. STOP suspende, CONT permite continuar, e wait aguarda e recolhe a conclusão. A amostra de ps pode depender do momento; T indica parada, S espera interruptível e R executável/em execução, sem distinguir pronto de rodando. Se a conta impedir sinais ou ocultar dados, registre o bloqueio. Não envie sinais a processos de outras pessoas.</p><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">PID e PPID variam; PPID deve corresponder ao shell que iniciou sleep.
+Processo acompanhado e recolhido.</pre></div><div class="question"><label for="p03-resposta">Registre PID, PPID e estado observado. Desenhe as transições provocadas pelos sinais e diferencie segundo plano de paralelismo. Por que sleep não é uma tarefa CPU-bound?</label><textarea id="p03-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Se um serviço usasse a CPU continuamente, qual transição esperaria quando fosse preemptado? Interprete a coluna NI sem supor que a prioridade garante uma fração fixa da CPU. jobs, bg e fg podem ser explorados com o professor, sem deixar trabalhos suspensos.</div><label class="done"><input type="checkbox" id="feito-3" data-step="3">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p04"><p class="label">P04 · encontro de 60 minutos · Processos POSIX reais</p><h2>Crie, substitua e recolha uma execução</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un02t03.pdf" target="_blank" rel="noopener">Tema 3 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un02t04.pdf" target="_blank" rel="noopener">Tema 4 (PDF, nova aba)</a>.</p><p>O serviço terá um filho. Ele modifica sua cópia da leitura e substitui a imagem executável com exec. O pai aguarda e confere o código de saída. Há somente um filho e ele termina sem pausas.</p><div class="question"><label for="p04-previsao">Se o filho trocar 12 por 30, o valor no pai também mudará? O PID muda após exec?</label><textarea id="p04-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar processos.c</span><button class="copy" type="button" aria-label="Copiar: Criar processos.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; processos.c &lt;&lt;&#x27;FIM&#x27;
+#define _POSIX_C_SOURCE 200809L
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;errno.h&gt;
+int main(int argc, char **argv) {
+    if (argc == 2 &amp;&amp; !strcmp(argv[1], &quot;filho&quot;)) {
+        printf(&quot;Apos exec: PID=%ld PPID=%ld\n&quot;, (long)getpid(), (long)getppid());
+        return 7;
+    }
+    int leitura = 12;
+    printf(&quot;Pai antes: PID=%ld leitura=%d\n&quot;, (long)getpid(), leitura);
+    fflush(stdout); /* Nao duplicar dados pendentes do stdio no fork. */
+    pid_t filho = fork();
+    if (filho &lt; 0) { perror(&quot;fork&quot;); return 1; }
+    if (filho == 0) {
+        leitura = 30;
+        printf(&quot;Filho antes de exec: PID=%ld PPID=%ld leitura=%d\n&quot;,
+               (long)getpid(), (long)getppid(), leitura);
+        fflush(stdout);
+        execl(&quot;./processos&quot;, &quot;processos&quot;, &quot;filho&quot;, (char *)NULL);
+        perror(&quot;execl&quot;); _exit(1);
+    }
+    int status;
+    while (waitpid(filho, &amp;status, 0) &lt; 0) {
+        if (errno != EINTR) { perror(&quot;waitpid&quot;); return 1; }
+    }
+    if (!WIFEXITED(status)) { fputs(&quot;Filho nao terminou normalmente.\n&quot;, stderr); return 1; }
+    printf(&quot;Pai depois: leitura=%d codigo_filho=%d\n&quot;, leitura, WEXITSTATUS(status));
+    return WEXITSTATUS(status) == 7 ? 0 : 1;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic processos.c -o processos
+./processos</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">Pai antes: PID=&lt;pai&gt; leitura=12
+Filho antes de exec: PID=&lt;filho&gt; PPID=&lt;pai&gt; leitura=30
+Apos exec: PID=&lt;mesmo filho&gt; PPID=&lt;pai&gt;
+Pai depois: leitura=12 codigo_filho=7</pre></div><p><code>fork</code> cria outro processo; os espaços de endereçamento são separados, mesmo quando há copy-on-write. <code>execl</code> substitui o programa do filho e preserva seu PID; não cria outro processo. <code>waitpid</code> recolhe seu estado de término. O 7 é um código escolhido pelo trabalhador, e o coordenador retorna sucesso ao reconhecê-lo. Sem esperar, um filho terminado pode permanecer zombie até ser recolhido; não criamos zombies persistentes neste roteiro.</p><div class="question"><label for="p04-resposta">Compare os PIDs e os valores e explique fork, exec e waitpid. Por que um endereço virtual numericamente igual em pai e filho não demonstra memória compartilhada?</label><textarea id="p04-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Mude a leitura inicial para 18 e o retorno do modo filho para 9. Atualize também a verificação do pai, recompile e preveja as saídas. Compare esse isolamento com o compartilhamento entre threads da P06.</div><label class="done"><input type="checkbox" id="feito-4" data-step="4">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p05"><p class="label">P05 · encontro de 60 minutos · Simulação determinística</p><h2>Distribua a CPU entre três pedidos</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un02t05.pdf" target="_blank" rel="noopener">Tema 5 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un02t06.pdf" target="_blank" rel="noopener">Tema 6 (PDF, nova aba)</a>.</p><p>Três pedidos P1, P2 e P3 chegam no instante 0, com bursts 5, 3 e 1. O modelo tem uma CPU, sem E/S ou custo de troca. SJF não é preemptivo; RR usa quantum 2. Empates seguem a ordem dos pedidos. Isso não configura o escalonador do Linux.</p><div class="question"><label for="p05-previsao">Desenhe o Gantt de FCFS antes da execução. Qual pedido deve ter menor tempo de resposta em SJF?</label><textarea id="p05-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar escalonamento.c</span><button class="copy" type="button" aria-label="Copiar: Criar escalonamento.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; escalonamento.c &lt;&lt;&#x27;FIM&#x27;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+/* Modelo: chegadas 0, CPU unica, sem custo de troca, quantum 2. */
+int main(int argc, char **argv) {
+    const char *politica = argc &gt; 1 ? argv[1] : &quot;fcfs&quot;;
+    int rr = !strcmp(politica, &quot;rr&quot;), sjf = !strcmp(politica, &quot;sjf&quot;);
+    if (argc &gt; 2 || (!rr &amp;&amp; !sjf &amp;&amp; strcmp(politica, &quot;fcfs&quot;))) {
+        fputs(&quot;Use fcfs, sjf ou rr.\n&quot;, stderr); return 1;
+    }
+    const int burst[] = {5,3,1};
+    int restante[] = {5,3,1}, fim[3] = {0}, primeira[] = {-1,-1,-1};
+    int ordem[] = {0,1,2}, tempo = 0, completos = 0;
+    if (sjf) { ordem[0]=2; ordem[1]=1; ordem[2]=0; }
+    while (completos &lt; 3) {
+        for (int j=0; j&lt;3; j++) {
+            int p = ordem[j];
+            if (!restante[p]) continue;
+            int fatia = rr &amp;&amp; restante[p] &gt; 2 ? 2 : restante[p];
+            if (primeira[p] &lt; 0) primeira[p] = tempo;
+            printf(&quot;[%d,%d) P%d\n&quot;, tempo, tempo+fatia, p+1);
+            tempo += fatia; restante[p] -= fatia;
+            if (!restante[p]) { fim[p]=tempo; completos++; }
+        }
+    }
+    double espera=0, retorno=0, resposta=0;
+    for (int p=0; p&lt;3; p++) {
+        int w = fim[p]-burst[p]; /* Chegadas 0; sem E/S no modelo. */
+        printf(&quot;P%d espera=%d retorno=%d resposta=%d\n&quot;, p+1,w,fim[p],primeira[p]);
+        espera+=w; retorno+=fim[p]; resposta+=primeira[p];
+    }
+    printf(&quot;Medias: espera=%.2f retorno=%.2f resposta=%.2f\n&quot;,espera/3,retorno/3,resposta/3);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic escalonamento.c -o escalonamento
+./escalonamento fcfs</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./escalonamento sjf
+./escalonamento rr</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">FCFS: espera média=4.33; retorno médio=7.33; resposta média=4.33
+SJF: espera média=1.67; retorno médio=4.67; resposta média=1.67
+RR: espera média=4.33; retorno médio=7.33; resposta média=2.00</pre></div><p>Retorno = conclusão − chegada; espera = retorno − burst neste modelo sem E/S; resposta = primeiro uso da CPU − chegada. Todos os tempos são unidades abstratas. A chegada zero torna SRTF equivalente a SJF neste cenário; não demonstra sua equivalência geral. Prioridade e filas multinível são comparações teóricas, não políticas implementadas aqui.</p><div class="question"><label for="p05-resposta">Entregue os três Gantts e confira as médias com uma conta manual. Por que RR pode melhorar resposta sem melhorar a espera média? Para qual objetivo você escolheria cada política?</label><textarea id="p05-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Altere somente a fatia RR de 2 para 1, recompile e compare resposta e quantidade de fatias. Depois proponha no papel chegadas não simultâneas e explique por que o programa precisaria ser ampliado para representá-las.</div><label class="done"><input type="checkbox" id="feito-5" data-step="5">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p06"><p class="label">P06 · encontro de 60 minutos · Threads reais e interleaving controlado</p><h2>Compartilhe um contador sem perder atualizações</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un02t07.pdf" target="_blank" rel="noopener">Tema 7 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un02t08.pdf" target="_blank" rel="noopener">Tema 8 (PDF, nova aba)</a>.</p><p>Duas threads confirmam um lote cada, portanto o contador deveria chegar a 2. O primeiro caso força ambas a ler antes de gravar; o segundo protege toda a operação com mutex. Usamos cargas e gravações atômicas para evitar data race e comportamento indefinido de C.</p><div class="question"><label for="p06-previsao">Se ambas lerem 0 e depois cada uma gravar 1, qual será o resultado? Uma leitura atômica torna ler + somar + gravar indivisível?</label><textarea id="p06-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar concorrencia.c</span><button class="copy" type="button" aria-label="Copiar: Criar concorrencia.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; concorrencia.c &lt;&lt;&#x27;FIM&#x27;
+#define _XOPEN_SOURCE 700
+#include &lt;stdio.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;stdatomic.h&gt;
+/* Atomico evita data race em C; ler+somar+gravar NAO e um incremento atomico. */
+static atomic_int contador;
+static pthread_barrier_t barreira;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+static int protegido;
+static void *trabalhar(void *arg) {
+    (void)arg;
+    if (!protegido) {
+        int copia = atomic_load(&amp;contador);
+        pthread_barrier_wait(&amp;barreira); /* Ambos leem antes de qualquer gravacao. */
+        atomic_store(&amp;contador, copia+1);
+    } else {
+        pthread_mutex_lock(&amp;mutex);
+        int copia = atomic_load(&amp;contador);
+        atomic_store(&amp;contador, copia+1);
+        pthread_mutex_unlock(&amp;mutex);
+    }
+    return NULL;
+}
+int main(void) {
+    if (pthread_barrier_init(&amp;barreira,NULL,2)) return 1;
+    for (int modo=0; modo&lt;2; modo++) {
+        protegido=modo; atomic_store(&amp;contador,0);
+        pthread_t t[2];
+        for (int i=0;i&lt;2;i++) if (pthread_create(&amp;t[i],NULL,trabalhar,NULL)) {
+            fputs(&quot;Falha ao criar thread; avise o professor.\n&quot;,stderr); return 1;
+        }
+        for (int i=0;i&lt;2;i++) if (pthread_join(t[i],NULL)) return 1;
+        printf(&quot;%s: contador=%d esperado=2\n&quot;,modo?&quot;Com mutex&quot;:&quot;Atualizacao perdida&quot;,atomic_load(&amp;contador));
+    }
+    pthread_barrier_destroy(&amp;barreira); pthread_mutex_destroy(&amp;mutex);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic -pthread concorrencia.c -o concorrencia
+./concorrencia</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">Atualizacao perdida: contador=1 esperado=2
+Com mutex: contador=2 esperado=2</pre></div><p>A barreira controla a ordem para tornar a perda reproduzível; não é um conserto do incremento. O mutex envolve leitura, soma e gravação como uma única região crítica. Um <code>contador++</code> comum concorrente, sem proteção, teria data race: não o usamos como experimento válido. O incremento poderia também usar uma operação read-modify-write atômica, discutida como alternativa.</p><div class="diagram">Modelo de deadlock: T1 possui A e espera B; T2 possui B e espera A.</div><p>No modelo, A e B são exclusivos e não preemptíveis. Identifique exclusão mútua, posse e espera, ausência de preempção e espera circular. Proponha uma ordem global A → B para romper o ciclo. Não execute um programa que fique travado. Mutex, semáforo e monitor não são sinônimos; um semáforo pode controlar quantidade de vagas, enquanto um monitor encapsula estado e sincronização.</p><div class="question"><label for="p06-resposta">Mostre a sequência das duas threads que produz 1 e explique por que não há data race de C no código fornecido. Identifique a região crítica protegida e as quatro condições do deadlock modelado.</label><textarea id="p06-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Substitua a região de leitura + soma + gravação por atomic_fetch_add(&amp;contador, 1), removendo a barreira somente dessa variante. Preveja o resultado, recompile e explique por que essa operação difere de atomic_load seguido de atomic_store. Não coloque barreira dentro do mutex.</div><label class="done"><input type="checkbox" id="feito-6" data-step="6">Concluí a investigação e expliquei os resultados</label></section><section class="etapa"><h2>Confira antes de entregar</h2><ul><li>Registrou a previsão antes de conferir a referência?</li><li>Explicou a saída e distinguiu inventário, execução real e modelo?</li><li>Realizou a mudança proposta ou justificou uma limitação?</li><li>Relacionou a descoberta ao serviço?</li></ul><p>Baixe as respostas pelo botão no início e envie pelo canal definido pelo professor. O arquivo é baixado no aparelho que abriu o roteiro, não no servidor. Os registros são locais ao navegador, não comprovam presença e não são enviados automaticamente. Guarde os programas na pasta da unidade. Ao terminar a sessão, digite <code>exit</code>.</p><details><summary>Se algo der errado</summary><div><p><b>Ferramenta ausente:</b> registre e avise o professor; não instale pacotes nem use sudo.</p><p><b>Prompt &gt;:</b> o shell espera o fim do bloco. Digite FIM sozinho numa linha ou interrompa com Ctrl+C e copie novamente.</p><p><b>Erro de compilação:</b> confira se copiou o bloco inteiro, incluindo chaves e cabeçalhos. A compilação bem-sucedida normalmente não imprime nada; só execute após corrigir erros.</p><p><b>Permissão, quota ou criação de processo/thread bloqueada:</b> registre a mensagem e use a alternativa documental ou o modelo no papel indicado pelo professor, sem contornar as políticas.</p><p><b>Dados variáveis:</b> PIDs, endereços e contadores não precisam coincidir com exemplos. Não substitua os seus por números esperados.</p><p><b>Sem JavaScript:</b> comandos, fontes e navegação continuam disponíveis. Responda em texto por outro meio; botões, progresso e download dependem de JavaScript.</p></div></details></section></main><nav class="footer-nav" aria-label="Sequência"><a href="../un01/">← Anterior</a><a href="../un03/">Próxima →</a></nav><footer>Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia<br><a href="../professor.html">Guia docente e referências</a></footer></div></body></html>

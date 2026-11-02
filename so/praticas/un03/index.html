@@ -1,0 +1,110 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Práticas de Sistemas Operacionais em C para o terminal Linux do LIAC, organizadas pelas cinco unidades conceituais."><meta name="theme-color" content="#13202a"><title>Onde vivem os dados do serviço? · Laboratório SO | LIAC</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un03"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../index.html">Percurso das práticas</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav><header class="hero"><p class="label">LIAC · UNEMAT · Sistemas Operacionais</p><h1>Onde vivem os dados do serviço?</h1><p class="lede">Espaço de endereçamento, paginação e memória virtual</p><div class="meta"><span><b>3 encontros</b> de 60 min</span><span><b>C11 + Linux</b></span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas salvas apenas neste navegador quando permitido; baixe antes de sair.</p><p id="progress-count">0/3 etapas</p><progress max="3" value="0" aria-label="Práticas concluídas"></progress></header><main id="conteudo"><section class="etapa"><h2>O mesmo serviço, cinco perspectivas</h2><p><a href="../../materiais/#unidade-3">Retomar os materiais teóricos da unidade 3</a></p><p>Um serviço do LIAC lê quatro valores, calcula um total e escreve um relatório. O problema acompanha as investigações de kernel, processos, memória, arquivos e E/S. Os dados são didáticos; não há sensor conectado.</p><p>Use C11 e GCC no Linux. Bash organiza arquivos e executa comandos; não é necessário Python. As rotinas de apoio são fornecidas: explique as operações relacionadas a SO, sem precisar dominar toda a implementação. Recompile sempre que modificar um fonte.</p><p>O planejamento anterior reserva uma hora de laboratório por encontro. Cada P abaixo é um bloco de 60 minutos: 5 para prever, 35 para executar, 15 para interpretar e modificar e 5 para registrar. Em cada unidade, faça apenas a prática indicada pelo professor naquele encontro.</p></section><section class="etapa"><h2>Prepare sua pasta</h2><p>Entre com sua conta pessoal no terminal. Cole um bloco por vez, sem o símbolo $ do prompt. Esta unidade é independente nos arquivos; as práticas dentro dela usam a mesma pasta. Os blocos criam ou substituem apenas arquivos com os nomes indicados.</p><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/so-servico/un03
+cd ~/atividades/so-servico/un03
+pwd
+command -v bash gcc</code></pre></div><p>O caminho deve terminar em <code>/atividades/so-servico/un03</code>. Se faltar GCC, avise o professor. Os arquivos e processos são executados no servidor; os campos de resposta ficam no aparelho. Não amplie tamanhos ou repetições para forçar lentidão.</p></section><nav class="steps-nav" aria-label="Práticas desta unidade"><a href="#p07">P07</a> <a href="#p08">P08</a> <a href="#p09">P09</a> </nav><section class="etapa" id="p07"><p class="label">P07 · encontro de 60 minutos · Observação real, buffer de 1 MiB</p><h2>Observe memória sem esgotar a conta</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un03t01.pdf" target="_blank" rel="noopener">Tema 1 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un03t02.pdf" target="_blank" rel="noopener">Tema 2 (PDF, nova aba)</a>.</p><p>O serviço precisa de um buffer para receber lotes. Aloque 1 MiB, toque uma posição por página e observe os próprios mapas e faltas menores. O programa termina e libera o buffer; não há teste de estresse.</p><div class="question"><label for="p07-previsao">O endereço impresso será físico ou virtual? malloc garante que todos os bytes já estejam residentes em RAM?</label><textarea id="p07-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>free -h
+getconf PAGESIZE</code></pre></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar memoria.c</span><button class="copy" type="button" aria-label="Copiar: Criar memoria.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; memoria.c &lt;&lt;&#x27;FIM&#x27;
+#define _POSIX_C_SOURCE 200809L
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/resource.h&gt;
+static int mapa(void) {
+    char linha[512];
+    FILE *f=fopen(&quot;/proc/self/maps&quot;,&quot;r&quot;);
+    if (!f) { perror(&quot;maps&quot;); return 0; }
+    int n=0;
+    while (fgets(linha,sizeof linha,f)) {
+        if (n++ &lt; 4 || strstr(linha,&quot;[heap]&quot;) || strstr(linha,&quot;[stack]&quot;)) fputs(linha,stdout);
+    }
+    return fclose(f)==0;
+}
+static long faltas(void) {
+    struct rusage r;
+    if (getrusage(RUSAGE_SELF,&amp;r)) return -1;
+    return r.ru_minflt;
+}
+int main(void) {
+    long pagina=sysconf(_SC_PAGESIZE);
+    if (pagina&lt;=0 || pagina&gt;65536) return 1;
+    size_t tamanho=1024*1024; /* 1 MiB; nao aumentar para provocar swap. */
+    volatile unsigned char *dados=malloc(tamanho);
+    if (!dados) { perror(&quot;malloc&quot;); return 1; }
+    printf(&quot;PID=%ld pagina=%ld bytes alocados=%zu\n&quot;,(long)getpid(),pagina,tamanho);
+    printf(&quot;Endereco virtual do buffer=%p\n&quot;,(void *)dados);
+    long antes=faltas();
+    for (size_t i=0;i&lt;tamanho;i+=(size_t)pagina) dados[i]=24;
+    long depois=faltas();
+    printf(&quot;Faltas menores antes=%ld depois=%ld\n&quot;,antes,depois);
+    int ok=mapa();
+    free((void *)dados);
+    puts(&quot;Buffer liberado; mapas e contadores sao observacoes reais, nao enderecos fisicos.&quot;);
+    return ok?0:1;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic memoria.c -o memoria
+./memoria</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">PID, endereço, mapas e contadores variam.
+Buffer de 1048576 bytes; página é consultada no sistema.
+Não se exige aumento exato nem positivo de um contador.</pre></div><p><code>malloc</code> reserva memória para o programa; tocar páginas pode demandar trabalho adicional do kernel. Faltas menores não exigem, por definição, buscar dados em armazenamento; não são o mesmo que cache miss da CPU. O tamanho de página consultado é uma referência do sistema, não uma prova de que cada mapeamento usa apenas páginas desse tamanho. O mapa mostra regiões virtuais, incluindo bibliotecas e pilha. Um buffer grande pode ser mapeado fora de [heap]; memória liberada nem sempre volta imediatamente ao SO.</p><div class="question"><label for="p07-resposta">Registre tamanho, endereço, duas regiões do mapa e os contadores antes/depois. Por que a memória total de free não é a quota da sua conta? Diferencie fragmentação interna e externa com um exemplo.</label><textarea id="p07-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Reduza o buffer para 512 KiB, recompile e compare sem exigir uma diferença exata de faltas. Explique por que os endereços podem variar entre execuções e por que não podemos inferir um endereço físico por /proc/self/maps.</div><label class="done"><input type="checkbox" id="feito-7" data-step="7">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p08"><p class="label">P08 · encontro de 60 minutos · Simulação determinística</p><h2>Traduza um endereço no modelo</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un03t03.pdf" target="_blank" rel="noopener">Tema 3 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un03t04.pdf" target="_blank" rel="noopener">Tema 4 (PDF, nova aba)</a>.</p><p>O buffer agora é representado por quatro páginas virtuais de 16 bytes. A tabela contém frames [3, 5, ausente, 2]. A memória física fictícia possui oito frames. Os tamanhos são didáticos; não são os do servidor.</p><div class="question"><label for="p08-previsao">Para o endereço virtual 30, calcule página, deslocamento, frame e endereço físico antes de executar.</label><textarea id="p08-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar paginacao.c</span><button class="copy" type="button" aria-label="Copiar: Criar paginacao.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; paginacao.c &lt;&lt;&#x27;FIM&#x27;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+/* Modelo didatico: paginas de 16 bytes, 4 paginas virtuais e 8 frames. */
+int main(int argc,char **argv) {
+    char *fim;
+    long virtual=argc&gt;1?strtol(argv[1],&amp;fim,10):30;
+    if (argc&gt;2 || (argc&gt;1 &amp;&amp; (fim==argv[1] || *fim)) || virtual&lt;0 || virtual&gt;63) {
+        fputs(&quot;Use endereco virtual de 0 a 63.\n&quot;,stderr); return 1;
+    }
+    const int tabela[]={3,5,-1,2}; /* -1: pagina nao presente. */
+    int pagina=(int)virtual/16, offset=(int)virtual%16;
+    printf(&quot;virtual=%ld pagina=%d offset=%d\n&quot;,virtual,pagina,offset);
+    if (tabela[pagina]&lt;0) puts(&quot;Pagina ausente: page fault no modelo; nao ha endereco fisico calculavel agora.&quot;);
+    else printf(&quot;frame=%d fisico=%d\n&quot;,tabela[pagina],tabela[pagina]*16+offset);
+    puts(&quot;Tabela fornecida, nao e a tabela real do processo Linux.&quot;);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic paginacao.c -o paginacao
+./paginacao 30</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./paginacao 32
+./paginacao 63</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">30: pagina=1 offset=14; frame=5 fisico=94
+32: pagina=2 offset=0; page fault no modelo
+63: pagina=3 offset=15; frame=2 fisico=47</pre></div><p>Página = endereço / tamanho; deslocamento = resto; físico = frame × tamanho + deslocamento, somente se a página estiver presente. Uma página ausente exige tratamento; o modelo não simula leitura de disco ou escolha de vítima. A TLB guarda traduções, não o conteúdo de toda a RAM. O miss da TLB não implica, por si só, página ausente.</p><div class="question"><label for="p08-resposta">Apresente as contas dos três endereços. Compare a tabela fornecida com uma tabela real e explique por que esse programa não consulta a MMU do Linux. Com páginas de 16 bytes, qual seria o desperdício na última página de um buffer de 35 bytes?</label><textarea id="p08-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Mude o frame da página 1 de 5 para 6, recompile e preveja a nova tradução de 30. Mantendo 16 bytes por página, explique por que o deslocamento permanece igual. Desenhe um índice de dois níveis e discuta o custo de tabelas sem exigir implementação.</div><label class="done"><input type="checkbox" id="feito-8" data-step="8">Concluí a investigação e expliquei os resultados</label></section><section class="etapa" id="p09"><p class="label">P09 · encontro de 60 minutos · Simulação de FIFO, LRU e OPT</p><h2>Escolha uma vítima para o próximo lote</h2><p class="small">Base conceitual da unidade: <a href="../../materiais/pdfs/un03t05.pdf" target="_blank" rel="noopener">Tema 5 (PDF, nova aba)</a> · <a href="../../materiais/pdfs/un03t06.pdf" target="_blank" rel="noopener">Tema 6 (PDF, nova aba)</a>.</p><p>Três frames começam vazios. Use o mesmo fluxo [1,2,3,1,4,2,5,1,2,3,4,5] em todas as políticas. OPT conhece o futuro e serve como referência teórica; o programa não mede faltas reais do Linux.</p><div class="question"><label for="p09-previsao">Trace os cinco primeiros acessos de FIFO e preveja qual página será expulsa ao chegar 4. O hit na página 1 muda sua idade no FIFO?</label><textarea id="p09-previsao" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><p>Cole o bloco inteiro. A linha <code>FIM</code>, sozinha, encerra a gravação. O fonte fica na pasta atual; repetir o bloco substitui somente esse arquivo do exercício.</p><div class="command"><div class="command-head"><span>Criar paginas.c</span><button class="copy" type="button" aria-label="Copiar: Criar paginas.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; paginas.c &lt;&lt;&#x27;FIM&#x27;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+/* Mesmo fluxo, tres frames, todos vazios: FIFO, LRU e OPT. */
+int main(int argc,char **argv) {
+    const char *modo=argc&gt;1?argv[1]:&quot;fifo&quot;;
+    int fifo=!strcmp(modo,&quot;fifo&quot;), lru=!strcmp(modo,&quot;lru&quot;), opt=!strcmp(modo,&quot;opt&quot;);
+    if (argc&gt;2 || (!fifo &amp;&amp; !lru &amp;&amp; !opt)) { fputs(&quot;Use fifo, lru ou opt.\n&quot;,stderr); return 1; }
+    const int refs[]={1,2,3,1,4,2,5,1,2,3,4,5};
+    int frames[]={-1,-1,-1}, ultimo[]={-1,-1,-1}, proximo=0, faltas=0;
+    for (int t=0;t&lt;12;t++) {
+        int pos=-1;
+        for (int j=0;j&lt;3;j++) if (frames[j]==refs[t]) pos=j;
+        int hit=pos&gt;=0;
+        if (!hit) {
+            faltas++;
+            for (int j=0;j&lt;3;j++) if (frames[j]&lt;0) { pos=j; break; }
+            if (pos&lt;0) {
+                if (fifo) pos=proximo;
+                if (lru) { pos=0; for (int j=1;j&lt;3;j++) if (ultimo[j]&lt;ultimo[pos]) pos=j; }
+                if (opt) {
+                    int longe=-1;
+                    for (int j=0;j&lt;3;j++) {
+                        int k=t+1; while (k&lt;12 &amp;&amp; refs[k]!=frames[j]) k++;
+                        if (k&gt;longe) { longe=k; pos=j; }
+                    }
+                }
+            }
+            frames[pos]=refs[t];
+            if (fifo) proximo=(pos+1)%3;
+        }
+        ultimo[pos]=t;
+        printf(&quot;ref=%d %s frames=[%d,%d,%d]\n&quot;,refs[t],hit?&quot;HIT&quot;:&quot;FAULT&quot;,frames[0],frames[1],frames[2]);
+    }
+    printf(&quot;Faltas=%d Hits=%d\n&quot;,faltas,12-faltas);
+    return 0;
+}
+FIM</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -O0 -Wall -Wextra -Wpedantic paginas.c -o paginas
+./paginas fifo</code></pre></div><div class="command"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./paginas lru
+./paginas opt</code></pre></div><div class="expected"><div class="expected-label">Referência para comparação · confira após prever</div><pre tabindex="0">FIFO: Faltas=10 Hits=2
+LRU: Faltas=10 Hits=2
+OPT: Faltas=7 Hits=5</pre></div><p>FIFO considera entrada; LRU considera uso recente; OPT remove a página cujo próximo uso está mais distante ou não ocorrerá. Empates escolhem o primeiro frame. Mesma contagem de faltas não significa mesma sequência de vítimas. Uma falta não significa necessariamente swap: uma página pode ser nova, compartilhada ou associada a arquivo. Clock, working set e thrashing são discutidos pelos cenários abaixo, sem provocar pressão de memória real.</p><div class="question"><label for="p09-resposta">Entregue a tabela dos frames e faltas para uma política, localize uma diferença de vítima entre FIFO e LRU e explique por que as contagens coincidem neste fluxo. Por que OPT não é diretamente implementável sem conhecer as futuras referências?</label><textarea id="p09-resposta" placeholder="Registre sua hipótese, evidência, interpretação e limites."></textarea></div><div class="dica"><b>Mudança ou transferência:</b> Substitua o fluxo por 12 repetições da página 1, recompile e preveja faltas e hits. Descreva como Clock aproxima recência e o que aconteceria se o conjunto de trabalho não coubesse nos frames; não tente provocar thrashing no servidor.</div><label class="done"><input type="checkbox" id="feito-9" data-step="9">Concluí a investigação e expliquei os resultados</label></section><section class="etapa"><h2>Confira antes de entregar</h2><ul><li>Registrou a previsão antes de conferir a referência?</li><li>Explicou a saída e distinguiu inventário, execução real e modelo?</li><li>Realizou a mudança proposta ou justificou uma limitação?</li><li>Relacionou a descoberta ao serviço?</li></ul><p>Baixe as respostas pelo botão no início e envie pelo canal definido pelo professor. O arquivo é baixado no aparelho que abriu o roteiro, não no servidor. Os registros são locais ao navegador, não comprovam presença e não são enviados automaticamente. Guarde os programas na pasta da unidade. Ao terminar a sessão, digite <code>exit</code>.</p><details><summary>Se algo der errado</summary><div><p><b>Ferramenta ausente:</b> registre e avise o professor; não instale pacotes nem use sudo.</p><p><b>Prompt &gt;:</b> o shell espera o fim do bloco. Digite FIM sozinho numa linha ou interrompa com Ctrl+C e copie novamente.</p><p><b>Erro de compilação:</b> confira se copiou o bloco inteiro, incluindo chaves e cabeçalhos. A compilação bem-sucedida normalmente não imprime nada; só execute após corrigir erros.</p><p><b>Permissão, quota ou criação de processo/thread bloqueada:</b> registre a mensagem e use a alternativa documental ou o modelo no papel indicado pelo professor, sem contornar as políticas.</p><p><b>Dados variáveis:</b> PIDs, endereços e contadores não precisam coincidir com exemplos. Não substitua os seus por números esperados.</p><p><b>Sem JavaScript:</b> comandos, fontes e navegação continuam disponíveis. Responda em texto por outro meio; botões, progresso e download dependem de JavaScript.</p></div></details></section></main><nav class="footer-nav" aria-label="Sequência"><a href="../un02/">← Anterior</a><a href="../un04/">Próxima →</a></nav><footer>Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia<br><a href="../professor.html">Guia docente e referências</a></footer></div></body></html>
