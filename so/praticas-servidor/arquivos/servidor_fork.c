@@ -11,7 +11,7 @@ int main(int argc, char **argv) {
         printf("[PROCESSO FILHO APOS EXEC] PID = %ld | PPID = %ld\n",
                (long)getpid(), (long)getppid());
         puts("Trabalhador processou o pedido do cliente com sucesso.");
-        return 200; // Codigo HTTP 200 OK retornado como exit status
+        return 0; // Sucesso do processo; nao e uma resposta HTTP
     }
 
     printf("=== SERVIDOR MASTER (PAI): GERENCIANDO REQUISICOES ===\n");
@@ -44,12 +44,12 @@ int main(int argc, char **argv) {
 
     // Codigo do processo Pai: aguarda o filho terminar
     int status;
-    waitpid(pid, &status, 0);
+    if (waitpid(pid, &status, 0) < 0) { perror("waitpid"); return 1; }
 
     puts("\n=== RESUMO NO SERVIDOR PAI ===");
     printf("Conexoes no Pai continuam intactas: %d (Memoria isolada do filho!)\n", conexoes_ativas);
     if (WIFEXITED(status)) {
-        printf("Processo filho terminou com status HTTP = %d\n", WEXITSTATUS(status));
+        printf("Processo filho terminou com status de saida = %d\n", WEXITSTATUS(status));
     }
 
     return 0;

@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
     printf("Total REAL computado no servidor: %ld curtidas\n", contador_likes);
 
     if (contador_likes == CLICKS_POR_CLIENTE * 2) {
-        puts("Sucesso! Mutex garantiu que nenhum clique fosse perdido.");
+        puts(usar_mutex ? "Sucesso! Mutex protegeu as atualizacoes."
+                        : "Total coincidiu nesta execucao; isso nao comprova ausencia de corrida.");
     } else {
         printf("Perda detectada! Faltaram %ld curtidas por falta de exclusao mutua.\n",
                (CLICKS_POR_CLIENTE * 2) - contador_likes);

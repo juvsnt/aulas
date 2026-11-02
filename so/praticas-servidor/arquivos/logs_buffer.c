@@ -11,12 +11,14 @@ int main(void) {
 
     printf("=== GRAVANDO %d LOGS DE ACESSO DO SERVIDOR NO DISCO ===\n", TOTAL_LOGS);
 
-    // Metodo 1: Sem buffer (100 chamadas de sistema write individuais ao kernel)
+    // Metodo 1: Sem buffer da biblioteca C; o kernel ainda pode usar page cache.
     int fd_direto = open("logs_direto.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (fd_direto < 0) return 1;
 
     for (int i = 0; i < TOTAL_LOGS; i++) {
-        write(fd_direto, linha_log, len); // 100 transições de modo usuario -> modo kernel!
+        if (write(fd_direto, linha_log, len) != (ssize_t)len) {
+            perror("write"); close(fd_direto); return 1;
+        }
     }
     close(fd_direto);
 
@@ -25,13 +27,13 @@ int main(void) {
     if (!f_buffer) return 1;
 
     for (int i = 0; i < TOTAL_LOGS; i++) {
-        fputs(linha_log, f_buffer); // Acumula no buffer em espaco de usuario
+        if (fputs(linha_log, f_buffer) == EOF) { perror("fputs"); fclose(f_buffer); return 1; }
     }
-    fclose(f_buffer); // 1 unica transferencia em lote para o kernel
+    if (fclose(f_buffer) == EOF) { perror("fclose"); return 1; }
 
     puts("Arquivo 'logs_direto.txt' gerado com 100 chamadas de sistema write().");
     puts("Arquivo 'logs_buffer.txt' gerado com bufferizacao eficiente da biblioteca C.");
-    puts("\nConclusao de SO: Buffers reduzem drasticamente as mudancas de contexto para o kernel.");
+    puts("\nConclusao de SO: Buffers podem reduzir chamadas de sistema e transicoes de modo.");
 
     return 0;
 }

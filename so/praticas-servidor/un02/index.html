@@ -53,6 +53,8 @@
         </nav>
       </section>
 
+      <section class="etapa"><h2>O que esta unidade permite observar</h2><p>fork e threads são reais; a fila FCFS/SJF/RR é uma simulação com demandas de CPU e chegadas fixas. Tempo de download não equivale necessariamente a tempo de CPU. A versão sem mutex ilustra um programa incorreto em C e não fornece resultados previsíveis.</p></section>
+
       <section class="etapa">
         <h2>Prepare sua pasta de trabalho</h2>
         <div class="command">
@@ -67,7 +69,8 @@ pwd</code></pre>
       <section class="etapa" id="p03">
         <p class="label">P03 · 60 minutos · Controle de processos e sinais</p>
         <h2>O processo do servidor em segundo plano (Background)</h2>
-        <p>Um servidor não deve travar o terminal do administrador. Ele roda como serviço em segundo plano (background). Vamos simular o controle de um processo via sinais do Linux (<code>STOP</code> para pausar e <code>CONT</code> para retomar):</p>
+        <div class="question"><label for="p03-previsao"><b>Antes de executar:</b> Qual estado ps deve mostrar após STOP? O processo terminou ou ainda pode continuar?</label><textarea id="p03-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
+        <p>Neste experimento, um comando em background permite continuar usando o terminal. Serviços reais também podem ser supervisionados por um gerenciador de serviços. Vamos simular o controle de um processo via sinais do Linux (<code>STOP</code> para pausar e <code>CONT</code> para retomar):</p>
         <div class="command">
           <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
           <pre tabindex="0"><code>sleep 2 &amp;
@@ -88,6 +91,9 @@ Processo do servidor concluido e recolhido.</pre>
           <label for="p03-resposta">Na coluna STAT do comando ps, a letra 'T' indica qual estado do processo? O que o sinal CONT fez em seguida?</label>
           <textarea id="p03-resposta" placeholder="Explique os estados do processo e o efeito dos sinais STOP e CONT."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Repita o bloco com sleep 5 e acrescente ps logo após CONT. Compare T com o estado observado após a retomada; a observação é uma fotografia. Não envie sinais a processos de outros usuários.</p>
+        <div class="question"><label for="p03-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p03-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P03</label>
       </section>
 
@@ -95,7 +101,8 @@ Processo do servidor concluido e recolhido.</pre>
       <section class="etapa" id="p04">
         <p class="label">P04 · 60 minutos · Processos trabalhadores com fork</p>
         <h2>Atendendo clientes com fork, exec e wait</h2>
-        <p>Crie o programa <code>servidor_fork.c</code>. O processo pai (master) recebe a conexão e cria um processo filho com <code>fork()</code> para atender o cliente. O filho substitui sua imagem com <code>execl()</code> e retorna o status HTTP 200:</p>
+        <div class="question"><label for="p04-previsao"><b>Antes de executar:</b> Se o filho muda conexoes_ativas para 99, qual valor o pai imprimirá? O PID mudará no exec?</label><textarea id="p04-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
+        <p>Crie o programa <code>servidor_fork.c</code>. O processo pai (master) recebe a conexão e cria um processo filho com <code>fork()</code> para atender o cliente. O filho substitui sua imagem com <code>execl()</code> e termina com status de saída 0. Esse status informa sucesso ao pai e não é uma resposta HTTP:</p>
         <div class="command">
           <div class="command-head"><span>Criar servidor_fork.c</span><button class="copy" type="button">Copiar</button></div>
           <pre tabindex="0"><code>cat &gt; servidor_fork.c &lt;&lt;'FIM'
@@ -107,11 +114,12 @@ Processo do servidor concluido e recolhido.</pre>
 #include &lt;string.h&gt;
 
 int main(int argc, char **argv) {
-    if (argc == 2 && strcmp(argv[1], "trabalhador") == 0) {
+    // Se invocado com argumento "trabalhador", simula a execucao apos o exec
+    if (argc == 2 &amp;&amp; strcmp(argv[1], "trabalhador") == 0) {
         printf("[PROCESSO FILHO APOS EXEC] PID = %ld | PPID = %ld\n",
                (long)getpid(), (long)getppid());
         puts("Trabalhador processou o pedido do cliente com sucesso.");
-        return 200; // Codigo HTTP 200 OK retornado como exit status
+        return 0; // Sucesso do processo; nao e uma resposta HTTP
     }
 
     printf("=== SERVIDOR MASTER (PAI): GERENCIANDO REQUISICOES ===\n");
@@ -124,29 +132,32 @@ int main(int argc, char **argv) {
 
     pid_t pid = fork();
 
-    if (pid < 0) {
+    if (pid &lt; 0) {
         perror("fork");
         return 1;
     }
 
     if (pid == 0) {
-        conexoes_ativas = 99; // Altera apenas a memoria privada do filho
+        // Codigo do processo filho (trabalhador)
+        conexoes_ativas = 99; // Modifica apenas a copia da memoria do filho!
         printf("[FILHO ANTES DO EXEC] PID = %ld | PPID = %ld | Minhas conexoes = %d\n",
                (long)getpid(), (long)getppid(), conexoes_ativas);
         fflush(stdout);
 
+        // Substitui a imagem do processo pelo trabalhador
         execl("./servidor_fork", "servidor_fork", "trabalhador", (char *)NULL);
         perror("execl");
         _exit(1);
     }
 
+    // Codigo do processo Pai: aguarda o filho terminar
     int status;
-    waitpid(pid, &status, 0);
+    if (waitpid(pid, &amp;status, 0) &lt; 0) { perror("waitpid"); return 1; }
 
     puts("\n=== RESUMO NO SERVIDOR PAI ===");
     printf("Conexoes no Pai continuam intactas: %d (Memoria isolada do filho!)\n", conexoes_ativas);
     if (WIFEXITED(status)) {
-        printf("Processo filho terminou com status HTTP = %d\n", WEXITSTATUS(status));
+        printf("Processo filho terminou com status de saida = %d\n", WEXITSTATUS(status));
     }
 
     return 0;
@@ -167,12 +178,15 @@ Trabalhador processou o pedido do cliente com sucesso.
 
 === RESUMO NO SERVIDOR PAI ===
 Conexoes no Pai continuam intactas: 1 (Memoria isolada do filho!)
-Processo filho terminou com status HTTP = 200</pre>
+Processo filho terminou com status de saida = 0</pre>
         </div>
         <div class="question">
           <label for="p04-resposta">Por que a variável 'conexoes_ativas' no pai continuou valendo 1 mesmo após o filho alterá-la para 99? O que isso prova sobre o espaço de endereçamento criado pelo fork?</label>
           <textarea id="p04-resposta" placeholder="Explique o isolamento de memória entre processos criados por fork."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Troque 99 por 7 apenas no filho, recompile e execute. Registre os PIDs antes/depois de exec, o valor visto pelo pai e o status de saída. Explique as funções diferentes de fork, exec e waitpid.</p>
+        <div class="question"><label for="p04-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p04-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P04</label>
       </section>
 
@@ -180,6 +194,7 @@ Processo filho terminou com status HTTP = 200</pre>
       <section class="etapa" id="p05">
         <p class="label">P05 · 60 minutos · Escalonamento da CPU</p>
         <h2>Fila de requisições: FCFS, SJF e Round Robin</h2>
+        <div class="question"><label for="p05-previsao"><b>Antes de executar:</b> Com demandas de CPU 5, 3 e 1 e chegada em t=0, calcule a espera média de FCFS e SJF. No RR, todos começam em t=0?</label><textarea id="p05-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Crie o programa <code>escalonador_web.c</code> para comparar como o sistema operacional decide a ordem de atendimento entre um download longo (5s) e um clique leve (1s):</p>
         <div class="command">
           <div class="command-head"><span>Criar escalonador_web.c</span><button class="copy" type="button">Copiar</button></div>
@@ -188,7 +203,7 @@ Processo filho terminou com status HTTP = 200</pre>
 #include &lt;string.h&gt;
 
 int main(int argc, char **argv) {
-    const char *politica = (argc > 1) ? argv[1] : "fcfs";
+    const char *politica = (argc &gt; 1) ? argv[1] : "fcfs";
 
     // 3 Requisicoes chegam no instante t=0:
     // Req 1: Download de video longo (burst = 5s)
@@ -198,10 +213,11 @@ int main(int argc, char **argv) {
     printf("=== ESCALONAMENTO DE REQUISICOES NO SERVIDOR (%s) ===\n", politica);
 
     if (strcmp(politica, "fcfs") == 0) {
-        puts("Ordem: 1. Video (5s) -> 2. Imagem (3s) -> 3. Texto (1s)");
+        // FCFS: Atende na ordem de chegada (Req1 -&gt; Req2 -&gt; Req3)
+        puts("Ordem: 1. Video (5s) -&gt; 2. Imagem (3s) -&gt; 3. Texto (1s)");
         int espera1 = 0;
         int espera2 = 5;
-        int espera3 = 5 + 3; // 8s de espera
+        int espera3 = 5 + 3; // 8s de espera para um clique de 1s!
         double media = (espera1 + espera2 + espera3) / 3.0;
 
         puts("\nDiagrama de Gantt:");
@@ -211,7 +227,8 @@ int main(int argc, char **argv) {
         puts("Problema do FCFS (Efeito Comboio): O clique rapido esperou 8s pelo video longo!");
 
     } else if (strcmp(politica, "sjf") == 0) {
-        puts("Ordem: 1. Texto (1s) -> 2. Imagem (3s) -> 3. Video (5s)");
+        // SJF: Atende o mais curto primeiro (Req3 -&gt; Req2 -&gt; Req1)
+        puts("Ordem: 1. Texto (1s) -&gt; 2. Imagem (3s) -&gt; 3. Video (5s)");
         int espera3 = 0;
         int espera2 = 1;
         int espera1 = 1 + 3; // 4s de espera
@@ -224,9 +241,12 @@ int main(int argc, char **argv) {
         puts("Vantagem do SJF: Menor tempo medio de espera possivel!");
 
     } else if (strcmp(politica, "rr") == 0) {
+        // Round Robin com quantum = 2s
         puts("Modo Round Robin (fatias de tempo de 2s):");
         puts("[Req1(2s)] [Req2(2s)] [Req3(1s: Fim)] [Req1(2s)] [Req2(1s: Fim)] [Req1(1s: Fim)]");
-        puts("Tempo de resposta imediato para todos os clientes sem travamentos!");
+        puts("Primeira resposta: Req1=0s | Req2=2s | Req3=4s (nao e imediata).");
+    } else {
+        puts("Use: ./escalonador_web fcfs | sjf | rr");
     }
 
     return 0;
@@ -241,6 +261,9 @@ gcc -std=c11 -Wall -Wextra -O0 escalonador_web.c -o escalonador_web
           <label for="p05-resposta">Qual foi o tempo médio de espera no FCFS versus no SJF? Por que o algoritmo Round Robin é o mais utilizado em sistemas interativos como servidores web?</label>
           <textarea id="p05-resposta" placeholder="Compare os tempos de espera e explique a vantagem do compartilhamento de tempo no Round Robin."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>No papel, refaça o RR com quantum 1, sem custo de troca. Registre a linha do tempo, a primeira resposta e a conclusão de cada tarefa. Compare com quantum 2; o programa imprime um cenário fixo, não mede o escalonador do Linux.</p>
+        <div class="question"><label for="p05-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p05-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí a prática P05</label>
       </section>
 
@@ -248,6 +271,7 @@ gcc -std=c11 -Wall -Wextra -O0 escalonador_web.c -o escalonador_web
       <section class="etapa" id="p06">
         <p class="label">P06 · 60 minutos · Concorrência e exclusão mútua</p>
         <h2>O contador de curtidas (Likes) e o Mutex</h2>
+        <div class="question"><label for="p06-previsao"><b>Antes de executar:</b> Duas threads compartilham contador_likes? Um total correto em uma execução sem mutex prova que o código está protegido?</label><textarea id="p06-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Crie o programa <code>contador_likes.c</code>. Ele cria 2 threads simultâneas simulando visitantes clicando em "Curtir" 50.000 vezes cada. Execute primeiro sem mutex (veja as curtidas se perdendo por condição de corrida) e depois com mutex:</p>
         <div class="command">
           <div class="command-head"><span>Criar contador_likes.c</span><button class="copy" type="button">Copiar</button></div>
@@ -265,14 +289,16 @@ int usar_mutex = 0;
 
 void *cliente_clicando(void *arg) {
     (void)arg;
-    for (int i = 0; i < CLICKS_POR_CLIENTE; i++) {
+    for (int i = 0; i &lt; CLICKS_POR_CLIENTE; i++) {
         if (usar_mutex) {
-            pthread_mutex_lock(&trava_likes);
-            contador_likes++; // Regiao critica protegida
-            pthread_mutex_unlock(&trava_likes);
+            pthread_mutex_lock(&amp;trava_likes);
+            contador_likes++; // Regiao critica protegida por exclusao mutua
+            pthread_mutex_unlock(&amp;trava_likes);
         } else {
+            // Regiao critica desprotegida: leitura e gravacao sofrem perda por corrida
             long temp = contador_likes;
-            for (volatile int j = 0; j < 5; j++);
+            // Pequeno laço para forçar a intercalacao de threads na CPU
+            for (volatile int j = 0; j &lt; 5; j++);
             contador_likes = temp + 1;
         }
     }
@@ -280,7 +306,7 @@ void *cliente_clicando(void *arg) {
 }
 
 int main(int argc, char **argv) {
-    usar_mutex = (argc > 1 && strcmp(argv[1], "com_mutex") == 0);
+    usar_mutex = (argc &gt; 1 &amp;&amp; strcmp(argv[1], "com_mutex") == 0);
 
     printf("=== SERVIDOR WEB: 2 CLIENTES CLICANDO EM CURTIR (%s) ===\n",
            usar_mutex ? "COM MUTEX" : "SEM MUTEX (RACE CONDITION)");
@@ -288,8 +314,8 @@ int main(int argc, char **argv) {
            CLICKS_POR_CLIENTE, CLICKS_POR_CLIENTE * 2);
 
     pthread_t thread1, thread2;
-    pthread_create(&thread1, NULL, cliente_clicando, NULL);
-    pthread_create(&thread2, NULL, cliente_clicando, NULL);
+    pthread_create(&amp;thread1, NULL, cliente_clicando, NULL);
+    pthread_create(&amp;thread2, NULL, cliente_clicando, NULL);
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
@@ -297,7 +323,8 @@ int main(int argc, char **argv) {
     printf("Total REAL computado no servidor: %ld curtidas\n", contador_likes);
 
     if (contador_likes == CLICKS_POR_CLIENTE * 2) {
-        puts("Sucesso! Mutex garantiu que nenhum clique fosse perdido.");
+        puts(usar_mutex ? "Sucesso! Mutex protegeu as atualizacoes."
+                        : "Total coincidiu nesta execucao; isso nao comprova ausencia de corrida.");
     } else {
         printf("Perda detectada! Faltaram %ld curtidas por falta de exclusao mutua.\n",
                (CLICKS_POR_CLIENTE * 2) - contador_likes);
@@ -316,9 +343,12 @@ gcc -std=c11 -Wall -Wextra -O0 -pthread contador_likes.c -o contador_likes
 COM MUTEX: Total REAL computado: 100000 curtidas (Sucesso!)</pre>
         </div>
         <div class="question">
-          <label for="p06-resposta">Por que sem mutex o total de curtidas foi menor do que 100.000? Como a trava (pthread_mutex) resolve esse problema no sistema operacional?</label>
+          <label for="p06-resposta">Que totais você observou sem mutex e por que não há garantia de resultado? Como a trava (pthread_mutex) resolve esse problema no sistema operacional?</label>
           <textarea id="p06-resposta" placeholder="Explique o conceito de condição de corrida (race condition) e exclusão mútua."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Execute três vezes sem argumento e três vezes com com_mutex. Registre todos os totais. Altere CLICKS_POR_CLIENTE para 10000, recompile e repita com mutex: o esperado passa a 20000. A versão sem mutex contém data race em C e tem comportamento indefinido; uma perda não é garantida.</p>
+        <div class="question"><label for="p06-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p06-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí a prática P06</label>
       </section>
 

@@ -27,6 +27,13 @@ int main(void) {
     printf("4. Pilha/Stack (var local):      %p\n\n", (void *)&variavel_local);
 
     puts("Memoria alocada com sucesso no Heap para cache do servidor.");
+    FILE *mapa = fopen("/proc/self/maps", "r");
+    if (mapa) {
+        char linha[512];
+        puts("Mapa virtual deste processo (malloc pode usar mapeamento anonimo):");
+        while (fgets(linha, sizeof(linha), mapa)) fputs(linha, stdout);
+        fclose(mapa);
+    } else { perror("/proc/self/maps (observacao indisponivel)"); }
     free(cache_paginas);
     return 0;
 }

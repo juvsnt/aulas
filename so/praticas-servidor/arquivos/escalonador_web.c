@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         // Round Robin com quantum = 2s
         puts("Modo Round Robin (fatias de tempo de 2s):");
         puts("[Req1(2s)] [Req2(2s)] [Req3(1s: Fim)] [Req1(2s)] [Req2(1s: Fim)] [Req1(1s: Fim)]");
-        puts("Tempo de resposta imediato para todos os clientes sem travamentos!");
+        puts("Primeira resposta: Req1=0s | Req2=2s | Req3=4s (nao e imediata).");
     } else {
         puts("Use: ./escalonador_web fcfs | sjf | rr");
     }

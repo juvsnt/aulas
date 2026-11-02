@@ -26,9 +26,19 @@
 
     <main id="conteudo">
       <section class="etapa">
+        <h2>Condução de cada encontro e condições do LIAC</h2>
+        <p>Reserve aproximadamente 10 minutos para cenário e previsão, 20 para execução e interpretação, 20 para mudança orientada e 10 para registrar evidências. Os tempos são estimativas: reduza a quantidade de código digitado usando os fontes fornecidos quando necessário.</p>
+        <p>Antes da aula, confira Bash, GCC com pthreads, ferramentas básicas e leitura de /proc usando uma conta de aluno. A trilha usa arquivos locais, sem portas de rede, instalação, sudo ou acesso a outras contas. strace é opcional: ausência ou bloqueio devem ser registrados como limites, sem impedir a atividade.</p>
+        <p>Avalie a previsão mesmo quando incorreta se houver justificativa e revisão pela evidência. Exija comando ou alteração, saída antes/depois, interpretação e limite. Os campos antigos de resposta foram preservados; os novos também integram o download.</p>
+        <h3>Referências técnicas para mediação</h3>
+        <p><a href="https://man7.org/linux/man-pages/man2/fork.2.html">fork e copy-on-write</a> · <a href="https://www.man7.org/linux/man-pages/man2/write.2.html">write e escritas parciais</a> · <a href="https://www.man7.org/linux/man-pages/man2/fsync.2.html">fsync e persistência</a> · <a href="https://docs.kernel.org/mm/page_cache.html">Page cache do Linux</a>.</p>
+        <p>Os exemplos de read/write usam arquivos locais pequenos e detectam falhas; uma aplicação de produção deve tratar leituras/escritas parciais e interrupções com laços apropriados. Os simuladores aceitam os valores inteiros indicados nos roteiros; não são ferramentas gerais de validação de entradas.</p>
+      </section>
+
+      <section class="etapa">
         <h2>Proposta Pedagógica da Trilha</h2>
         <p>Esta trilha alternativa conecta cada conceito teórico de Sistemas Operacionais à arquitetura e operação de um <b>servidor web moderno na nuvem</b>. Em vez de somar números abstratos de temperatura, os estudantes exploram como chamadas de sistema atendem requisições, como processos e threads concorrentes gerenciam múltiplos clientes, como o Mutex evita perda de curtidas, como o cache de páginas na RAM usa LRU e como o sistema de arquivos protege documentos com inodos e permissões.</p>
-        <p>Todos os programas dos alunos foram elaborados em C11 limpo (20 a 35 linhas), eliminando construções defensivas pesadas para focar diretamente nas operações de SO.</p>
+        <p>Os programas usam C11 com interfaces POSIX do Linux, nomes descritivos e verificações essenciais. O foco está na interpretação das operações de SO; a extensão varia conforme o experimento.</p>
       </section>
 
       <section class="etapa">
@@ -135,15 +145,17 @@
 
       <section class="etapa">
         <h2>Gabarito e Referências dos Desafios</h2>
+        <p><b>P01:</b> kernel e recursos dependem do ambiente; MemAvailable estima memória utilizável sem swap e difere de MemFree. nproc e id não demonstram a cota da conta. <b>P03:</b> STOP produz estado T; CONT permite retomar e wait recolhe o término. <b>P07:</b> endereços são virtuais e podem variar entre execuções; malloc pode usar mapeamento anônimo, sem aparecer na região [heap]. <b>P10:</b> 640 permite leitura ao grupo; o link simbólico tem inode próprio e stat -L consulta o alvo. <b>P13:</b> Cached representa cache de arquivos com particularidades do Linux; load average não é porcentagem. Restrições de /proc são resultados válidos. <b>P14:</b> exigir três evidências identificadas e distinguir processos de threads, simulação de observação e decisão HTTP de erro do kernel.</p>
+        <p><b>Mudanças orientadas:</b> P02 deixa de imprimir 404 quando o arquivo passa a existir; P04 preserva o valor 1 no pai mesmo com 7 no filho; P05, RR com quantum 1, tem primeira resposta em 0/1/2 e conclusão em 9/7/3 para as tarefas 1/2/3; P06 com mutex e 10000 cliques por thread totaliza 20000; P08: 4095 → VPN 0, offset 4095, e 4096 → VPN 1, offset 0; P09 deve justificar o resultado pela sequência modificada; P11: 8192 → 2 blocos e sobra 0, 8193 → 3 blocos e sobra 4095; P12 deve manter os logs iguais e passar de 100 para 10 linhas por arquivo. Avalie as demais comparações pelos dados do ambiente, sem impor saídas variáveis.</p>
         <ul>
           <li><b>P02:</b> A syscall <code>open()</code> retorna -1 e configura <code>errno = 2 (ENOENT)</code> quando o arquivo solicitado não existe. O servidor intercepta essa condição do kernel e constrói a resposta HTTP com código de status <b>404 Not Found</b>.</li>
-          <li><b>P04:</b> A variável <code>conexoes_ativas</code> no processo pai permaneceu valendo 1 mesmo após o filho alterá-la para 99, comprovando que o <code>fork()</code> duplica o espaço de endereçamento em cópias isoladas de memória física. O filho retornou status de saída HTTP 200 via <code>WEXITSTATUS</code>.</li>
+          <li><b>P04:</b> A variável <code>conexoes_ativas</code> no processo pai permaneceu valendo 1 mesmo após o filho alterá-la para 99, comprovando que o <code>fork()</code> cria espaços de endereçamento separados. O Linux usa copy-on-write: páginas físicas podem ser compartilhadas até uma escrita exigir cópia. O filho termina com status de saída 0, obtido por <code>WEXITSTATUS</code>; isso não transmite HTTP.</li>
           <li><b>P05:</b> No FCFS, o tempo médio de espera foi de <b>4,33 segundos</b> (com o clique leve de 1s esperando 8s pelo vídeo longo). No SJF, o tempo médio caiu para <b>1,67 segundos</b> (ordem ideal). O Round Robin garante responsividade rápida distribuindo a CPU em fatias de tempo de 2s.</li>
-          <li><b>P06:</b> Sem mutex, a condição de corrida nas duas threads concorrentes causa perda de atualizações na memória, resultando em um total inferior a 100.000. Com <code>pthread_mutex_lock/unlock</code>, a exclusão mútua garante exatamente <b>100.000 curtidas</b> computadas.</li>
-          <li><b>P08:</b> O endereço virtual 9000 corresponde à Página Virtual 2 com deslocamento 808 bytes, mapeada para o frame 2 da RAM. O endereço 14000 caiu na página 3, ausente na RAM, disparando uma <b>Falta de Página (Page Fault)</b> para busca no disco.</li>
+          <li><b>P06:</b> Sem mutex há uma data race e comportamento indefinido em C; podem aparecer perdas, mas um total inferior a 100.000 não é garantido. Com <code>pthread_mutex_lock/unlock</code>, a exclusão mútua garante exatamente <b>100.000 curtidas</b> computadas.</li>
+          <li><b>P08:</b> O endereço virtual 9000 corresponde à Página Virtual 2 com deslocamento 808 bytes, mapeada para o frame 2 da RAM. O endereço 14000 caiu na página 3, ausente na RAM, indicando uma <b>falta de página simulada</b>. Fora do modelo, faltas também podem ser resolvidas sem disco, como em alocação sob demanda e copy-on-write.</li>
           <li><b>P09:</b> No algoritmo LRU com 3 frames na RAM, o acesso à Imagem 4 expulsa a <b>Imagem 2</b> (que era a menos recentemente usada). No FIFO, a expulsão segue a ordem de chegada.</li>
-          <li><b>P11:</b> O arquivo de 10.000 bytes ocupou <b>3 blocos de 4 KB</b> (total 12.288 bytes no SSD), gerando exatamente <b>2.288 bytes de fragmentação interna</b> no último bloco. O byte 5000 localiza-se no bloco lógico 1, offset 904.</li>
-          <li><b>P12:</b> O uso de buffers de E/S em espaço de usuário reduz 100 trocas de contexto para o kernel em apenas 1 transferência em lote, poupando ciclos de CPU e tempo de barramento de disco.</li>
+          <li><b>P11:</b> No modelo sem arquivos esparsos, compressão ou metadados, 10.000 bytes exigem <b>3 blocos de 4 KB</b> (total calculado de 12.288 bytes), gerando exatamente <b>2.288 bytes de fragmentação interna</b> no último bloco. O byte 5000 localiza-se no bloco lógico 1, offset 904.</li>
+          <li><b>P12:</b> O uso de buffers de E/S em espaço de usuário pode reduzir chamadas de escrita ao kernel. A quantidade depende do buffer e da implementação e exige medição. Transição de modo não implica troca de processo; write/fclose também não garantem persistência imediata no dispositivo.</li>
         </ul>
       </section>
 

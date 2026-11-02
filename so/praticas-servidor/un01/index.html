@@ -51,6 +51,8 @@
         </nav>
       </section>
 
+      <section class="etapa"><h2>O que esta unidade permite observar</h2><p>As chamadas de sistema são reais, mas os pedidos e respostas são arquivos locais. Não há socket, navegador conectado ou servidor HTTP em escuta. O kernel devolve errno; o código da aplicação decide o status HTTP.</p></section>
+
       <section class="etapa">
         <h2>Prepare sua pasta de trabalho</h2>
         <p>No terminal do LIAC, crie a pasta da Unidade 1 e entre nela:</p>
@@ -66,6 +68,7 @@ pwd</code></pre>
       <section class="etapa" id="p01">
         <p class="label">P01 · 60 minutos · Inventário real</p>
         <h2>Reconhecendo a máquina do servidor web</h2>
+        <div class="question"><label for="p01-previsao"><b>Antes de executar:</b> Quais informações descrevem a máquina e quais descrevem apenas seu processo? A RAM disponível será igual à RAM livre?</label><textarea id="p01-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Descubra os recursos que o sistema operacional disponibiliza para o nosso servidor:</p>
         <div class="command">
           <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
@@ -86,6 +89,9 @@ PID   PPID COMMAND
           <label for="p01-resposta">Qual versão do kernel Linux está em execução? Quanto de memória RAM total e disponível a máquina possui?</label>
           <textarea id="p01-resposta" placeholder="Anote a versão do kernel e a quantidade de memória observada."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Acrescente nproc e id aos comandos e repita free -h. Separe recursos visíveis, identidade da conta e valores que variaram. Não confunda recursos visíveis com uma cota garantida para sua conta.</p>
+        <div class="question"><label for="p01-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p01-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P01</label>
       </section>
 
@@ -93,6 +99,7 @@ PID   PPID COMMAND
       <section class="etapa" id="p02">
         <p class="label">P02 · 60 minutos · Execução real e chamadas de sistema</p>
         <h2>Atendendo uma requisição e o Erro 404</h2>
+        <div class="question"><label for="p02-previsao"><b>Antes de executar:</b> Que retorno você espera de open quando o arquivo não existe? Quem decide transformar esse resultado em HTTP 404?</label><textarea id="p02-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Crie o mini-servidor <code>servidor_basico.c</code>. Ele simula o recebimento de um pedido de página e utiliza chamadas de sistema reais (<code>open</code>, <code>read</code>, <code>write</code> e <code>close</code>). Depois, tenta abrir uma página inexistente para ver o retorno de erro no kernel:</p>
         <div class="command">
           <div class="command-head"><span>Criar servidor_basico.c</span><button class="copy" type="button">Copiar</button></div>
@@ -115,28 +122,31 @@ int main(void) {
 
     // 2. Syscall de abertura para leitura do pedido
     int fd_pedido = open("pedido.txt", O_RDONLY);
-    if (fd_pedido < 0) { perror("open pedido"); return 1; }
+    if (fd_pedido &lt; 0) { perror("open pedido"); return 1; }
 
     char buffer[128];
     ssize_t bytes_lidos = read(fd_pedido, buffer, sizeof(buffer) - 1);
-    if (bytes_lidos > 0) buffer[bytes_lidos] = '\0';
+    if (bytes_lidos &lt; 0) { perror("read"); close(fd_pedido); return 1; }
+    buffer[bytes_lidos] = '\0';
     close(fd_pedido);
 
     printf("Requisicao recebida pelo descritor de arquivo: %s", buffer);
 
     // 3. Syscall gerando a resposta HTTP 200 OK
     int fd_resposta = open("resposta.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd_resposta < 0) { perror("open resposta"); return 1; }
+    if (fd_resposta &lt; 0) { perror("open resposta"); return 1; }
 
-    const char *resposta = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1>Servidor LIAC Online</h1>\n";
-    write(fd_resposta, resposta, strlen(resposta));
+    const char *resposta = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n&lt;h1&gt;Servidor LIAC Online&lt;/h1&gt;\n";
+    if (write(fd_resposta, resposta, strlen(resposta)) != (ssize_t)strlen(resposta)) {
+        perror("write resposta"); close(fd_resposta); return 1;
+    }
     close(fd_resposta);
     puts("Resposta gravada com sucesso em 'resposta.txt' (HTTP 200 OK).");
 
     // 4. Demonstrando o Erro 404 no kernel: tentando abrir arquivo que nao existe
-    puts("\n=== DEMONSTRANDO O ERRO 404 (SYSCALL AO KERNEL) ===");
+    puts("\n=== ENOENT NO KERNEL E DECISAO HTTP NA APLICACAO ===");
     int fd_invalido = open("pagina_inexistente.html", O_RDONLY);
-    if (fd_invalido < 0) {
+    if (fd_invalido &lt; 0) {
         printf("open('pagina_inexistente.html'): Retorno = -1\n");
         printf("Codigo de erro errno = %d (%s)\n", errno, strerror(errno));
         if (errno == ENOENT) {
@@ -160,7 +170,7 @@ Processo do servidor em execucao: PID = ...
 Requisicao recebida pelo descritor de arquivo: GET /index.html HTTP/1.1
 Resposta gravada com sucesso em 'resposta.txt' (HTTP 200 OK).
 
-=== DEMONSTRANDO O ERRO 404 (SYSCALL AO KERNEL) ===
+=== ENOENT NO KERNEL E DECISAO HTTP NA APLICACAO ===
 open('pagina_inexistente.html'): Retorno = -1
 Codigo de erro errno = 2 (No such file or directory)
 Resultado no servidor: HTTP 404 Not Found (Arquivo nao encontrado no sistema de arquivos)!</pre>
@@ -169,6 +179,9 @@ Resultado no servidor: HTTP 404 Not Found (Arquivo nao encontrado no sistema de 
           <label for="p02-resposta">O que o número -1 e o erro ENOENT (código 2) significam na chamada open()? Como o servidor web usa isso para responder o famoso erro '404 Not Found' ao navegador do usuário?</label>
           <textarea id="p02-resposta" placeholder="Explique a relação entre a chamada de sistema do kernel e o erro 404."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Após a primeira execução, crie pagina_inexistente.html com echo e rode novamente. Compare a presença da mensagem 404 e explique por que o programa não envia uma página pela rede. Depois remova apenas esse arquivo de teste se quiser restaurar o cenário.</p>
+        <div class="question"><label for="p02-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p02-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P02</label>
       </section>
 

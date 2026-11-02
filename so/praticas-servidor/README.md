@@ -43,3 +43,11 @@ python3 -m http.server 8000
 ```
 
 Abra `http://localhost:8000/so/praticas-servidor/` no navegador para testar a navegação e a responsividade em celular/desktop.
+
+## Revisão pedagógica e conceitual
+
+As 14 práticas incluem previsão antes da execução, interpretação, mudança orientada e registro de comandos e saídas antes/depois. Os campos anteriores foram preservados e os novos são salvos e exportados pelo mecanismo existente.
+
+Os roteiros distinguem operações reais de modelos didáticos, status de processo de HTTP, espaços virtuais de páginas físicas e transições de modo de trocas de contexto. Não há servidor de rede em escuta: os experimentos usam arquivos locais, sem sudo ou instalação. A disponibilidade efetiva de ferramentas e de /proc deve ser conferida com conta de aluno no LIAC.
+
+O verificador também confere fronteiras de páginas/blocos, equivalência dos logs, presença dos campos das 14 práticas e igualdade entre fontes do ZIP, arquivos C e códigos nos roteiros.

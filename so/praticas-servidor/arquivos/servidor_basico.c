@@ -20,7 +20,8 @@ int main(void) {
 
     char buffer[128];
     ssize_t bytes_lidos = read(fd_pedido, buffer, sizeof(buffer) - 1);
-    if (bytes_lidos > 0) buffer[bytes_lidos] = '\0';
+    if (bytes_lidos < 0) { perror("read"); close(fd_pedido); return 1; }
+    buffer[bytes_lidos] = '\0';
     close(fd_pedido);
 
     printf("Requisicao recebida pelo descritor de arquivo: %s", buffer);
@@ -30,12 +31,14 @@ int main(void) {
     if (fd_resposta < 0) { perror("open resposta"); return 1; }
 
     const char *resposta = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1>Servidor LIAC Online</h1>\n";
-    write(fd_resposta, resposta, strlen(resposta));
+    if (write(fd_resposta, resposta, strlen(resposta)) != (ssize_t)strlen(resposta)) {
+        perror("write resposta"); close(fd_resposta); return 1;
+    }
     close(fd_resposta);
     puts("Resposta gravada com sucesso em 'resposta.txt' (HTTP 200 OK).");
 
     // 4. Demonstrando o Erro 404 no kernel: tentando abrir arquivo que nao existe
-    puts("\n=== DEMONSTRANDO O ERRO 404 (SYSCALL AO KERNEL) ===");
+    puts("\n=== ENOENT NO KERNEL E DECISAO HTTP NA APLICACAO ===");
     int fd_invalido = open("pagina_inexistente.html", O_RDONLY);
     if (fd_invalido < 0) {
         printf("open('pagina_inexistente.html'): Retorno = -1\n");

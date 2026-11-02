@@ -51,21 +51,25 @@
       <section class="etapa" id="p14">
         <p class="label">P14 · 60 minutos · Dossiê e diagnóstico técnico</p>
         <h2>O caminho completo de uma requisição web</h2>
+        <div class="question"><label for="p14-previsao"><b>Antes de executar:</b> Dois clientes atendidos por processos distintos e por threads terão o mesmo tipo de isolamento? Que evidências permitem distinguir os casos?</label><textarea id="p14-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Relembre o percurso que uma requisição percorre dentro do sistema operacional:</p>
         <ol>
-          <li><b>Rede e E/S (Unidade 5):</b> O pacote de rede chega pela interface física, gerando uma interrupção de hardware que o kernel atende.</li>
-          <li><b>Chamada de Sistema (Unidade 1):</b> A requisição cruza a fronteira do modo kernel para o modo usuário através de chamadas como <code>read</code> e <code>write</code>.</li>
-          <li><b>Processos e Escalonamento (Unidade 2):</b> A CPU aloca uma fatia de tempo (Round Robin) para o processo ou thread trabalhadora do servidor.</li>
-          <li><b>Concorrência e Exclusão Mútua (Unidade 2):</b> O contador de acessos do site é incrementado com segurança através de um <code>Mutex</code>.</li>
-          <li><b>Memória Virtual e Cache (Unidade 3):</b> O servidor consulta o buffer de páginas na memória RAM. Se a imagem não estiver presente, ocorre uma Falta de Página (Page Fault) e o kernel busca os blocos no disco.</li>
-          <li><b>Sistema de Arquivos e Permissões (Unidade 4):</b> O Inode do arquivo <code>index.html</code> é consultado para confirmar as permissões de leitura pública (644).</li>
-          <li><b>Buffers de E/S e Logs (Unidade 5):</b> A resposta HTTP 200 OK é transmitida de volta ao cliente e a linha de acesso é acumulada no buffer do arquivo <code>access.log</code>.</li>
+          <li><b>Rede e E/S:</b> o kernel recebe os dados da interface e os disponibiliza ao processo. As práticas desta trilha não abriram sockets nem capturaram tráfego; esta etapa é uma explicação conceitual.</li>
+          <li><b>Chamadas de sistema:</b> o processo solicita leitura e escrita ao kernel. ENOENT informa arquivo ausente; a aplicação escolhe construir uma resposta HTTP 404.</li>
+          <li><b>Escalonamento:</b> tarefas prontas disputam CPU. FCFS, SJF e RR foram modelos didáticos; a simulação não identifica a política efetiva do Linux.</li>
+          <li><b>Isolamento e concorrência:</b> processos têm espaços virtuais separados; threads do mesmo processo compartilham dados e precisam coordenar atualizações. Mutex protege a região crítica, não todo acesso ao servidor automaticamente.</li>
+          <li><b>Memória e arquivos:</b> ausência no cache da aplicação não implica necessariamente page fault. Leituras de arquivos podem usar o page cache do kernel; acessos à memória virtual podem gerar faltas, inclusive sem leitura do disco.</li>
+          <li><b>Permissões:</b> o kernel verifica o acesso segundo identidade e permissões dos arquivos e diretórios. Modo 644 não publica um arquivo na web por si só: o serviço precisa ter acesso e configurá-lo para atendimento.</li>
+          <li><b>Resposta e logs:</b> um servidor real envia a resposta ao cliente e registra o atendimento. Nesta trilha, respostas e logs foram arquivos locais; stdio e page cache podem adiar transferências. Encerrar a escrita não demonstra persistência no dispositivo.</li>
         </ol>
 
         <div class="question">
           <label for="p14-dossie">Dossiê do Servidor: Com base nas evidências coletadas nas práticas P01 a P13, redija uma explicação técnica de como o sistema operacional garante que dois clientes acessando o servidor ao mesmo tempo não interfiram na memória um do outro e recebam suas páginas sem corrupção de dados:</label>
-          <textarea id="p14-dossie" rows="6" placeholder="Sintetize a integração entre isolamento de processos (fork/threads), memória virtual (espaço de endereçamento privado) e exclusão mútua (mutex)."></textarea>
+          <textarea id="p14-dossie" rows="6" placeholder="Sintetize a integração entre isolamento entre processos e compartilhamento entre threads, memória virtual (espaço de endereçamento privado) e exclusão mútua (mutex)."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Compare dois projetos: um processo por cliente e threads no mesmo processo. Use ao menos três evidências das práticas, identifique dados compartilhados e proponha uma proteção. Diante de um arquivo ausente, explique separadamente errno, decisão HTTP e registro de log.</p>
+        <div class="question"><label for="p14-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p14-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí o dossiê da P14</label>
       </section>
 

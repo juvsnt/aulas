@@ -51,6 +51,8 @@
         </nav>
       </section>
 
+      <section class="etapa"><h2>O que esta unidade permite observar</h2><p>Sem buffer de stdio ainda pode haver page cache no kernel. A quantidade de writes de stdio não é fixa; uma chamada de sistema pode retornar ao mesmo processo sem troca de contexto. write e fclose não asseguram persistência imediata. Load average conta tarefas executáveis ou em espera ininterruptível, não porcentagem de CPU. Em contêineres, /proc pode expor dados do host ou restringir informações.</p></section>
+
       <section class="etapa">
         <h2>Prepare sua pasta de trabalho</h2>
         <div class="command">
@@ -65,7 +67,8 @@ pwd</code></pre>
       <section class="etapa" id="p12">
         <p class="label">P12 · 60 minutos · Buffers de E/S</p>
         <h2>Gravando o access.log com e sem buffer</h2>
-        <p>Crie o programa <code>logs_buffer.c</code>. Ele simula a gravação de 100 requisições: primeiro de forma direta sem buffer (100 chamadas <code>write</code> ao kernel) e depois com bufferização na memória do processo (1 lote para o disco):</p>
+        <div class="question"><label for="p12-previsao"><b>Antes de executar:</b> Os dois métodos produzirão o mesmo conteúdo? Sem buffer da biblioteca C significa sem cache no kernel?</label><textarea id="p12-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
+        <p>Crie o programa <code>logs_buffer.c</code>. Ele simula a gravação de 100 requisições: primeiro de forma direta sem buffer (100 chamadas <code>write</code> ao kernel) e depois com bufferização na memória do processo (agrupamento de escritas pela biblioteca C):</p>
         <div class="command">
           <div class="command-head"><span>Criar logs_buffer.c</span><button class="copy" type="button">Copiar</button></div>
           <pre tabindex="0"><code>cat &gt; logs_buffer.c &lt;&lt;'FIM'
@@ -82,25 +85,29 @@ int main(void) {
 
     printf("=== GRAVANDO %d LOGS DE ACESSO DO SERVIDOR NO DISCO ===\n", TOTAL_LOGS);
 
+    // Metodo 1: Sem buffer da biblioteca C; o kernel ainda pode usar page cache.
     int fd_direto = open("logs_direto.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    if (fd_direto < 0) return 1;
+    if (fd_direto &lt; 0) return 1;
 
-    for (int i = 0; i < TOTAL_LOGS; i++) {
-        write(fd_direto, linha_log, len);
+    for (int i = 0; i &lt; TOTAL_LOGS; i++) {
+        if (write(fd_direto, linha_log, len) != (ssize_t)len) {
+            perror("write"); close(fd_direto); return 1;
+        }
     }
     close(fd_direto);
 
+    // Metodo 2: Com buffer de E/S (dados acumulados na memoria do processo)
     FILE *f_buffer = fopen("logs_buffer.txt", "w");
     if (!f_buffer) return 1;
 
-    for (int i = 0; i < TOTAL_LOGS; i++) {
-        fputs(linha_log, f_buffer);
+    for (int i = 0; i &lt; TOTAL_LOGS; i++) {
+        if (fputs(linha_log, f_buffer) == EOF) { perror("fputs"); fclose(f_buffer); return 1; }
     }
-    fclose(f_buffer);
+    if (fclose(f_buffer) == EOF) { perror("fclose"); return 1; }
 
     puts("Arquivo 'logs_direto.txt' gerado com 100 chamadas de sistema write().");
     puts("Arquivo 'logs_buffer.txt' gerado com bufferizacao eficiente da biblioteca C.");
-    puts("\nConclusao de SO: Buffers reduzem drasticamente as mudancas de contexto para o kernel.");
+    puts("\nConclusao de SO: Buffers podem reduzir chamadas de sistema e transicoes de modo.");
 
     return 0;
 }
@@ -110,8 +117,11 @@ gcc -std=c11 -Wall -Wextra -O0 logs_buffer.c -o logs_buffer
         </div>
         <div class="question">
           <label for="p12-resposta">Por que fazer 100 chamadas de sistema individuais é muito mais custoso para a CPU do que acumular os dados em um buffer de memória e gravar tudo de uma vez?</label>
-          <textarea id="p12-resposta" placeholder="Explique o custo de troca de contexto entre modo usuário e modo kernel em operações de E/S."></textarea>
+          <textarea id="p12-resposta" placeholder="Explique o custo das chamadas de sistema e distinga transição de modo de troca do processo em execução."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Confira os arquivos com wc -l e cmp logs_direto.txt logs_buffer.txt. Troque TOTAL_LOGS para 10, recompile e compare novamente. Se strace já estiver disponível e autorizado no LIAC, use strace -c -e write ./logs_buffer; sem ele, não declare uma contagem medida para stdio.</p>
+        <div class="question"><label for="p12-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p12-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P12</label>
       </section>
 
@@ -119,14 +129,15 @@ gcc -std=c11 -Wall -Wextra -O0 logs_buffer.c -o logs_buffer
       <section class="etapa" id="p13">
         <p class="label">P13 · 60 minutos · Telemetria do kernel e /proc</p>
         <h2>Painel de monitoramento do servidor em tempo real</h2>
-        <p>No Linux, o diretório <code>/proc</code> não fica no disco: ele é uma janela direta para a memória do kernel. Inspecione a carga da CPU (load average), a memória consumida e as interrupções de hardware:</p>
+        <div class="question"><label for="p13-previsao"><b>Antes de executar:</b> Load average é uma porcentagem de CPU? MemFree pequeno significa necessariamente falta de memória?</label><textarea id="p13-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
+        <p>No Linux, o diretório <code>/proc</code> não fica no disco: ele é um sistema de arquivos virtual com informações fornecidas pelo kernel. Inspecione a carga da CPU (load average), a memória consumida e as interrupções de hardware:</p>
         <div class="command">
           <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
           <pre tabindex="0"><code>echo "=== CARGA DO SERVIDOR (1min, 5min, 15min) ==="
 cat /proc/loadavg
 
 echo "=== MEMORIA VIRTUAL E FISICA DO SERVIDOR ==="
-grep -E "MemTotal|MemFree|Cached|Buffers" /proc/meminfo
+grep -E "MemTotal|MemFree|MemAvailable|Cached|Buffers" /proc/meminfo
 
 echo "=== INTERRUPCOES DE DISCO E REDE ATENDIDAS PELO KERNEL ==="
 head -n 10 /proc/interrupts</code></pre>
@@ -145,6 +156,9 @@ Buffers:  ... kB</pre>
           <label for="p13-resposta">O que significa o valor 'Cached' exibido em /proc/meminfo? Por que o sistema operacional usa a memória RAM livre para guardar cache de arquivos de disco?</label>
           <textarea id="p13-resposta" placeholder="Explique o papel do Page Cache do kernel Linux na velocidade de servidores web."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Inclua MemAvailable na consulta e repita as leituras após alguns segundos. Registre o que mudou e o que permaneceu estável. Se /proc/interrupts estiver vazio ou restrito, registre essa limitação; não tente alterar permissões do sistema.</p>
+        <div class="question"><label for="p13-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p13-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P13</label>
       </section>
 

@@ -24,19 +24,19 @@ int main(int argc, char **argv) {
     int tabela_frames[] = {5, 8, 2, -1};
     int total_paginas = 4;
 
-    if (numero_pagina < total_paginas) {
+    if (endereco_virtual >= 0 && numero_pagina < total_paginas) {
         int frame = tabela_frames[numero_pagina];
         if (frame >= 0) {
             long endereco_fisico = (frame * TAMANHO_PAGINA) + deslocamento;
             printf("Status: PAGINA PRESENTE NA RAM!\n");
             printf("Mapeada para o Frame Fisico: %d\n", frame);
-            printf("Endereco Fisico Real na RAM: %ld\n", endereco_fisico);
+            printf("Endereco fisico no modelo: %ld\n", endereco_fisico);
         } else {
             puts("Status: [PAGE FAULT] Pagina ausente da memoria RAM!");
-            puts("O kernel precisa suspender o processo e buscar a pagina no disco.");
+            puts("Neste modelo, a pagina precisaria ser buscada no disco; nao ocorre falta real.");
         }
     } else {
-        puts("Status: [SEGMENTATION FAULT] Endereco fora do espaco alocado!");
+        puts("Status: [ACESSO INVALIDO NO MODELO] Nenhum sinal real foi gerado!");
     }
 
     return 0;

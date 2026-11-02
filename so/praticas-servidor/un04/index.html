@@ -51,6 +51,8 @@
         </nav>
       </section>
 
+      <section class="etapa"><h2>O que esta unidade permite observar</h2><p>Permissões e links são operações reais, mas a alocação em blocos de 4096 bytes é um modelo aritmético. O sistema de arquivos do LIAC pode ser outro; o cálculo ignora metadados, arquivos esparsos e compressão. Todos os testes usam arquivos da sua própria pasta.</p></section>
+
       <section class="etapa">
         <h2>Prepare sua pasta de trabalho</h2>
         <div class="command">
@@ -65,6 +67,7 @@ pwd</code></pre>
       <section class="etapa" id="p10">
         <p class="label">P10 · 60 minutos · Inodes, links e permissões</p>
         <h2>Protegendo arquivos públicos e confidenciais do servidor</h2>
+        <div class="question"><label for="p10-previsao"><b>Antes de executar:</b> Em 644 e 600, quem pode ler e escrever? Um link simbólico copia o conteúdo do arquivo?</label><textarea id="p10-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Crie um arquivo público (<code>index.html</code>) e um arquivo confidencial do servidor (<code>config_segura.dat</code>). Ajuste suas permissões com <code>chmod</code> e crie um link simbólico (atalho):</p>
         <div class="command">
           <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
@@ -87,16 +90,20 @@ Arquivo: index.html | Inode: ... | Permissoes: -rw-r--r-- (644)
 Arquivo: config_segura.dat | Inode: ... | Permissoes: -rw------- (600)</pre>
         </div>
         <div class="question">
-          <label for="p10-resposta">Qual a diferença entre a permissão 644 de index.html e a permissão 600 de config_segura.dat? Por que arquivos de configuração de servidores nunca devem ter permissão 644 ou 777?</label>
+          <label for="p10-resposta">Qual a diferença entre a permissão 644 de index.html e a permissão 600 de config_segura.dat? Por que um arquivo que contém segredo exige restringir a leitura, e como o usuário/grupo do serviço influencia essa escolha?</label>
           <textarea id="p10-resposta" placeholder="Explique os riscos de permissões inadequadas em servidores e a função do chmod."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Mude apenas config_segura.dat para 640, confira com stat e restaure 600. Explique o acesso do grupo. Compare stat e stat -L no link: link e alvo são objetos diferentes. Não use senhas reais.</p>
+        <div class="question"><label for="p10-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p10-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P10</label>
       </section>
 
       <!-- PRÁTICA P11 -->
       <section class="etapa" id="p11">
         <p class="label">P11 · 60 minutos · Mapeamento em blocos e fragmentação</p>
-        <h2>Como o HTML é dividido em blocos de disco (ext4)</h2>
+        <h2>Como modelar a divisão do HTML em blocos</h2>
+        <div class="question"><label for="p11-previsao"><b>Antes de executar:</b> Para 10000 bytes e blocos de 4096, quantos blocos e quantos bytes de sobra você prevê?</label><textarea id="p11-previsao" placeholder="Registre sua previsão e a justificativa antes de executar."></textarea></div>
         <p>Crie o programa <code>disco_blocos.c</code>. Ele calcula a alocação de blocos de 4 KB no sistema de arquivos para um arquivo de 10.000 bytes e mede a fragmentação interna no último bloco:</p>
         <div class="command">
           <div class="command-head"><span>Criar disco_blocos.c</span><button class="copy" type="button">Copiar</button></div>
@@ -107,28 +114,36 @@ Arquivo: config_segura.dat | Inode: ... | Permissoes: -rw------- (600)</pre>
 #define TAMANHO_BLOCO 4096 // 4 KB por bloco no sistema de arquivos ext4
 
 int main(int argc, char **argv) {
-    long tamanho_arquivo = (argc > 1) ? atol(argv[1]) : 10000;
+    long tamanho_arquivo = (argc &gt; 1) ? atol(argv[1]) : 10000; // Ex: pagina index.html de 10 KB
 
-    printf("=== ARMAZENAMENTO NO SISTEMA DE ARQUIVOS (EXT4) ===\n");
+    if (tamanho_arquivo &lt; 0 || tamanho_arquivo &gt; 1000000000L) {
+        fputs("Use um tamanho entre 0 e 1000000000 bytes.\n", stderr); return 1;
+    }
+    printf("=== MODELO DE ALOCACAO: BLOCOS DE 4096 BYTES ===\n");
     printf("Tamanho do arquivo index.html: %ld bytes\n", tamanho_arquivo);
     printf("Tamanho do bloco de disco:     %d bytes (4 KB)\n\n", TAMANHO_BLOCO);
 
+    // Calculo da quantidade de blocos necessarios:
     long blocos_necessarios = (tamanho_arquivo + TAMANHO_BLOCO - 1) / TAMANHO_BLOCO;
     long espaco_alocado_disco = blocos_necessarios * TAMANHO_BLOCO;
     long fragmentacao_interna = espaco_alocado_disco - tamanho_arquivo;
 
     printf("1. Blocos de disco alocados:   %ld bloco(s)\n", blocos_necessarios);
-    printf("2. Espaco real ocupado no SSD: %ld bytes\n", espaco_alocado_disco);
+    printf("2. Espaco alocado no modelo:   %ld bytes\n", espaco_alocado_disco);
     printf("3. Fragmentacao Interna:       %ld bytes (desperdicados no ultimo bloco)\n\n",
            fragmentacao_interna);
 
+    // Consulta de um byte especifico (ex: byte 5000)
     long byte_busca = 5000;
     long bloco_logico = byte_busca / TAMANHO_BLOCO;
     long deslocamento_bloco = byte_busca % TAMANHO_BLOCO;
 
+    if (byte_busca &gt;= tamanho_arquivo) {
+        puts("Byte 5000 fora do arquivo: nenhum mapeamento solicitado."); return 0;
+    }
     printf("Localizando o byte %ld dentro do arquivo:\n", byte_busca);
-    printf("-> Bloco Logico do Inode: %ld\n", bloco_logico);
-    printf("-> Deslocamento no bloco: %ld bytes\n", deslocamento_bloco);
+    printf("-&gt; Bloco Logico do Inode: %ld\n", bloco_logico);
+    printf("-&gt; Deslocamento no bloco: %ld bytes\n", deslocamento_bloco);
 
     return 0;
 }
@@ -138,12 +153,12 @@ gcc -std=c11 -Wall -Wextra -O0 disco_blocos.c -o disco_blocos
         </div>
         <div class="expected">
           <div class="expected-label">Saída esperada</div>
-          <pre tabindex="0">=== ARMAZENAMENTO NO SISTEMA DE ARQUIVOS (EXT4) ===
+          <pre tabindex="0">=== MODELO DE ALOCACAO: BLOCOS DE 4096 BYTES ===
 Tamanho do arquivo index.html: 10000 bytes
 Tamanho do bloco de disco:     4096 bytes (4 KB)
 
 1. Blocos de disco alocados:   3 bloco(s)
-2. Espaco real ocupado no SSD: 12288 bytes
+2. Espaco alocado no modelo:   12288 bytes
 3. Fragmentacao Interna:       2288 bytes (desperdicados no ultimo bloco)
 
 Localizando o byte 5000 dentro do arquivo:
@@ -154,6 +169,9 @@ Localizando o byte 5000 dentro do arquivo:
           <label for="p11-resposta">Um arquivo de 10.000 bytes exigiu quantos blocos de 4 KB? Por que houve 2.288 bytes de fragmentação interna no disco?</label>
           <textarea id="p11-resposta" placeholder="Explique o motivo de o sistema de arquivos alocar blocos inteiros e o que é fragmentação interna."></textarea>
         </div>
+        <h3>Mudança orientada e evidências</h3>
+        <p>Execute com 8192 e 8193. Compare blocos e fragmentação e explique por que um byte adicional exige outro bloco no modelo. O programa calcula valores; não cria arquivo nem mede o SSD do LIAC.</p>
+        <div class="question"><label for="p11-evidencias">Registre o comando ou alteração, um trecho da saída original e da saída modificada e sua interpretação. Sua previsão se confirmou? Qual limite impede generalizar o resultado?</label><textarea id="p11-evidencias" rows="5" placeholder="Comando/alteração → antes → depois → interpretação → limite da evidência."></textarea></div>
         <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P11</label>
       </section>
 
