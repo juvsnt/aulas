@@ -51,3 +51,7 @@ python3 -m http.server 8000
 Abra `/aoc/praticas/`. O CSS da página de entrada da disciplina está em `pages/disciplinas.css` no repositório e é copiado para a raiz na publicação. O workflow do GitHub Pages copia `aoc/praticas` para `_site/aoc/praticas`.
 
 A extensão GDB não foi executada localmente por ausência dessa ferramenta. Android/iPhone físicos e as quotas reais requerem teste no LIAC. O roteiro principal pode ser conferido com navegador emulado e sem JavaScript; isso não substitui uma aula piloto no servidor.
+
+## Integração com hardware e planejamento
+
+As sete unidades possuem uma conexão de bancada com campo exportável nas respostas. O dossiê progressivo termina em uma recomendação de hardware para dois cenários de uso da estação, com requisitos declarados, evidências e limites. A observação pode usar máquinas desligadas, fotos e documentação identificadas. O guia docente propõe 13 blocos de 60 minutos, retoma RISC/CISC após CPU e integra a avaliação à rubrica existente. A distribuição deve ser conferida com a carga horária institucional; não equivale automaticamente às 60 horas-aulas do PPC.
