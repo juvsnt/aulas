@@ -15,6 +15,8 @@ on:
       - "aoc/praticas/**"
       - "aoc/praticas-game/**"
       - "sd/materiais/**"
+      - "sd/praticas/**"
+      - "sd/PLANEJAMENTO_PRATICAS.md"
       - "so/index.html"
       - "aoc/index.html"
       - "sd/index.html"
@@ -88,6 +90,7 @@ jobs:
           cp -r aoc/praticas _site/aoc/praticas
           cp -r aoc/praticas-game _site/aoc/praticas-game
           cp -r sd/materiais _site/sd/materiais
+          cp -r sd/praticas _site/sd/praticas
 
       - uses: actions/upload-pages-artifact@v3
         with:
