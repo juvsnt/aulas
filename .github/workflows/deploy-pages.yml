@@ -11,6 +11,9 @@ on:
       - "so/materiais/**"
       - "aoc/materiais/**"
       - "sd/materiais/**"
+      - "so/index.html"
+      - "aoc/index.html"
+      - "sd/index.html"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -66,6 +69,10 @@ jobs:
         run: |
           mkdir -p _site/aoc _site/so _site/sd
           cp pages/index.html _site/index.html
+          cp pages/disciplinas.css _site/disciplinas.css
+          cp so/index.html _site/so/index.html
+          cp aoc/index.html _site/aoc/index.html
+          cp sd/index.html _site/sd/index.html
           cp -r so/quiz-threads _site/so/quiz-threads
           cp -r aoc/arqxorg/dist _site/aoc/arqxorg
           cp -r aoc/aoc_mips-mars/dist _site/aoc/aoc_mips-mars
