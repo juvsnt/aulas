@@ -10,6 +10,7 @@ on:
       - "so/terminal-de-bolso/**"
       - "so/materiais/**"
       - "aoc/materiais/**"
+      - "sd/materiais/**"
       - "pages/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
@@ -63,7 +64,7 @@ jobs:
       # Aulas em HTML estatico (sem build) sao copiadas direto da pasta.
       - name: Assemble Pages site
         run: |
-          mkdir -p _site/aoc _site/so
+          mkdir -p _site/aoc _site/so _site/sd
           cp pages/index.html _site/index.html
           cp -r so/quiz-threads _site/so/quiz-threads
           cp -r aoc/arqxorg/dist _site/aoc/arqxorg
@@ -71,6 +72,7 @@ jobs:
           cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
           cp -r so/materiais _site/so/materiais
           cp -r aoc/materiais _site/aoc/materiais
+          cp -r sd/materiais _site/sd/materiais
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,0 +1,62 @@
+[
+  {
+    "arquivo": "unidade 01/un01t01-fundamentos.pdf",
+    "destino": "pdfs/un01t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 02/un02t01-ipc.pdf",
+    "destino": "pdfs/un02t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 03/un03t01-tempo-sincronizacao-coord.pdf",
+    "destino": "pdfs/un03t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 04/un04t01-coordenação_distribuida.pdf",
+    "destino": "pdfs/un04t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 05/un05t01-difusao_comunicacao_em_grupo.pdf",
+    "destino": "pdfs/un05t01.pdf",
+    "paginas": 14
+  },
+  {
+    "arquivo": "unidade 06/un06t01-concorrencia_e_compartilhamento_de_informacao.pdf",
+    "destino": "pdfs/un06t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 07/un07t01-Transações_Distribuídas_e_Protocolo_2PC.pdf",
+    "destino": "pdfs/un07t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 08/uni08t01-tolerancia_a_falhas.pdf",
+    "destino": "pdfs/un08t01.pdf",
+    "paginas": 14
+  },
+  {
+    "arquivo": "unidade 09/un09t01-sistemas_de_arquivos_distribuídos.pdf",
+    "destino": "pdfs/un09t01.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 09/un09t02-Serviços_de_Nomes_Distribuídos.pdf",
+    "destino": "pdfs/un09t02.pdf",
+    "paginas": 15
+  },
+  {
+    "arquivo": "unidade 09/un09t03-Memória_Compartilhada_Distribuída.pdf",
+    "destino": "pdfs/un09t03.pdf",
+    "paginas": 14
+  },
+  {
+    "arquivo": "unidade 10/uni10t01-Segurança_em_Sistemas_Distribuídos.pdf",
+    "destino": "pdfs/un10t01.pdf",
+    "paginas": 15
+  }
+]
