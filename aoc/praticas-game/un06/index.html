@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 6: A meta dos 60 FPS: o pipeline grafico. Estagios de pipeline, bolhas, CPI e speedup no console retro.">
+  <meta name="theme-color" content="#13202a">
+  <title>A meta dos 60 FPS: o pipeline gráfico · Unidade 06 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un06">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 06</p>
+      <h1>A meta dos 60 FPS: o pipeline gráfico</h1>
+      <p class="lede">Descubra como os processadores executam múltiplos quadros simultaneamente sobrepondo etapas em um pipeline e veja o que causa as travadas de imagem (stuttering).</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Pipeline, estágios, bolhas (stalls), CPI e speedup</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>O desafio dos 60 quadros por segundo (60 FPS)</h2>
+        <p>Para um jogo rodar com fluidez impecável a <b>60 FPS</b>, o hardware precisa gerar um quadro novo a cada <b>16,6 milissegundos</b>! Cada quadro precisa passar por 4 etapas sequenciais: <b>E (Entrada)</b>, <b>F (Física)</b>, <b>C (Colisão)</b> e <b>R (Renderização)</b>. Se o console executasse um quadro de cada vez do início ao fim (modo sequencial), o jogo ficaria lento. A solução da arquitetura de computadores é o <b>Pipeline</b>: sobrepor as etapas para que, enquanto um quadro está sendo desenhado na tela, a física do próximo já esteja sendo calculada!</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta da Unidade 6</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un06
+cd ~/atividades/aoc-game/un06
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un06</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un06"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Simulador de pipeline</span>
+          <h2 id="titulo-2">Crie o simulador de pipeline gráfico</h2>
+        </div>
+        <p>Crie o arquivo <code>pipeline_fps.c</code> que visualiza o avanço temporal dos quadros pelos 4 estágios da CPU:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar pipeline_fps.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; pipeline_fps.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+int main(int argc, char **argv) {
+    int quadros = 6;
+    int bolhas = (argc > 1) ? atoi(argv[1]) : 0;
+    if (bolhas < 0 || bolhas > 3) bolhas = 0;
+
+    int estagios = 4; // E=Entrada, F=Fisica, C=Colisao, R=Renderizacao
+    int ciclos_total = quadros + (estagios - 1) + bolhas;
+
+    printf("=== PIPELINE GRAFICO DO MOTOR DE JOGO (%d QUADROS) ===\n", quadros);
+    printf("Estagios: E=Entrada | F=Fisica | C=Colisao | R=Renderizacao\n");
+    if (bolhas > 0) {
+        printf("Simulando %d ciclo(s) de bolha/engasgo (stall) a partir do Quadro 3!\n", bolhas);
+    }
+    printf("\n");
+
+    const char nomes_estagios[] = "EFCR";
+
+    for (int q = 0; q < quadros; q++) {
+        int atraso = (q >= 2) ? bolhas : 0;
+        int inicio = q + atraso;
+
+        printf("Quadro %d: ", q + 1);
+        for (int t = 0; t < ciclos_total; t++) {
+            int estagio_idx = t - inicio;
+            if (estagio_idx >= 0 && estagio_idx < estagios) {
+                printf("%c ", nomes_estagios[estagio_idx]);
+            } else {
+                printf(". ");
+            }
+        }
+        printf("\n");
+    }
+
+    printf("\n=== METRICAS DE DESEMPENHO E 60 FPS ===\n");
+    int sem_pipeline = quadros * estagios;
+    printf("Tempo sequencial (sem pipeline): %d ciclos\n", sem_pipeline);
+    printf("Tempo com pipeline:              %d ciclos\n", ciclos_total);
+    printf("Aceleracao (Speedup):            %.2fx mais rapido\n", (double)sem_pipeline / ciclos_total);
+    if (bolhas > 0) {
+        puts("Aviso: As bolhas causaram perda de ciclos e queda momentanea de FPS (stuttering).");
+    } else {
+        puts("Pipeline ideal: 60 FPS cravados e transicoes perfeitas!");
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 pipeline_fps.c -o pipeline_fps</code></pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">O programa compilou com sucesso sem erros?</label>
+          <textarea id="resposta-2" placeholder="Confirme a compilação de pipeline_fps."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Pipeline perfeito</span>
+          <h2 id="titulo-3">Executando o fluxo ideal (60 FPS cravados)</h2>
+        </div>
+        <p>Execute o pipeline com 0 bolhas para ver a sobreposição perfeita dos quadros:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>./pipeline_fps 0</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">Quadro 1: E F C R . . . . . 
+Quadro 2: . E F C R . . . . 
+Quadro 3: . . E F C R . . . 
+Quadro 4: . . . E F C R . . 
+Quadro 5: . . . . E F C R . 
+Quadro 6: . . . . . E F C R 
+
+=== METRICAS DE DESEMPENHO E 60 FPS ===
+Tempo sequencial (sem pipeline): 24 ciclos
+Tempo com pipeline:              9 ciclos
+Aceleracao (Speedup):            2.67x mais rapido
+Pipeline ideal: 60 FPS cravados e transicoes perfeitas!</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-3">Sem pipeline, 6 quadros de 4 estágios levariam 24 ciclos. Em quantos ciclos o pipeline terminou esses mesmos 6 quadros?</label>
+          <textarea id="resposta-3" placeholder="Anote a quantidade de ciclos com pipeline e a aceleração alcançada."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Bolha e travamento</span>
+          <h2 id="titulo-4">Simulando o temido stuttering (engasgo de FPS)</h2>
+        </div>
+        <p>Se o Quadro 3 sofrer uma dependência de dados ou cálculo demorado de física, o processador precisará pausar o pipeline por 2 ciclos (bolha de stall):</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>./pipeline_fps 2</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho da saída com 2 bolhas</div>
+          <pre tabindex="0">Quadro 1: E F C R . . . . . . . 
+Quadro 2: . E F C R . . . . . . 
+Quadro 3: . . . . E F C R . . . 
+Quadro 4: . . . . . E F C R . . 
+...
+Tempo com pipeline:              11 ciclos
+Aceleracao (Speedup):            2.18x mais rapido
+Aviso: As bolhas causaram perda de ciclos e queda momentanea de FPS (stuttering).</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-4">O que aconteceu visualmente com a linha do Quadro 3? Por que isso causa queda de fluidez perceptível para o jogador?</label>
+          <textarea id="resposta-4" placeholder="Explique como a bolha no pipeline afeta a entrega constante de quadros na tela."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio teórico</span>
+          <h2 id="titulo-5">E se o jogo rodar por 1.000 quadros?</h2>
+        </div>
+        <p>A latência de um único quadro continua sendo de 4 estágios. Mas quando o pipeline está cheio, sai <b>1 quadro pronto a cada ciclo</b>!</p>
+        <p>Para $N = 1000$ quadros sem bolhas, o tempo com pipeline seria de apenas $1000 + (4 - 1) = 1003$ ciclos, enquanto no modo sequencial levaria $1000 \times 4 = 4000$ ciclos.</p>
+        <div class="question">
+          <label for="resposta-5">Qual é a aceleração aproximada para um número muito grande de quadros ($4000 / 1003$)? A que número esse speedup se aproxima?</label>
+          <textarea id="resposta-5" placeholder="Calcule o speedup aproximado e relacione com a quantidade de estágios do pipeline (4 estágios = aceleração máxima próxima a 4x)."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un05/">← Prática anterior (Unidade 05)</a>
+      <a href="../un07/">Próxima prática (Unidade 07) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 1: Vidas, inventário e o estouro de bits no console retrô. Laboratório AOC no terminal Linux.">
+  <meta name="theme-color" content="#13202a">
+  <title>Vidas, inventário e o estouro de bits · Unidade 01 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un01">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 01</p>
+      <h1>Vidas, inventário e o estouro de bits</h1>
+      <p class="lede">Investigue como o computador armazena a vida do herói em 1 byte, compreenda o clássico bug de overflow ao ultrapassar o limite e compacte poderes em bits.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Bits, bytes, bases numéricas e máscaras lógicas</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>O console de 8 bits e a memória do herói</h2>
+        <p>No desenvolvimento do nosso jogo 2D, a memória RAM do console guarda o estado do personagem. Em sistemas com restrição de memória, cada byte conta! Em vez de usar variáveis grandes, a vida do herói é armazenada em apenas <b>1 byte sem sinal</b> (com valores possíveis de 0 a 255), e os itens que ele carrega (espada, escudo, chave) são representados por bits individuais de status.</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta de trabalho</h2>
+        </div>
+        <p>Acesse o terminal do LIAC e crie uma pasta exclusiva para a Unidade 1:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un01
+cd ~/atividades/aoc-game/un01
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada (com seu nome de usuário)</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un01</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da sua pasta exibido pelo comando pwd:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un01"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Inventário da máquina</span>
+          <h2 id="titulo-2">Conhecendo o hardware do servidor</h2>
+        </div>
+        <p>Antes de escrever o programa do jogo, vamos verificar a arquitetura do processador onde nosso código será compilado e executado:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>uname -m
+LC_ALL=C lscpu | grep "Model name\|Architecture"</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída típica do servidor LIAC</div>
+          <pre tabindex="0">x86_64
+Architecture:            x86_64
+Model name:              Intel(R) Core(TM) ...</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">Qual arquitetura de CPU foi informada? Ela é de 32 bits ou 64 bits?</label>
+          <textarea id="resposta-2" placeholder="Registre a arquitetura observada."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Representação em código</span>
+          <h2 id="titulo-3">Crie e execute o programa do herói</h2>
+        </div>
+        <p>Cole o bloco completo para criar o arquivo <code>personagem.c</code> e execute:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar personagem.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; personagem.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+
+int main(void) {
+    // 1. Representacao da vida do personagem em 1 byte (0 a 255)
+    unsigned char vida = 250;
+    unsigned char pocao_cura = 10;
+    
+    // Demonstrando o estouro (overflow/wrap-around) tipico de jogos antigos:
+    unsigned char vida_apos_cura = vida + pocao_cura;
+
+    printf("=== STATUS DO PERSONAGEM (8 BITS) ===\n");
+    printf("Vida inicial: %u\n", vida);
+    printf("Tomou pocao de cura de +%u vidas...\n", pocao_cura);
+    printf("Vida resultante com overflow de 8 bits: %u (o valor estourou!)\n\n", vida_apos_cura);
+
+    // 2. Inventario e flags de status compactadas em bits:
+    // Bit 0 (1): Vivo
+    // Bit 1 (2): Espada equipada
+    // Bit 2 (4): Escudo equipado
+    // Bit 3 (8): Chave do castelo
+    unsigned char status = 1 | 2 | 8; // Heroi vivo, com espada e chave (total = 11)
+
+    printf("=== FLAGS DE INVENTARIO EM BITS ===\n");
+    printf("Valor da variavel status: decimal=%u | hexadecimal=0x%02X\n", status, status);
+    printf("Bit 0 - Heroi vivo?         %s\n", (status &amp; 1) ? "SIM" : "NAO");
+    printf("Bit 1 - Possui espada?      %s\n", (status &amp; 2) ? "SIM" : "NAO");
+    printf("Bit 2 - Possui escudo?      %s\n", (status &amp; 4) ? "SIM" : "NAO");
+    printf("Bit 3 - Tem chave da porta? %s\n", (status &amp; 8) ? "SIM" : "NAO");
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 personagem.c -o personagem
+./personagem</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== STATUS DO PERSONAGEM (8 BITS) ===
+Vida inicial: 250
+Tomou pocao de cura de +10 vidas...
+Vida resultante com overflow de 8 bits: 4 (o valor estourou!)
+
+=== FLAGS DE INVENTARIO EM BITS ===
+Valor da variavel status: decimal=11 | hexadecimal=0x0B
+Bit 0 - Heroi vivo?         SIM
+Bit 1 - Possui espada?      SIM
+Bit 2 - Possui escudo?      NAO
+Bit 3 - Tem chave da porta? SIM</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-3">O programa compilou e executou com sucesso? Que valor apareceu na vida final após a cura?</label>
+          <textarea id="resposta-3" placeholder="Anote a resposta observada."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Interpretação</span>
+          <h2 id="titulo-4">Por que a vida virou 4? O mistério do overflow</h2>
+        </div>
+        <p>Em 1 byte (8 bits), o maior valor positivo sem sinal é <b>255</b> ($11111111_2$).</p>
+        <p>Quando somamos $250 + 10 = 260$, esse número precisaria de 9 bits ($100000100_2$). Como o registrador de 8 bits só consegue guardar os últimos 8 bits, o 9º bit (mais à esquerda) é descartado. Sobram apenas os bits $00000100_2$, que em decimal vale exatamente <b>4</b>!</p>
+        <div class="question">
+          <label for="resposta-4">Explique com suas palavras por que o jogador que tinha 250 de vida ficou apenas com 4 de vida após tomar a poção. Como você corrigiria isso na lógica do jogo?</label>
+          <textarea id="resposta-4" placeholder="Explique o fenômeno de estouro (overflow) e como evitar que a vida passe de 255."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">Equipando o escudo do herói</h2>
+        </div>
+        <p>No programa original, o herói não possuía o escudo (o Bit 2 de valor 4 estava desligado). Altere a linha do <code>status</code> no código para incluir o escudo (adicione <code>| 4</code>), recompile e execute:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>sed -i 's/1 | 2 | 8/1 | 2 | 4 | 8/' personagem.c
+gcc -std=c11 -Wall -Wextra -O0 personagem.c -o personagem
+./personagem</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada no desafio</div>
+          <pre tabindex="0">Valor da variavel status: decimal=15 | hexadecimal=0x0F
+Bit 0 - Heroi vivo?         SIM
+Bit 1 - Possui espada?      SIM
+Bit 2 - Possui escudo?      SIM
+Bit 3 - Tem chave da porta? SIM</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-5">Qual o novo valor decimal e hexadecimal de status? O escudo agora aparece como SIM?</label>
+          <textarea id="resposta-5" placeholder="Registre o novo valor de status e confirme se o escudo foi ativado."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas respostas nos campos acima e clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto no seu celular ou computador.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../">← Percurso</a>
+      <a href="../un02/">Próxima prática (Unidade 02) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

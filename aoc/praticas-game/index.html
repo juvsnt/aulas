@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Laboratório prático de AOC baseado em um console retrô 2D: bits, instruções, CPU, cache, E/S, 60 FPS e paralelismo no terminal Linux do LIAC.">
+  <meta name="theme-color" content="#13202a">
+  <title>Por dentro do console: sete investigações · Laboratório AOC | LIAC</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-unit="percurso">
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../">← Disciplina AOC</a>
+      <a href="index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · Arquitetura e Organização de Computadores</p>
+      <h1>Por dentro do console:<br>sete investigações.</h1>
+      <p class="lede">Descubra como o hardware dá vida a um jogo 2D: desde os bits de vida do herói e colisões em Assembly até a memória cache do mapa, os 60 FPS no pipeline e a horda de inimigos em processadores multicore.</p>
+      <div class="meta">
+        <span><b>7 práticas</b></span>
+        <span><b>60–75 min</b> por unidade</span>
+        <span><b>Sem instalação pelo aluno</b></span>
+        <span><b>C11 simples e intuitivo</b></span>
+      </div>
+      <div class="dica">
+        <b>Prefere a abordagem de sensores físicos?</b> Você também pode cursar a trilha científica alternativa: <a href="../praticas/">Uma estação, sete investigações →</a>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O contexto</p>
+        <h2>Você faz parte da equipe de engenharia do console retrô</h2>
+        <p>Em vez de números abstratos soltos, cada investigação revela uma parte do computador resolvendo um desafio real de um jogo retrô 2D:</p>
+        <div class="diagram">Vidas e inventário → colisão em Assembly → CPU no combate → cache no mapa → joystick e savegame → 60 FPS e pipeline → inimigos em multicore</div>
+        <p>Todos os programas foram escritos em C limpo e direto, pensados especialmente para facilitar o aprendizado prático sem sobrecarga de sintaxe.</p>
+      </section>
+
+      <section class="etapa">
+        <h2>Antes de começar</h2>
+        <ol>
+          <li>Acesse <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal.liac-lab.dev (nova aba)</a> com seu login institucional do LIAC.</li>
+          <li>Mantenha o roteiro aberto no celular ou computador e copie os blocos de comando com o botão <b>Copiar</b>.</li>
+          <li>Se for seu primeiro contato com o terminal, faça antes o <a href="../../so/terminal-de-bolso/">Terminal de Bolso</a>.</li>
+          <li>As pastas ficam organizadas em <code>~/atividades/aoc-game/un01</code> a <code>un07</code>. Cada prática é independente e pode ser feita separadamente.</li>
+        </ol>
+      </section>
+
+      <section class="etapa">
+        <h2>Escolha a unidade</h2>
+        <ol class="route">
+          <li>
+            <span class="badge">UNIDADE 01 · 60 min</span>
+            <h3><a href="un01/">Vidas, inventário e o estouro de bits</a></h3>
+            <p>Descubra como a memória guarda a vida do herói em 1 byte, o famoso bug de overflow ao curar acima do limite e como compactar espadas e chaves em bits.</p>
+            <span class="small">Bits, bytes, bases numéricas, máscaras lógicas e overflow</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 02 · 60 min</span>
+            <h3><a href="un02/">A caminhada do herói em instruções da ISA</a></h3>
+            <p>Veja como o comando de andar e a colisão com a parede viram instruções reais x86-64 (<code>mov</code>, <code>add</code>, <code>cmp</code> e desvios) na desmontagem do executável.</p>
+            <span class="small">Compilação C → Assembly x86-64 e inspeção com objdump</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 03 · 60 min</span>
+            <h3><a href="un03/">A CPU em batalha: o golpe do monstro</a></h3>
+            <p>Acompanhe o ciclo de instrução (Busca, Decodifica, Executa) na CPU: o registrador PC, a ULA subtraindo o dano e a flag Zero disparando o Game Over.</p>
+            <span class="small">Ciclo de instrução, registradores, ULA e flags de condição</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 04 · 60 min</span>
+            <h3><a href="un04/">Renderizando o mapa da fase na memória cache</a></h3>
+            <p>Entenda por que desenhar o mapa do jogo linha por linha aproveita a linha de cache (Hits), enquanto desenhar aos saltos por coluna gera chuva de Misses lentos.</p>
+            <span class="small">Hierarquia de memória, localidade espacial e simulação de cache</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 05 · 60 min</span>
+            <h3><a href="un05/">O joystick e a gravação do savegame</a></h3>
+            <p>Compare ler os botões do controle por Polling versus Interrupção, e investigue por que gravar o savegame em bloco com buffer é muito mais rápido.</p>
+            <span class="small">E/S, barramentos, polling, interrupções e buffers</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 06 · 60 min</span>
+            <h3><a href="un06/">A meta dos 60 FPS: o pipeline gráfico</a></h3>
+            <p>Descubra como o console processa múltiplos quadros simultaneamente em estágios sobrepostos e o que acontece quando uma bolha (stall) faz o jogo engasgar.</p>
+            <span class="small">Estágios do pipeline, speedup, bolhas, CPI e taxa de quadros</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 07 · 60 min</span>
+            <h3><a href="un07/">Horda de 1.000 inimigos em processadores multicore</a></h3>
+            <p>Divida o cálculo de física de uma horda de inimigos entre múltiplos núcleos da CPU e calcule os limites reais de aceleração pela Lei de Amdahl.</p>
+            <span class="small">Multiprocessadores, divisão de dados e limites da Lei de Amdahl</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="etapa">
+        <h2>Como registrar e entregar</h2>
+        <p>Em cada etapa, leia o cenário, execute o comando sugerido e anote suas observações no campo de resposta. O progresso é salvo automaticamente no seu navegador.</p>
+        <p>Ao terminar a prática, clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto com suas conclusões e enviá-lo ao professor.</p>
+        <p><a href="professor.html">Acesse o Guia do Professor com planejamento e gabarito →</a></p>
+      </section>
+    </main>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

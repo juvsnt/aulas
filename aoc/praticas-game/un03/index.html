@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 3: A CPU em batalha: o golpe do monstro. Ciclo de instrucao, PC, IR, ULA e flags no console retro.">
+  <meta name="theme-color" content="#13202a">
+  <title>A CPU em batalha: o golpe do monstro · Unidade 03 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un03">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 03</p>
+      <h1>A CPU em batalha: o golpe do monstro</h1>
+      <p class="lede">Acompanhe o ciclo de instrução passo a passo dentro do processador: como o Program Counter (PC), o registrador IR, a ULA e a Flag Zero decidem o Game Over.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Ciclo Busca-Decodifica-Executa, PC, IR, ULA e flags</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>O que acontece na CPU quando o herói toma um ataque?</h2>
+        <p>Durante a batalha, o herói tem 50 pontos de vida guardados na memória RAM. Um monstro ataca e causa 50 de dano. Para processar essa regra, a CPU precisa buscar a instrução apontada pelo <b>PC (Program Counter)</b>, decodificar a operação no <b>IR (Instruction Register)</b>, trazer a vida para um registrador rápido, acionar a <b>ULA (Unidade Lógica e Aritmética)</b> para subtrair o dano e testar a <b>Flag Zero (ZF)</b> para saber se a vida chegou a zero e acionar o Game Over.</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta da Unidade 3</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un03
+cd ~/atividades/aoc-game/un03
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un03</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un03"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Simulador do ciclo</span>
+          <h2 id="titulo-2">Execute o combate na CPU</h2>
+        </div>
+        <p>Crie o arquivo <code>cpu_game.c</code>, compile e execute para ver o ciclo de instrução passo a passo:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar cpu_game.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; cpu_game.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main(void) {
+    // Memoria principal (RAM): posicao 0 contem a Vida do Heroi
+    int memoria[] = {50};
+    int pc = 0;           // Program Counter (Aponta para a instrucao atual)
+    int r0 = 0;           // Registrador de uso geral da CPU
+    int zf = 0;           // Flag Zero (1 se a ultima operacao na ULA resultou em 0)
+
+    // Programa de instrucoes da CPU para a rotina de combate:
+    const char *instrucoes[] = {"LOAD", "SUB", "STORE", "JZ", "HALT"};
+    int operandos[]          = { 0,     50,    0,       4,    0    };
+
+    printf("=== CPU DO CONSOLE: CICLO DE INSTRUCAO DE COMBATE ===\n");
+    printf("Vida inicial guardada na RAM[0] = %d HP\n\n", memoria[0]);
+
+    while (1) {
+        int ciclo_pc = pc;
+        const char *ir = instrucoes[pc]; // 1. BUSCA: IR recebe instrucao
+        int op = operandos[pc];
+        pc++;                           // 2. INCREMENTO DO PC
+
+        // 3. DECODIFICACAO E EXECUCAO (ULA e Registradores)
+        if (strcmp(ir, "LOAD") == 0) {
+            r0 = memoria[op];           // Carrega da RAM para o registrador R0
+        } else if (strcmp(ir, "SUB") == 0) {
+            r0 -= op;                   // ULA realiza a subtracao do dano
+            zf = (r0 <= 0);             // Se a vida zerou, ativa Flag Zero
+        } else if (strcmp(ir, "STORE") == 0) {
+            memoria[op] = r0;           // Grava o novo valor de volta na RAM
+        } else if (strcmp(ir, "JZ") == 0) {
+            if (zf) {                   // Se flag Zero ativa, desvia o PC
+                printf("  [DESVIO CONDICIONAL] Vida zerou! Desviando PC para Game Over.\n");
+                pc = op;
+            }
+        } else if (strcmp(ir, "HALT") == 0) {
+            printf("PC=%d | IR=%-5s    | Fim da execucao da CPU.\n", ciclo_pc, ir);
+            break;
+        }
+
+        printf("PC=%d | IR=%-5s %2d | R0=%2d | Flag ZF=%d | RAM[0]=%d HP\n",
+               ciclo_pc, ir, op, r0, zf, memoria[0]);
+    }
+
+    printf("\nResultado Final: RAM[0] = %d (Heroi derrotado)\n", memoria[0]);
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 cpu_game.c -o cpu_game
+./cpu_game</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== CPU DO CONSOLE: CICLO DE INSTRUCAO DE COMBATE ===
+Vida inicial guardada na RAM[0] = 50 HP
+
+PC=0 | IR=LOAD   0 | R0=50 | Flag ZF=0 | RAM[0]=50 HP
+PC=1 | IR=SUB   50 | R0= 0 | Flag ZF=1 | RAM[0]=50 HP
+PC=2 | IR=STORE  0 | R0= 0 | Flag ZF=1 | RAM[0]=0 HP
+  [DESVIO CONDICIONAL] Vida zerou! Desviando PC para Game Over.
+PC=3 | IR=JZ     4 | R0= 0 | Flag ZF=1 | RAM[0]=0 HP
+PC=4 | IR=HALT     | Fim da execucao da CPU.
+
+Resultado Final: RAM[0] = 0 (Heroi derrotado)</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">Qual instrução fez a Flag ZF mudar de 0 para 1? O que essa flag indicou para o processador?</label>
+          <textarea id="resposta-2" placeholder="Explique qual instrução alterou a flag ZF e o seu significado."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Ciclo de instrução</span>
+          <h2 id="titulo-3">Rastreando os estágios de cada ciclo</h2>
+        </div>
+        <p>A cada repetição do laço da CPU, três coisas acontecem:</p>
+        <ol>
+          <li><b>Busca (Fetch):</b> A CPU lê a instrução que está no endereço apontado por <code>PC</code> e guarda no registrador <code>IR</code>. Em seguida, o <code>PC</code> é incrementado para apontar para a próxima instrução.</li>
+          <li><b>Decodificação (Decode):</b> A CPU descobre qual circuito deve ser ativado (LOAD, SUB, STORE ou desvio).</li>
+          <li><b>Execução (Execute):</b> A ULA calcula ou a memória transfere dados.</li>
+        </ol>
+        <div class="question">
+          <label for="resposta-3">O que aconteceu com o valor do registrador R0 durante a instrução LOAD e depois durante a instrução SUB?</label>
+          <textarea id="resposta-3" placeholder="Descreva os valores assumidos por R0 nessas duas etapas."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Papel dos registradores</span>
+          <h2 id="titulo-4">Por que a CPU usa registradores internos?</h2>
+        </div>
+        <p>A memória principal (RAM) fica fora do chip do processador e é relativamente lenta. Para realizar cálculos matemáticos na ULA com velocidade máxima, a CPU precisa primeiro carregar os dados para seus <b>registradores internos</b> (como <code>R0</code>). Somente após o resultado estar pronto é que ela grava de volta na RAM (com a instrução <code>STORE</code>).</p>
+        <div class="question">
+          <label for="resposta-4">Por que a CPU não faz a operação de subtração diretamente na memória RAM em vez de carregar para R0?</label>
+          <textarea id="resposta-4" placeholder="Explique a diferença de velocidade entre registradores internos e a memória RAM."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">O herói sobrevive ao ataque!</h2>
+        </div>
+        <p>Altere o dano do ataque de 50 para <b>30</b>. Como a vida inicial é 50, o herói sobreviverá com 20 HP. A flag ZF continuará sendo 0 e a instrução <code>JZ</code> NÃO deve saltar para Game Over:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>sed -i 's/{ 0,     50,    0,/{ 0,     30,    0,/' cpu_game.c
+gcc -std=c11 -Wall -Wextra -O0 cpu_game.c -o cpu_game
+./cpu_game</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho esperado no desafio</div>
+          <pre tabindex="0">...
+PC=1 | IR=SUB   30 | R0=20 | Flag ZF=0 | RAM[0]=50 HP
+PC=2 | IR=STORE  0 | R0=20 | Flag ZF=0 | RAM[0]=20 HP
+PC=3 | IR=JZ     4 | R0=20 | Flag ZF=0 | RAM[0]=20 HP
+...
+Resultado Final: RAM[0] = 20</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-5">Qual foi o valor final de vida restante na RAM? Ocorreu a mensagem de desvio condicional para Game Over?</label>
+          <textarea id="resposta-5" placeholder="Registre o resultado e explique por que a instrução JZ não realizou o desvio desta vez."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações acima e clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto com suas conclusões.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un02/">← Prática anterior (Unidade 02)</a>
+      <a href="../un04/">Próxima prática (Unidade 04) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 7: Horda de 1.000 inimigos em processadores multicore. Divisao de dados e limites da Lei de Amdahl no console retro.">
+  <meta name="theme-color" content="#13202a">
+  <title>Horda de 1.000 inimigos em processadores multicore · Unidade 07 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un07">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 07</p>
+      <h1>Horda de 1.000 inimigos em processadores multicore</h1>
+      <p class="lede">Divida o cálculo de uma horda de inimigos entre múltiplos núcleos da CPU e compreenda por que colocar mais núcleos não traz aceleração infinita devido à Lei de Amdahl.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Multiprocessadores, divisão de dados e limites da Lei de Amdahl</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>Uma batalha épica com 1.000 inimigos simultâneos</h2>
+        <p>Na fase final do jogo, o herói enfrenta uma horda de 1.000 monstros na tela ao mesmo tempo. A cada quadro, a posição e a inteligência artificial de cada monstro precisam ser recalculadas. Em um processador com um único núcleo, essa carga pode derrubar o desempenho do console. Para contornar isso, os consoles modernos utilizam CPUs <b>multicore</b> (com 4, 8 ou mais núcleos), dividindo os monstros em lotes independentes. Mas será que ter 8 núcleos deixará o jogo 8 vezes mais rápido? A resposta está na famosa <b>Lei de Amdahl</b>!</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta da Unidade 7</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un07
+cd ~/atividades/aoc-game/un07
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un07</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un07"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Divisão de dados</span>
+          <h2 id="titulo-2">Crie o programa da horda de inimigos</h2>
+        </div>
+        <p>Crie o arquivo <code>inimigos_multicore.c</code> para calcular o processamento dos monstros e avaliar a Lei de Amdahl:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar inimigos_multicore.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; inimigos_multicore.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+
+#define TOTAL_INIMIGOS 1000
+
+// Funcao que calcula fisica e movimento de um intervalo de inimigos
+long calcular_inimigos(int inicio, int fim) {
+    long soma = 0;
+    // Laco pesado para simular processamento intensivo de fisica:
+    for (int rep = 0; rep < 20000; rep++) {
+        for (int i = inicio; i < fim; i++) {
+            soma += (i * 3 + 7) % 100;
+        }
+    }
+    return soma;
+}
+
+int main(void) {
+    printf("=== ATUALIZANDO HORDA DE %d INIMIGOS NO JOGO ===\n", TOTAL_INIMIGOS);
+
+    // 1. Execucao sequencial (1 unico nucleo da CPU processa tudo)
+    clock_t t0 = clock();
+    long res_total = calcular_inimigos(0, TOTAL_INIMIGOS);
+    clock_t t1 = clock();
+    double tempo_1_core = (double)(t1 - t0) / CLOCKS_PER_SEC;
+
+    printf("1 Nucleo:       Tempo = %.4f s (Resultado = %ld)\n", tempo_1_core, res_total);
+
+    // 2. Divisao do lote para 2 Nucleos (particionamento de dados)
+    // Nucleo A calcula 0 a 499; Nucleo B calcula 500 a 999
+    clock_t t2 = clock();
+    long loteA = calcular_inimigos(0, 500);
+    long loteB = calcular_inimigos(500, 1000);
+    long res_divisao = loteA + loteB;
+    clock_t t3 = clock();
+    double tempo_2_lotes = (double)(t3 - t2) / CLOCKS_PER_SEC;
+
+    printf("2 Lotes de 500: Lote A = %ld | Lote B = %ld (Total = %ld)\n", loteA, loteB, res_divisao);
+    printf("Tempo total medido sequencialmente: %.4f s\n", tempo_2_lotes);
+
+    // 3. Analise teorica da Lei de Amdahl no jogo
+    double p = 0.80; // 80% do tempo eh calculo de inimigos (paralelizavel)
+    printf("\n=== LEI DE AMDAHL: LIMITES DE ACELERACAO DO JOGO ===\n");
+    printf("Cenario: 80%% do jogo eh fisica paralelizavel e 20%% eh desenho sequencial de tela:\n");
+
+    int cores[] = {1, 2, 4, 8, 16};
+    for (int c = 0; c < 5; c++) {
+        int n = cores[c];
+        double aceleracao = 1.0 / ((1.0 - p) + (p / n));
+        printf("Com %2d nucleos: Aceleracao maxima teorica = %.2fx\n", n, aceleracao);
+    }
+
+    double limite = 1.0 / (1.0 - p);
+    printf("Com infinitos nucleos: Aceleracao maxima nunca ultrapassa %.1fx!\n", limite);
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 inimigos_multicore.c -o inimigos_multicore
+./inimigos_multicore</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho da saída esperada</div>
+          <pre tabindex="0">=== ATUALIZANDO HORDA DE 1000 INIMIGOS NO JOGO ===
+1 Nucleo:       Tempo = 0.0... s (Resultado = 990000000)
+2 Lotes de 500: Lote A = 495000000 | Lote B = 495000000 (Total = 990000000)
+...
+=== LEI DE AMDAHL: LIMITES DE ACELERACAO DO JOGO ===
+Com  1 nucleos: Aceleracao maxima teorica = 1.00x
+Com  2 nucleos: Aceleracao maxima teorica = 1.67x
+Com  4 nucleos: Aceleracao maxima teorica = 2.50x
+Com  8 nucleos: Aceleracao maxima teorica = 3.33x
+Com 16 nucleos: Aceleracao maxima teorica = 4.00x
+Com infinitos nucleos: Aceleracao maxima nunca ultrapassa 5.0x!</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">A soma de Lote A + Lote B resultou exatamente no mesmo valor do cálculo de 1 núcleo só (990000000)?</label>
+          <textarea id="resposta-2" placeholder="Confirme se o resultado da divisão em 2 lotes bateu com o resultado original."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Particionamento</span>
+          <h2 id="titulo-3">Como dividir o trabalho entre núcleos?</h2>
+        </div>
+        <p>A técnica utilizada chama-se <b>particionamento de dados</b>: os 1.000 inimigos não dependem diretamente uns dos outros para calcular suas trajetórias. Assim, o Núcleo 1 processa os inimigos de índice 0 a 499, enquanto o Núcleo 2 processa simultaneamente os inimigos de 500 a 999. Ao final, a CPU apenas reúne as posições.</p>
+        <div class="question">
+          <label for="resposta-3">Por que os inimigos puderam ser divididos tão facilmente entre dois lotes sem causar erros de cálculo?</label>
+          <textarea id="resposta-3" placeholder="Explique por que as tarefas eram independentes entre si."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Lei de Amdahl</span>
+          <h2 id="titulo-4">Por que 8 núcleos não deixam o jogo 8x mais rápido?</h2>
+        </div>
+        <p>A <b>Lei de Amdahl</b> diz que a aceleração máxima obtida por computadores paralelos é estritamente limitada pela <b>fração do programa que NÃO pode ser paralelizada</b> (a parte sequencial).</p>
+        <p>No nosso jogo, 80% do tempo ($p = 0.80$) é o cálculo dos monstros. Mas os outros 20% do tempo ($1 - p = 0.20$) são estritamente sequenciais: atualizar o placar do jogador, tocar o som da fase e enviar o quadro para o cabo HDMI da TV. Mesmo que os monstros fossem calculados em zero segundos com infinitos núcleos, o jogo ainda levaria o tempo fixo dos 20% sequenciais. Portanto, a aceleração máxima teórica é $1 / 0.20 = \mathbf{5.0\times}$!</p>
+        <div class="question">
+          <label for="resposta-4">De acordo com a tabela impressa pelo programa, qual é a aceleração máxima teórica ao usar 4 núcleos e 8 núcleos?</label>
+          <textarea id="resposta-4" placeholder="Anote a aceleração teórica observada para 4 e 8 núcleos (ex: 2.50x e 3.33x)."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">Decisão de hardware para consoles de jogos</h2>
+        </div>
+        <p>Um jogador pergunta na internet: <i>"Se eu comprar um processador com 64 núcleos para o meu computador, meus jogos vão rodar 64 vezes mais rápidos?"</i></p>
+        <div class="question">
+          <label for="resposta-5">Com base na Lei de Amdahl e no que você aprendeu nesta prática, responda à pergunta do jogador justificando por que mais núcleos nem sempre trazem ganho proporcional em jogos:</label>
+          <textarea id="resposta-5" placeholder="Elabore sua resposta explicando os limites de paralelismo impostos pelas etapas sequenciais do jogo."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Conclusão do percurso!</h2>
+        <p>Parabéns! Você concluiu as sete investigações de Arquitetura e Organização de Computadores explorando o funcionamento do console de jogos 2D. Baixe suas respostas clicando no botão <b>Baixar respostas</b> no topo da página e entregue o arquivo ao professor.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un06/">← Prática anterior (Unidade 06)</a>
+      <a href="../index.html">Voltar ao início do percurso →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

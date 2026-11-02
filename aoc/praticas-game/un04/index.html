@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 4: Renderizando o mapa da fase na memoria cache. Localidade espacial, cache hits e misses no console retro.">
+  <meta name="theme-color" content="#13202a">
+  <title>Renderizando o mapa da fase na memória cache · Unidade 04 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un04">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 04</p>
+      <h1>Renderizando o mapa da fase na memória cache</h1>
+      <p class="lede">Investigue como o princípio da localidade espacial faz a memória cache acelerar o desenho dos cenários de um jogo e veja o desastre de desempenho dos cache misses.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Hierarquia de memória, localidade espacial, hits e misses</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>A tela precisa ser desenhada a cada fração de segundo</h2>
+        <p>O cenário do nosso jogo é composto por uma grade de blocos (tiles de pedra, grama, água). Para desenhar a fase na tela, a CPU precisa ler esses blocos da memória. Se a CPU tivesse que buscar cada bloquinho individualmente na memória RAM externa (que é muito lenta), o jogo sofreria quedas terríveis de velocidade. É aqui que entra a <b>Memória Cache</b>: quando um bloco é lido, a cache traz também os blocos vizinhos, aproveitando a <b>localidade espacial</b>.</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta da Unidade 4</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un04
+cd ~/atividades/aoc-game/un04
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un04</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un04"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Simulador de cache</span>
+          <h2 id="titulo-2">Crie o renderizador de blocos do mapa</h2>
+        </div>
+        <p>Crie o arquivo <code>mapa_cache.c</code>. Ele simula uma Cache L1 com 4 linhas, onde cada bloco armazena 2 tiles vizinhos da memória:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar mapa_cache.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; mapa_cache.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+// Simulador didatico de Cache L1:
+// 4 linhas de cache direta, cada bloco armazena 2 tiles consecutivos da RAM
+int main(int argc, char **argv) {
+    const char *modo = (argc > 1) ? argv[1] : "linha";
+
+    // Mapa 4x4 do jogo (indices de 0 a 15 na memoria):
+    // Varredura por linha (desenho natural da tela: 0,1,2,3, 4,5,6,7, ...)
+    int ordem_linha[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    // Varredura por coluna com saltos de memoria (0,4,8,12, 1,5,9,13, ...)
+    int ordem_coluna[16] = {0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15};
+
+    int *ordem = (strcmp(modo, "coluna") == 0) ? ordem_coluna : ordem_linha;
+
+    int cache[4] = {-1, -1, -1, -1}; // 4 linhas da cache (-1 = vazia)
+    int hits = 0, misses = 0;
+
+    printf("=== RENDERIZACAO DO MAPA DO JOGO: VARREDURA POR %s ===\n",
+           (strcmp(modo, "coluna") == 0) ? "COLUNA (SALTOS)" : "LINHA (SEQUENCIAL)");
+
+    for (int i = 0; i < 16; i++) {
+        int endereco = ordem[i];
+        int bloco = endereco / 2;      // 2 elementos por bloco da cache
+        int linha = bloco % 4;         // Mapeamento direto em 4 linhas
+
+        int hit = (cache[linha] == bloco);
+        if (hit) {
+            hits++;
+        } else {
+            misses++;
+            cache[linha] = bloco;      // Traz bloco da RAM lenta para a Cache
+        }
+
+        printf("Tile %2d -> Bloco %d na Linha %d: [%s]\n",
+               endereco, bloco, linha, hit ? "HIT (Cache rapida!)" : "MISS (Busca na RAM)");
+    }
+
+    printf("\n=== ESTATISTICAS DA MEMORIA CACHE ===\n");
+    printf("Total de acessos: 16\n");
+    printf("Hits (acertos):   %d\n", hits);
+    printf("Misses (erros):   %d\n", misses);
+    printf("Taxa de acertos:  %.1f%%\n", (hits * 100.0) / 16);
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 mapa_cache.c -o mapa_cache</code></pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">O programa compilou corretamente sem avisos?</label>
+          <textarea id="resposta-2" placeholder="Confirme a compilação do executável mapa_cache."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Varredura correta</span>
+          <h2 id="titulo-3">Desenhando o mapa por linha (Aproveitando a Cache)</h2>
+        </div>
+        <p>Execute o programa no modo padrão (varredura linha por linha, como a tela do jogo é atualizada):</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>./mapa_cache linha</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho da saída esperada</div>
+          <pre tabindex="0">=== RENDERIZACAO DO MAPA DO JOGO: VARREDURA POR LINHA (SEQUENCIAL) ===
+Tile  0 -> Bloco 0 na Linha 0: [MISS (Busca na RAM)]
+Tile  1 -> Bloco 0 na Linha 0: [HIT (Cache rapida!)]
+Tile  2 -> Bloco 1 na Linha 1: [MISS (Busca na RAM)]
+Tile  3 -> Bloco 1 na Linha 1: [HIT (Cache rapida!)]
+...
+Hits (acertos):   8
+Misses (erros):   8
+Taxa de acertos:  50.0%</pre>
+        </div>
+        <p>Observe: o Tile 0 causou um <b>MISS</b> (foi à RAM buscar). Mas como cada bloco da cache carrega 2 tiles, o Tile 1 já estava na cache, resultando em um <b>HIT</b> imediato!</p>
+        <div class="question">
+          <label for="resposta-3">Por que o acesso ao Tile 1 foi um HIT logo após o acesso ao Tile 0 ter sido um MISS?</label>
+          <textarea id="resposta-3" placeholder="Explique o conceito de localidade espacial e tamanho do bloco da cache."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Varredura com saltos</span>
+          <h2 id="titulo-4">O desastre dos Cache Misses por coluna</h2>
+        </div>
+        <p>Agora execute simulando um programador que cometeu o erro de varrer a matriz pelos índices de coluna (dando saltos na memória):</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>./mapa_cache coluna</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== RENDERIZACAO DO MAPA DO JOGO: VARREDURA POR COLUNA (SALTOS) ===
+Tile  0 -> Bloco 0 na Linha 0: [MISS (Busca na RAM)]
+Tile  4 -> Bloco 2 na Linha 2: [MISS (Busca na RAM)]
+Tile  8 -> Bloco 4 na Linha 0: [MISS (Busca na RAM)]
+...
+Hits (acertos):   0
+Misses (erros):   16
+Taxa de acertos:  0.0%</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-4">Qual foi a taxa de acertos (Hits) na varredura por coluna? O que aconteceu com a eficiência da memória cache?</label>
+          <textarea id="resposta-4" placeholder="Explique por que a taxa caiu para 0% e o impacto disso na velocidade do jogo."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">Lição de engenharia para motores de jogos</h2>
+        </div>
+        <p>Em jogos 2D e 3D, texturas, matrizes de pixels e blocos de mapas ocupam gigabytes de dados. Um jogo que acessa a memória de forma desorganizada sofre quedas constantes de desempenho.</p>
+        <div class="question">
+          <label for="resposta-5">Conclusão: Por que entender a organização da memória cache é fundamental para quem programa jogos e softwares de alto desempenho?</label>
+          <textarea id="resposta-5" placeholder="Sintetize o aprendizado da Unidade 4 relacionando ordem de acesso aos dados e cache."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique em <b>Baixar respostas</b> no topo para salvar o arquivo de texto da prática.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un03/">← Prática anterior (Unidade 03)</a>
+      <a href="../un05/">Próxima prática (Unidade 05) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

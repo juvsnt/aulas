@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Guia do professor para a trilha Por dentro do console: planejamento, gabarito e rubricas de avaliacao.">
+  <meta name="theme-color" content="#13202a">
+  <title>Guia do professor · Por dentro do console | Laboratório AOC</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-unit="professor">
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../">← Disciplina AOC</a>
+      <a href="index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">Planejamento docente · AOC</p>
+      <h1>Por dentro do console: Guia do Professor</h1>
+      <p class="lede">Trilha de aprendizagem com nível de dificuldade calibrado, baseada no funcionamento de um console e motor de jogos 2D.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <h2>Proposta Pedagógica da Trilha</h2>
+        <p>Esta trilha alternativa foi desenhada com o objetivo de reduzir a barreira de entrada da disciplina, eliminando a <b>complexidade acidental</b> de ponteiros avançados e chamadas de sistema complexas do Linux (como <code>fork</code>, <code>pipe</code> e macros de ponto flutuante), para que os estudantes concentrem 100% de sua atenção nos <b>conceitos fundamentais de Arquitetura e Organização de Computadores</b>.</p>
+        <p>A metáfora do console de jogos 2D é imediatamente compreendida por qualquer estudante de Ciência da Computação: vidas, inventário em bits, colisão em Assembly, ciclo da CPU no combate, cache no mapa da fase, joystick e interrupções, 60 FPS no pipeline e horda de inimigos em múltiplos núcleos.</p>
+      </section>
+
+      <section class="etapa">
+        <h2>Mapa das 7 Unidades</h2>
+        <div class="tbl">
+          <table>
+            <thead>
+              <tr>
+                <th>Un.</th>
+                <th>Tema no Console</th>
+                <th>Conceito de Hardware</th>
+                <th>Duração</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01</td>
+                <td>Vidas e inventário em bits</td>
+                <td>Bits, bytes, representação de inteiros, overflow e máscaras lógicas</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>02</td>
+                <td>Movimento e colisão na tela</td>
+                <td>Compilação C → Assembly x86-64, registradores e desvios condicionais</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>03</td>
+                <td>Ciclo da CPU no combate</td>
+                <td>Caminho de dados, PC, IR, ULA e a Flag Zero decidindo Game Over</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>04</td>
+                <td>Mapa da fase na memória cache</td>
+                <td>Hierarquia de memória, localidade espacial, linhas de cache e misses</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>05</td>
+                <td>Joystick e savegame</td>
+                <td>Dispositivos de E/S, polling vs. interrupção e transferência em bloco</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>06</td>
+                <td>Meta de 60 FPS e pipeline</td>
+                <td>Pipeline de múltiplos estágios, stalls (bolhas de engasgo) e speedup</td>
+                <td>60 min</td>
+              </tr>
+              <tr>
+                <td>07</td>
+                <td>Horda de 1.000 inimigos</td>
+                <td>Multiprocessadores, divisão de dados e limites da Lei de Amdahl</td>
+                <td>60 min</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="etapa">
+        <h2>Gabarito e Respostas Esperadas dos Desafios</h2>
+        <ul>
+          <li><b>Unidade 01:</b> Vida $250 + 10$ resulta em <b>4</b> porque o 9º bit é descartado no estouro de 8 bits ($260 \pmod{256} = 4$). No desafio, ativar o escudo (Bit 2 com valor 4) faz o status decimal passar de 11 para <b>15</b> (hexadecimal <code>0x0F</code>), ativando a mensagem "SIM" para o escudo.</li>
+          <li><b>Unidade 02:</b> No <code>objdump</code>, a função <code>mover</code> traduz a soma para <code>add eax, edx</code> e a verificação do limite para <code>cmp eax, ...</code> seguido de <code>jle</code> (salto se menor ou igual). No desafio, ao aumentar a borda para 100, a posição final atinge <b>85</b> sem colisão.</li>
+          <li><b>Unidade 03:</b> A instrução <code>SUB 50</code> zera o registrador R0, ativando a <b>Flag Zero (ZF=1)</b>, o que faz a instrução <code>JZ 4</code> saltar diretamente para a rotina de Game Over. No desafio com dano 30, o HP final fica em <b>20</b>, ZF permanece 0 e o desvio condicional NÃO é acionado.</li>
+          <li><b>Unidade 04:</b> Na varredura por linha, cada MISS inicial carrega 2 tiles para a linha de cache; portanto, o tile vizinho é um HIT garantido (taxa de <b>50% de acertos</b>). Na varredura por coluna aos saltos, todos os acessos caem em linhas conflitantes da RAM, gerando <b>0% de hits</b> (16 misses consecutivos).</li>
+          <li><b>Unidade 05:</b> O comando <code>od -An -tu1</code> exibe os valores <code>3 2 50 99</code>. Em hexadecimal (<code>od -An -tx1</code>), os valores são <code>03 02 32 63</code> ($50 = \text{0x32}$ e $99 = \text{0x63}$). Explicação conceitual: interrupções liberam a CPU para rodar a lógica do jogo em vez de ficar em loop ocioso de polling.</li>
+          <li><b>Unidade 06:</b> Sem pipeline, 6 quadros $\times 4$ estágios levam 24 ciclos. Com pipeline sem bolhas, levam apenas <b>9 ciclos</b> (aceleração de $2{,}67\times$). Com 2 bolhas, o tempo sobe para 11 ciclos (queda momentânea de FPS / stuttering). Para 1.000 quadros, o tempo com pipeline seria de 1.003 ciclos (aproximando-se do speedup máximo de $4\times$).</li>
+          <li><b>Unidade 07:</b> A soma dos dois lotes de 500 inimigos resulta exatamente em <code>990000000</code>. Pela Lei de Amdahl com $p = 0{,}80$, 4 núcleos aceleram em até $2{,}50\times$ e 8 núcleos em até $3{,}33\times$. Mesmo com infinitos núcleos, a aceleração máxima teórica é $1 / (1 - 0{,}80) = \mathbf{5{,}0\times}$, demonstrando por que mais núcleos nem sempre aceleram jogos proporcionalmente.</li>
+        </ul>
+      </section>
+
+      <section class="etapa">
+        <h2>Critérios de Avaliação Sugeridos (10 pontos por prática)</h2>
+        <ul>
+          <li><b>2,0 pontos:</b> Registro claro das previsões antes de executar cada comando.</li>
+          <li><b>3,0 pontos:</b> Execução correta dos comandos e transcrição fiel das evidências do terminal.</li>
+          <li><b>3,0 pontos:</b> Explicação conceitual com suas próprias palavras (ligando o resultado observado ao funcionamento do hardware).</li>
+          <li><b>2,0 pontos:</b> Resolução e justificativa do desafio prático de cada unidade.</li>
+        </ul>
+      </section>
+
+      <section class="etapa">
+        <h2>Download dos Códigos Fontes</h2>
+        <p>O pacote completo com os 7 programas em C11 pode ser baixado diretamente:</p>
+        <p><a href="arquivos/aoc-console-fontes.zip" download>Baixar pacote de fontes em C (aoc-console-fontes.zip)</a></p>
+      </section>
+    </main>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

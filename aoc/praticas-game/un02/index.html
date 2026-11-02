@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 2: A caminhada do herói em instruções da ISA. Compilação, Assembly x86-64 e desmontagem com objdump.">
+  <meta name="theme-color" content="#13202a">
+  <title>A caminhada do herói em instruções da ISA · Unidade 02 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un02">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 02</p>
+      <h1>A caminhada do herói em instruções da ISA</h1>
+      <p class="lede">Descubra como um simples comando de andar e uma colisão com a parede em C são traduzidos pelo compilador em instruções reais de máquina x86-64.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>C11, Assembly x86-64 e desmontagem com objdump</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>Do código em C até os circuitos do processador</h2>
+        <p>Quando o jogador aperta a tecla para a direita no controle, o motor do jogo executa uma função para atualizar a coordenada $X$ do herói: soma a velocidade e verifica se ele colidiu com a borda da tela. O processador não entende C diretamente: ele executa uma sequência de códigos numéricos (bytes de máquina) que correspondem a instruções Assembly como <code>mov</code> (copiar), <code>add</code> (somar) e <code>cmp</code> (comparar).</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua bancada da Unidade 2</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un02
+cd ~/atividades/aoc-game/un02
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un02</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un02"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Código em C</span>
+          <h2 id="titulo-2">Crie e execute a movimentação</h2>
+        </div>
+        <p>Crie o arquivo <code>movimento.c</code> com a função que calcula a nova posição e impede de passar da parede:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar movimento.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; movimento.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+
+// Funcao que atualiza a coordenada X do personagem e trata colisao com a borda
+int mover(int pos_x, int velocidade, int limite_tela) {
+    int novo_x = pos_x + velocidade;
+    if (novo_x > limite_tela) {
+        novo_x = limite_tela; // Nao deixa o heroi atravessar a parede
+    }
+    return novo_x;
+}
+
+int main(void) {
+    int pos_x = 75;
+    int velocidade = 10;
+    int borda = 80;
+
+    int final_x = mover(pos_x, velocidade, borda);
+
+    printf("=== MOVIMENTACAO E COLISAO NA TELA ===\n");
+    printf("Posicao inicial: %d | Velocidade: +%d | Limite da borda: %d\n",
+           pos_x, velocidade, borda);
+    printf("Posicao final:   %d (colidiu com o limite)\n", final_x);
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 -g movimento.c -o movimento
+./movimento</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== MOVIMENTACAO E COLISAO NA TELA ===
+Posicao inicial: 75 | Velocidade: +10 | Limite da borda: 80
+Posicao final:   80 (colidiu com o limite)</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">A posição inicial era 75 e a velocidade era 10. Por que a posição final foi 80 e não 85?</label>
+          <textarea id="resposta-2" placeholder="Explique o papel do if de colisão com o limite."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Desmontagem Assembly</span>
+          <h2 id="titulo-3">Olhando por dentro da função no processador</h2>
+        </div>
+        <p>Use o utilitário <code>objdump</code> para desmontar a função <code>mover</code> diretamente do arquivo executável compilado:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>objdump -d -M intel --disassemble=mover movimento</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho típico retornado pelo objdump (x86-64 sintaxe Intel)</div>
+          <pre tabindex="0">...
+add    eax,edx
+...
+cmp    eax,edx
+jle    ...
+mov    eax,edx
+...</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-3">Copie do seu terminal uma linha do objdump contendo a instrução 'add' e outra contendo 'cmp'. Quais registradores aparecem nessas linhas?</label>
+          <textarea id="resposta-3" placeholder="Cole as linhas observadas com add e cmp e liste os registradores (ex: eax, edx)."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Interpretação da ISA</span>
+          <h2 id="titulo-4">Relacionando o C ao Assembly</h2>
+        </div>
+        <p>Observe como cada construção da linguagem C mapeou para a CPU:</p>
+        <ul>
+          <li><code>pos_x + velocidade</code> gerou a instrução <code>add</code> (soma na ULA).</li>
+          <li><code>if (novo_x &gt; limite_tela)</code> gerou a instrução <code>cmp</code> (comparação) seguida de um desvio condicional (como <code>jle</code> = <i>jump if less or equal</i>).</li>
+        </ul>
+        <div class="question">
+          <label for="resposta-4">Em computadores, o que significa um 'desvio' (jump)? Como o processador faz para 'pular' uma parte do código se a colisão não tiver acontecido?</label>
+          <textarea id="resposta-4" placeholder="Explique com suas palavras o que a CPU faz com o contador de programa (PC) durante um desvio."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">Aumentando a borda da fase</h2>
+        </div>
+        <p>Altere a borda da tela de 80 para 100 pixels, recompile e verifique se o herói agora atinge a posição 85 sem colidir:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>sed -i 's/int borda = 80;/int borda = 100;/' movimento.c
+gcc -std=c11 -Wall -Wextra -O0 movimento.c -o movimento
+./movimento</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada no desafio</div>
+          <pre tabindex="0">=== MOVIMENTACAO E COLISAO NA TELA ===
+Posicao inicial: 75 | Velocidade: +10 | Limite da borda: 100
+Posicao final:   85 (colidiu com o limite)</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-5">Qual foi a posição final alcançada agora? O herói colidiu com o novo limite de 100?</label>
+          <textarea id="resposta-5" placeholder="Registre o resultado e explique por que agora a posição final foi 85."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas respostas nos campos acima e clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto com suas conclusões.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un01/">← Prática anterior (Unidade 01)</a>
+      <a href="../un03/">Próxima prática (Unidade 03) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

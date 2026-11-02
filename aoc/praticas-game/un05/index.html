@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 5: O joystick e a gravacao do savegame. Entrada e saida, barramentos, buffers e interrupcoes no console retro.">
+  <meta name="theme-color" content="#13202a">
+  <title>O joystick e a gravação do savegame · Unidade 05 | Laboratório AOC</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un05">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/5 etapas</span>
+      <progress max="5" value="0" aria-label="Etapas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina AOC</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · AOC · Unidade 05</p>
+      <h1>O joystick e a gravação do savegame</h1>
+      <p class="lede">Compreenda como o console se comunica com o mundo exterior: a leitura dos botões do controle por interrupção e o ganho de velocidade ao salvar o jogo com buffers.</p>
+      <div class="meta">
+        <span>Duração: <b>60 min</b></span>
+        <span>Entrada/Saída, barramentos, polling, interrupções e buffers</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do jogo</p>
+        <h2>Periféricos, barramentos e persistência de dados</h2>
+        <p>Um videogame não funciona apenas dentro da CPU e da RAM: ele precisa receber comandos do jogador através do joystick (dispositivo de entrada) e gravar o progresso da fase no cartão de memória ou disco (dispositivo de saída e armazenamento). A comunicação através dos <b>barramentos de E/S</b> é milhares de vezes mais lenta do que a CPU interna. Por isso, sistemas bem projetados utilizam <b>interrupções de hardware</b> e <b>buffers de transferência em bloco</b> para não travar a jogabilidade.</p>
+        <nav class="steps-nav" aria-label="Etapas desta prática">
+          <a href="#etapa-1">01</a>
+          <a href="#etapa-2">02</a>
+          <a href="#etapa-3">03</a>
+          <a href="#etapa-4">04</a>
+          <a href="#etapa-5">05</a>
+        </nav>
+      </section>
+
+      <!-- ETAPA 1 -->
+      <section class="etapa" id="etapa-1" aria-labelledby="titulo-1">
+        <div class="ehead">
+          <span class="num">01</span>
+          <span class="label">Ambiente de trabalho</span>
+          <h2 id="titulo-1">Prepare sua pasta da Unidade 5</h2>
+        </div>
+        <p>No terminal do LIAC, crie a pasta da prática e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/aoc-game/un05
+cd ~/atividades/aoc-game/un05
+pwd</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">/home/seu_usuario/atividades/aoc-game/un05</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-1">Confirme o caminho completo da pasta exibido no terminal:</label>
+          <textarea id="resposta-1" placeholder="Ex: /home/aluno/atividades/aoc-game/un05"></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 2 -->
+      <section class="etapa" id="etapa-2" aria-labelledby="titulo-2">
+        <div class="ehead">
+          <span class="num">02</span>
+          <span class="label">Gravando dados</span>
+          <h2 id="titulo-2">Crie e execute a rotina de savegame</h2>
+        </div>
+        <p>Crie o arquivo <code>io_game.c</code>, compile e execute para comparar a gravação byte a byte versus a gravação em bloco com buffer:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar io_game.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; io_game.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+
+int main(void) {
+    // Dados da partida salvos pelo jogo:
+    unsigned char save_original[4] = {
+        3,   // Byte 0: Vidas restantes
+        2,   // Byte 1: Numero da fase
+        50,  // Byte 2: Pontos ganhos
+        99   // Byte 3: Segundos restantes
+    };
+
+    printf("=== SALVANDO DADOS DO JOGO NO ARMAZENAMENTO ===\n");
+
+    // Metodo 1: Gravacao de 1 byte por vez (multiplos acessos lentos ao barramento)
+    FILE *f1 = fopen("save_byte.dat", "wb");
+    if (!f1) { perror("save_byte.dat"); return 1; }
+    for (int i = 0; i < 4; i++) {
+        fwrite(&save_original[i], 1, 1, f1); // 4 chamadas de E/S
+    }
+    fclose(f1);
+
+    // Metodo 2: Gravacao em lote com buffer/DMA (1 unico acesso em bloco)
+    FILE *f2 = fopen("save_bloco.dat", "wb");
+    if (!f2) { perror("save_bloco.dat"); return 1; }
+    fwrite(save_original, 1, 4, f2); // 1 chamada de E/S
+    fclose(f2);
+
+    puts("Arquivo 'save_byte.dat' gerado com 4 transferencias de 1 byte.");
+    puts("Arquivo 'save_bloco.dat' gerado com 1 transferencia em bloco de 4 bytes.");
+
+    // Modelo comparativo de entrada do controle:
+    puts("\n=== MODELO DE LEITURA DO JOYSTICK / CONTROLE ===");
+    puts("1. POLLING: A CPU pergunta em loop 'Apertou botao?' -> Desperdiça tempo da CPU.");
+    puts("2. INTERRUPCAO: O controle avisa a CPU somente quando o botao eh pressionado -> CPU fica livre.");
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 io_game.c -o io_game
+./io_game</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== SALVANDO DADOS DO JOGO NO ARMAZENAMENTO ===
+Arquivo 'save_byte.dat' gerado com 4 transferencias de 1 byte.
+Arquivo 'save_bloco.dat' gerado com 1 transferencia em bloco de 4 bytes.
+
+=== MODELO DE LEITURA DO JOYSTICK / CONTROLE ===
+1. POLLING: A CPU pergunta em loop 'Apertou botao?' -> Desperdiça tempo da CPU.
+2. INTERRUPCAO: O controle avisa a CPU somente quando o botao eh pressionado -> CPU fica livre.</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-2">O programa gerou os dois arquivos de salvamento com sucesso?</label>
+          <textarea id="resposta-2" placeholder="Confirme a execução do programa io_game."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 3 -->
+      <section class="etapa" id="etapa-3" aria-labelledby="titulo-3">
+        <div class="ehead">
+          <span class="num">03</span>
+          <span class="label">Inspeção binária</span>
+          <h2 id="titulo-3">Conferindo os arquivos no disco</h2>
+        </div>
+        <p>Use o utilitário <code>od</code> (octal dump) para inspecionar os bytes reais gravados no arquivo <code>save_bloco.dat</code>:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>ls -l save_*.dat
+od -An -tu1 save_bloco.dat</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">-rw-r--r-- 1 ... 4 ... save_bloco.dat
+-rw-r--r-- 1 ... 4 ... save_byte.dat
+   3   2  50  99</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-3">Confirme quantos bytes cada arquivo ocupa no disco e quais são os 4 números exibidos pelo od:</label>
+          <textarea id="resposta-3" placeholder="Anote o tamanho dos arquivos e a sequência de números impressa."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 4 -->
+      <section class="etapa" id="etapa-4" aria-labelledby="titulo-4">
+        <div class="ehead">
+          <span class="num">04</span>
+          <span class="label">Polling vs Interrupção</span>
+          <h2 id="titulo-4">Como o console deve escutar o controle?</h2>
+        </div>
+        <p>Imagine que o jogo rode a 60 quadros por segundo. Se usarmos <b>Polling</b>, a CPU precisará parar sua execução dezenas de vezes a cada quadro apenas para perguntar ao controle: <i>"O botão de pulo foi pressionado?"</i>. Na maioria das vezes a resposta será <i>"Não"</i>, desperdiçando tempo precioso que poderia ser usado para calcular a física e os gráficos do jogo.</p>
+        <p>Com <b>Interrupções de Hardware</b>, o processador trabalha focado exclusivamente no jogo. Quando o jogador aperta o botão no joystick, o hardware do controle gera um sinal elétrico de interrupção na placa-mãe. A CPU pausa momentaneamente o que estava fazendo, atende o pulo e retoma o jogo em frações de microssegundo.</p>
+        <div class="question">
+          <label for="resposta-4">Por que a técnica de Interrupção é muito mais eficiente do que Polling para dispositivos como botões de controle e teclado?</label>
+          <textarea id="resposta-4" placeholder="Explique a economia de ciclos de CPU ao usar interrupções."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ETAPA 5 -->
+      <section class="etapa" id="etapa-5" aria-labelledby="titulo-5">
+        <div class="ehead">
+          <span class="num">05</span>
+          <span class="label">Desafio prático</span>
+          <h2 id="titulo-5">Visualizando em hexadecimal</h2>
+        </div>
+        <p>Execute o comando <code>od</code> com a opção <code>-tx1</code> para ver a representação hexadecimal dos dados salvos:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>od -An -tx1 save_bloco.dat</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada em hexadecimal</div>
+          <pre tabindex="0">  03  02  32  63</pre>
+        </div>
+        <div class="question">
+          <label for="resposta-5">Relacione os valores: qual é o valor hexadecimal correspondente a 50 pontos (terceiro byte) e 99 segundos (quarto byte)?</label>
+          <textarea id="resposta-5" placeholder="Anote a correspondência (ex: 50 decimal = 0x32 hex; 99 decimal = 0x63 hex)."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-5" data-step="5"> Concluí esta etapa</label>
+      </section>
+
+      <!-- ENTREGA -->
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un04/">← Prática anterior (Unidade 04)</a>
+      <a href="../un06/">Próxima prática (Unidade 06) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>
