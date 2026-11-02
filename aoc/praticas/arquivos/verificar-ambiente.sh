@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Somente diagnostico; nao instala nem altera configuracoes.
 printf 'Arquitetura: '; uname -m
-for ferramenta in bash python3 gcc objdump od lscpu getconf; do
+for ferramenta in bash gcc objdump od lscpu getconf; do
   if command -v "$ferramenta" >/dev/null 2>&1; then
     printf 'OK %s\n' "$ferramenta"
   else

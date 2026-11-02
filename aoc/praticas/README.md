@@ -24,7 +24,7 @@ Analisados os nove PDFs de AOC e os documentos locais do projeto `labhw_dellxps`
 
 A documentação descreve Mint 22.3, i7-6700 e restrições por conta (uma CPU, 1 GiB, 200 processos e 50 MB), sem rede externa e sem sudo. O estado atual do LIAC e os pacotes precisam de homologação pelo professor. Nenhum acesso ao servidor foi realizado nem sua configuração alterada.
 
-Dependências principais: Bash, Python 3 com biblioteca padrão, GCC, Binutils e utilitários Linux comuns. GDB é apenas complementar. Não há instalação ou downloads pelo terminal do aluno. Os blocos here-document criam os arquivos por colagem; o pacote ZIP é para revisão/preparação, não pressupõe transferência automática do navegador ao servidor.
+Dependências dos alunos: Bash, GCC (C11), biblioteca C/POSIX do Linux, Binutils e utilitários Linux comuns. GDB é apenas complementar. Não há instalação ou downloads pelo terminal do aluno. Os blocos here-document criam os arquivos por colagem; o pacote ZIP é para revisão/preparação, não pressupõe transferência automática do navegador ao servidor.
 
 Todos os testes locais criam menos de 1 MiB de arquivos de trabalho. Os programas são finitos; a prática 7 abre apenas dois trabalhadores. Os tempos reais não têm alvo de aceleração e não devem ser usados para ranquear estudantes.
 
@@ -40,7 +40,7 @@ Ao alterar um programa, atualize o bloco correspondente no roteiro e o ZIP. O ve
 
 ## Verificação e publicação
 
-Na raiz do repositório:
+Ferramentas de manutenção do professor (Python somente para o verificador e servidor local; não é usado pelos alunos). Na raiz do repositório:
 
 ```bash
 python3 aoc/praticas/verificar.py
@@ -55,3 +55,7 @@ A extensão GDB não foi executada localmente por ausência dessa ferramenta. An
 ## Integração com hardware e planejamento
 
 As sete unidades possuem uma conexão de bancada com campo exportável nas respostas. O dossiê progressivo termina em uma recomendação de hardware para dois cenários de uso da estação, com requisitos declarados, evidências e limites. A observação pode usar máquinas desligadas, fotos e documentação identificadas. O guia docente propõe 13 blocos de 60 minutos, retoma RISC/CISC após CPU e integra a avaliação à rubrica existente. A distribuição deve ser conferida com a carga horária institucional; não equivale automaticamente às 60 horas-aulas do PPC.
+
+## Linguagem das investigações
+
+Todos os programas dos alunos estão em C11. Os roteiros fornecem fontes, compilação GCC com avisos e sem otimização, execução e explicações das operações relevantes. A U7 usa processos POSIX/Linux (fork, pipe, waitpid), com infraestrutura fornecida; não pressupõe domínio dessas APIs. C++ não é necessário. Os simuladores continuam sendo modelos didáticos, mesmo compilados em C. Na U1, a interpretação com sinal é matemática e o truncamento explícito; a saída float32 é referida ao alvo Linux x86-64. A U5 conta chamadas fread da biblioteca, sem inferir chamadas de sistema ou transferências de disco.
