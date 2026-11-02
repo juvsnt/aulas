@@ -10,6 +10,7 @@ on:
       - "so/terminal-de-bolso/**"
       - "so/materiais/**"
       - "aoc/materiais/**"
+      - "aoc/praticas/**"
       - "sd/materiais/**"
       - "so/index.html"
       - "aoc/index.html"
@@ -79,6 +80,7 @@ jobs:
           cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
           cp -r so/materiais _site/so/materiais
           cp -r aoc/materiais _site/aoc/materiais
+          cp -r aoc/praticas _site/aoc/praticas
           cp -r sd/materiais _site/sd/materiais
 
       - uses: actions/upload-pages-artifact@v3
