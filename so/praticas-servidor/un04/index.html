@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 4: Como os arquivos do site são protegidos e gravados? P10 e P11. Inodes, links, permissões e blocos de disco no Linux.">
+  <meta name="theme-color" content="#13202a">
+  <title>Como os arquivos do site são protegidos? · Unidade 04 | Laboratório SO</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un04">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/2 práticas</span>
+      <progress max="2" value="0" aria-label="Práticas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina SO</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · SO · Unidade 04</p>
+      <h1>Como os arquivos do site são protegidos e gravados?</h1>
+      <p class="lede">Explore o sistema de arquivos ext4: configure permissões de acesso (rwx) para proteger dados do servidor, crie links simbólicos e investigue a divisão em blocos de 4 KB no SSD.</p>
+      <div class="meta">
+        <span><b>2 encontros</b> de 60 min</span>
+        <span><b>P10 e P11</b> · Sistemas de Arquivos e Armazenamento</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do servidor</p>
+        <h2>Segurança de arquivos, inodos e armazenamento físico</h2>
+        <p>Um servidor web armazena arquivos públicos (como <code>index.html</code> e imagens, que qualquer visitante da internet pode ler) e arquivos confidenciais (como <code>banco_senhas.dat</code> e chaves de criptografia, que só o administrador pode acessar). No Linux, essa segurança é garantida pelas <b>permissões de acesso (leitura, escrita e execução)</b> armazenadas no <b>Inode</b> do arquivo. Além disso, o sistema de arquivos divide o disco físico em blocos de <b>4 KB</b>, agrupando os dados e controlando a fragmentação interna.</p>
+        <nav class="steps-nav" aria-label="Práticas desta unidade">
+          <a href="#p10">P10</a>
+          <a href="#p11">P11</a>
+        </nav>
+      </section>
+
+      <section class="etapa">
+        <h2>Prepare sua pasta de trabalho</h2>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/so-servidor/un04
+cd ~/atividades/so-servidor/un04
+pwd</code></pre>
+        </div>
+      </section>
+
+      <!-- PRÁTICA P10 -->
+      <section class="etapa" id="p10">
+        <p class="label">P10 · 60 minutos · Inodes, links e permissões</p>
+        <h2>Protegendo arquivos públicos e confidenciais do servidor</h2>
+        <p>Crie um arquivo público (<code>index.html</code>) e um arquivo confidencial do servidor (<code>config_segura.dat</code>). Ajuste suas permissões com <code>chmod</code> e crie um link simbólico (atalho):</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>echo "&lt;h1&gt;Pagina Publica&lt;/h1&gt;" &gt; index.html
+echo "SENHA_BANCO=secreta123" &gt; config_segura.dat
+
+chmod 644 index.html          # Publico: leitura para todos
+chmod 600 config_segura.dat   # Confidencial: somente o dono le/escreve
+ln -s index.html atalho_site.html
+
+ls -l index.html config_segura.dat atalho_site.html
+stat -c "Arquivo: %n | Inode: %i | Permissoes: %A (%a) | Links: %h" index.html config_segura.dat</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho esperado no terminal</div>
+          <pre tabindex="0">-rw-r--r-- ... index.html
+-rw------- ... config_segura.dat
+lrwxrwxrwx ... atalho_site.html -&gt; index.html
+Arquivo: index.html | Inode: ... | Permissoes: -rw-r--r-- (644)
+Arquivo: config_segura.dat | Inode: ... | Permissoes: -rw------- (600)</pre>
+        </div>
+        <div class="question">
+          <label for="p10-resposta">Qual a diferença entre a permissão 644 de index.html e a permissão 600 de config_segura.dat? Por que arquivos de configuração de servidores nunca devem ter permissão 644 ou 777?</label>
+          <textarea id="p10-resposta" placeholder="Explique os riscos de permissões inadequadas em servidores e a função do chmod."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P10</label>
+      </section>
+
+      <!-- PRÁTICA P11 -->
+      <section class="etapa" id="p11">
+        <p class="label">P11 · 60 minutos · Mapeamento em blocos e fragmentação</p>
+        <h2>Como o HTML é dividido em blocos de disco (ext4)</h2>
+        <p>Crie o programa <code>disco_blocos.c</code>. Ele calcula a alocação de blocos de 4 KB no sistema de arquivos para um arquivo de 10.000 bytes e mede a fragmentação interna no último bloco:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar disco_blocos.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; disco_blocos.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define TAMANHO_BLOCO 4096 // 4 KB por bloco no sistema de arquivos ext4
+
+int main(int argc, char **argv) {
+    long tamanho_arquivo = (argc > 1) ? atol(argv[1]) : 10000;
+
+    printf("=== ARMAZENAMENTO NO SISTEMA DE ARQUIVOS (EXT4) ===\n");
+    printf("Tamanho do arquivo index.html: %ld bytes\n", tamanho_arquivo);
+    printf("Tamanho do bloco de disco:     %d bytes (4 KB)\n\n", TAMANHO_BLOCO);
+
+    long blocos_necessarios = (tamanho_arquivo + TAMANHO_BLOCO - 1) / TAMANHO_BLOCO;
+    long espaco_alocado_disco = blocos_necessarios * TAMANHO_BLOCO;
+    long fragmentacao_interna = espaco_alocado_disco - tamanho_arquivo;
+
+    printf("1. Blocos de disco alocados:   %ld bloco(s)\n", blocos_necessarios);
+    printf("2. Espaco real ocupado no SSD: %ld bytes\n", espaco_alocado_disco);
+    printf("3. Fragmentacao Interna:       %ld bytes (desperdicados no ultimo bloco)\n\n",
+           fragmentacao_interna);
+
+    long byte_busca = 5000;
+    long bloco_logico = byte_busca / TAMANHO_BLOCO;
+    long deslocamento_bloco = byte_busca % TAMANHO_BLOCO;
+
+    printf("Localizando o byte %ld dentro do arquivo:\n", byte_busca);
+    printf("-> Bloco Logico do Inode: %ld\n", bloco_logico);
+    printf("-> Deslocamento no bloco: %ld bytes\n", deslocamento_bloco);
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 disco_blocos.c -o disco_blocos
+./disco_blocos 10000</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== ARMAZENAMENTO NO SISTEMA DE ARQUIVOS (EXT4) ===
+Tamanho do arquivo index.html: 10000 bytes
+Tamanho do bloco de disco:     4096 bytes (4 KB)
+
+1. Blocos de disco alocados:   3 bloco(s)
+2. Espaco real ocupado no SSD: 12288 bytes
+3. Fragmentacao Interna:       2288 bytes (desperdicados no ultimo bloco)
+
+Localizando o byte 5000 dentro do arquivo:
+-> Bloco Logico do Inode: 1
+-> Deslocamento no bloco: 904 bytes</pre>
+        </div>
+        <div class="question">
+          <label for="p11-resposta">Um arquivo de 10.000 bytes exigiu quantos blocos de 4 KB? Por que houve 2.288 bytes de fragmentação interna no disco?</label>
+          <textarea id="p11-resposta" placeholder="Explique o motivo de o sistema de arquivos alocar blocos inteiros e o que é fragmentação interna."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P11</label>
+      </section>
+
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo para salvar o relatório da Unidade 4.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un03/">← Prática anterior (Unidade 03)</a>
+      <a href="../un05/">Próxima prática (Unidade 05) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

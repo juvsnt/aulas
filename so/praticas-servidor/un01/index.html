@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 1: Quem atende aos pedidos do servidor? P01 e P02. Fundamentos, chamadas de sistema e erro 404 no Linux.">
+  <meta name="theme-color" content="#13202a">
+  <title>Quem atende aos pedidos do servidor? · Unidade 01 | Laboratório SO</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un01">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/2 práticas</span>
+      <progress max="2" value="0" aria-label="Práticas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina SO</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · SO · Unidade 01</p>
+      <h1>Quem atende aos pedidos do servidor?</h1>
+      <p class="lede">Investigue a fronteira entre as aplicações em modo usuário e os serviços do kernel: execute chamadas de sistema reais e veja o que acontece no sistema operacional durante um Erro 404.</p>
+      <div class="meta">
+        <span><b>2 encontros</b> de 60 min</span>
+        <span><b>P01 e P02</b> · Fundamentos e Syscalls</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do servidor</p>
+        <h2>A hospedagem na nuvem e o kernel do Linux</h2>
+        <p>Você foi contratado para colocar no ar o servidor web institucional. Antes de iniciar os serviços, você precisa reconhecer a capacidade da máquina (núcleos de CPU, memória RAM e limites da conta) e entender como uma requisição web cruza a fronteira entre o <b>modo usuário</b> (onde o servidor roda) e o <b>modo kernel</b> (onde o sistema operacional controla a rede e os discos).</p>
+        <nav class="steps-nav" aria-label="Práticas desta unidade">
+          <a href="#p01">P01</a>
+          <a href="#p02">P02</a>
+        </nav>
+      </section>
+
+      <section class="etapa">
+        <h2>Prepare sua pasta de trabalho</h2>
+        <p>No terminal do LIAC, crie a pasta da Unidade 1 e entre nela:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/so-servidor/un01
+cd ~/atividades/so-servidor/un01
+pwd</code></pre>
+        </div>
+      </section>
+
+      <!-- PRÁTICA P01 -->
+      <section class="etapa" id="p01">
+        <p class="label">P01 · 60 minutos · Inventário real</p>
+        <h2>Reconhecendo a máquina do servidor web</h2>
+        <p>Descubra os recursos que o sistema operacional disponibiliza para o nosso servidor:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>uname -sr
+free -h
+df -h .
+ps -p $$ -o pid,ppid,comm</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída típica no servidor</div>
+          <pre tabindex="0">Linux ...
+Mem: ... total ... usada ... livre ...
+Filesystem ... Tam Usad Disp Uso% Montado em ...
+PID   PPID COMMAND
+...    ... bash</pre>
+        </div>
+        <div class="question">
+          <label for="p01-resposta">Qual versão do kernel Linux está em execução? Quanto de memória RAM total e disponível a máquina possui?</label>
+          <textarea id="p01-resposta" placeholder="Anote a versão do kernel e a quantidade de memória observada."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P01</label>
+      </section>
+
+      <!-- PRÁTICA P02 -->
+      <section class="etapa" id="p02">
+        <p class="label">P02 · 60 minutos · Execução real e chamadas de sistema</p>
+        <h2>Atendendo uma requisição e o Erro 404</h2>
+        <p>Crie o mini-servidor <code>servidor_basico.c</code>. Ele simula o recebimento de um pedido de página e utiliza chamadas de sistema reais (<code>open</code>, <code>read</code>, <code>write</code> e <code>close</code>). Depois, tenta abrir uma página inexistente para ver o retorno de erro no kernel:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar servidor_basico.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; servidor_basico.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+#include &lt;errno.h&gt;
+
+int main(void) {
+    printf("=== SERVIDOR WEB: ATENDENDO REQUISICAO VIA SYSCALLS ===\n");
+    printf("Processo do servidor em execucao: PID = %ld\n\n", (long)getpid());
+
+    // 1. O servidor recebe o pedido de arquivo index.html do cliente
+    FILE *pedido = fopen("pedido.txt", "w");
+    if (!pedido) { perror("pedido.txt"); return 1; }
+    fputs("GET /index.html HTTP/1.1\n", pedido);
+    fclose(pedido);
+
+    // 2. Syscall de abertura para leitura do pedido
+    int fd_pedido = open("pedido.txt", O_RDONLY);
+    if (fd_pedido < 0) { perror("open pedido"); return 1; }
+
+    char buffer[128];
+    ssize_t bytes_lidos = read(fd_pedido, buffer, sizeof(buffer) - 1);
+    if (bytes_lidos > 0) buffer[bytes_lidos] = '\0';
+    close(fd_pedido);
+
+    printf("Requisicao recebida pelo descritor de arquivo: %s", buffer);
+
+    // 3. Syscall gerando a resposta HTTP 200 OK
+    int fd_resposta = open("resposta.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd_resposta < 0) { perror("open resposta"); return 1; }
+
+    const char *resposta = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1>Servidor LIAC Online</h1>\n";
+    write(fd_resposta, resposta, strlen(resposta));
+    close(fd_resposta);
+    puts("Resposta gravada com sucesso em 'resposta.txt' (HTTP 200 OK).");
+
+    // 4. Demonstrando o Erro 404 no kernel: tentando abrir arquivo que nao existe
+    puts("\n=== DEMONSTRANDO O ERRO 404 (SYSCALL AO KERNEL) ===");
+    int fd_invalido = open("pagina_inexistente.html", O_RDONLY);
+    if (fd_invalido < 0) {
+        printf("open('pagina_inexistente.html'): Retorno = -1\n");
+        printf("Codigo de erro errno = %d (%s)\n", errno, strerror(errno));
+        if (errno == ENOENT) {
+            puts("Resultado no servidor: HTTP 404 Not Found (Arquivo nao encontrado no sistema de arquivos)!");
+        }
+    } else {
+        close(fd_invalido);
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 servidor_basico.c -o servidor_basico
+./servidor_basico</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== SERVIDOR WEB: ATENDENDO REQUISICAO VIA SYSCALLS ===
+Processo do servidor em execucao: PID = ...
+
+Requisicao recebida pelo descritor de arquivo: GET /index.html HTTP/1.1
+Resposta gravada com sucesso em 'resposta.txt' (HTTP 200 OK).
+
+=== DEMONSTRANDO O ERRO 404 (SYSCALL AO KERNEL) ===
+open('pagina_inexistente.html'): Retorno = -1
+Codigo de erro errno = 2 (No such file or directory)
+Resultado no servidor: HTTP 404 Not Found (Arquivo nao encontrado no sistema de arquivos)!</pre>
+        </div>
+        <div class="question">
+          <label for="p02-resposta">O que o número -1 e o erro ENOENT (código 2) significam na chamada open()? Como o servidor web usa isso para responder o famoso erro '404 Not Found' ao navegador do usuário?</label>
+          <textarea id="p02-resposta" placeholder="Explique a relação entre a chamada de sistema do kernel e o erro 404."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P02</label>
+      </section>
+
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas respostas e clique no botão <b>Baixar respostas</b> no topo para salvar o relatório da Unidade 1.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../">← Percurso</a>
+      <a href="../un02/">Próxima prática (Unidade 02) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

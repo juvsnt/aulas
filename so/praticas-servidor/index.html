@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Laboratório prático de Sistemas Operacionais baseado em um servidor web real: chamadas de sistema, processos, threads, mutex, memória virtual, inodos e logs no terminal Linux.">
+  <meta name="theme-color" content="#13202a">
+  <title>Por dentro do servidor: catorze investigações · Laboratório SO | LIAC</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body data-unit="percurso">
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../">← Disciplina SO</a>
+      <a href="index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · Sistemas Operacionais</p>
+      <h1>Por dentro do servidor:<br>catorze investigações.</h1>
+      <p class="lede">Descubra como o sistema operacional dá suporte a um servidor web real: desde chamadas de sistema e múltiplos clientes com processos/threads até o contador de curtidas com mutex, cache de páginas na RAM e proteção de arquivos.</p>
+      <div class="meta">
+        <span><b>5 unidades + síntese</b></span>
+        <span><b>14 práticas</b> de 60 min</span>
+        <span><b>Sem instalação pelo aluno</b></span>
+        <span><b>C11 simples e direto</b></span>
+      </div>
+      <div class="dica">
+        <b>Prefere a abordagem de leituras numéricas?</b> Você também pode cursar a trilha analítica alternativa: <a href="../praticas/">Um serviço, cinco investigações →</a>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O contexto</p>
+        <h2>Você integra a equipe de infraestrutura do servidor web</h2>
+        <p>Em vez de números abstratos soltos, cada investigação revela uma parte do sistema operacional resolvendo um desafio concreto da web e da nuvem:</p>
+        <div class="diagram">Syscalls e Erro 404 → processos filhos e likes com mutex → cache de páginas na RAM → permissões e inodos → logs em buffer e métricas → síntese</div>
+        <p>Todos os programas foram escritos em C11 limpo e direto, pensados especialmente para facilitar o aprendizado prático sem sobrecarga sintática.</p>
+      </section>
+
+      <section class="etapa">
+        <h2>Antes de começar</h2>
+        <ol>
+          <li>Acesse <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal.liac-lab.dev (nova aba)</a> com seu login institucional do LIAC.</li>
+          <li>Mantenha o roteiro aberto no celular ou computador e copie os blocos de comando com o botão <b>Copiar</b>.</li>
+          <li>Se for seu primeiro contato com o terminal, faça antes o <a href="../terminal-de-bolso/">Terminal de Bolso</a>.</li>
+          <li>As pastas ficam organizadas em <code>~/atividades/so-servidor/un01</code> a <code>un05</code> e <code>sintese</code>. Cada prática é independente.</li>
+        </ol>
+      </section>
+
+      <section class="etapa">
+        <h2>Escolha a unidade</h2>
+        <ol class="route">
+          <li>
+            <span class="badge">UNIDADE 01 · P01–P02</span>
+            <h3><a href="un01/">Quem atende aos pedidos do servidor?</a></h3>
+            <p>Conheça a máquina de hospedagem na nuvem, execute a primeira requisição via chamadas de sistema reais (read/write) e entenda o que acontece no kernel durante o Erro 404.</p>
+            <span class="small">2 práticas de 60 min · Fundamentos, chamadas de sistema e modo kernel</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 02 · P03–P06</span>
+            <h3><a href="un02/">Como o servidor atende múltiplos clientes ao mesmo tempo?</a></h3>
+            <p>Controle processos em background, atenda requisições com processos trabalhadores (fork/exec), compare filas de escalonamento e proteja o contador de curtidas com Mutex.</p>
+            <span class="small">4 práticas de 60 min · Processos, threads, escalonamento e concorrência</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 03 · P07–P09</span>
+            <h3><a href="un03/">Onde as páginas do site ficam guardadas na memória?</a></h3>
+            <p>Aloque buffers no Heap, investigue o isolamento da memória virtual em /proc/self/maps, compreenda a tradução de páginas de 4 KB e o cache de imagens com LRU/FIFO.</p>
+            <span class="small">3 práticas de 60 min · Memória virtual, paginação e algoritmos de substituição</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 04 · P10–P11</span>
+            <h3><a href="un04/">Como os arquivos do site são protegidos e gravados?</a></h3>
+            <p>Proteja arquivos confidenciais com permissões de acesso (rwx), crie atalhos com links simbólicos e investigue como o HTML é dividido em blocos de 4 KB no disco.</p>
+            <span class="small">2 práticas de 60 min · Permissões, inodes, links e alocação em disco</span>
+          </li>
+          <li>
+            <span class="badge">UNIDADE 05 · P12–P13</span>
+            <h3><a href="un05/">Como o servidor grava logs e monitora o tráfego?</a></h3>
+            <p>Compare gravar o arquivo access.log com e sem buffer de E/S e construa um painel de monitoramento consultando o uso de CPU e tráfego de rede em /proc.</p>
+            <span class="small">2 práticas de 60 min · Entrada/Saída, buffers e métricas do kernel</span>
+          </li>
+          <li>
+            <span class="badge">SÍNTESE · P14</span>
+            <h3><a href="sintese/">A vida de uma requisição web de ponta a ponta</a></h3>
+            <p>Integre as cinco unidades documentando todo o percurso: a requisição chega pela rede, a thread atende, a RAM entrega a página e o log é gravado no disco.</p>
+            <span class="small">1 prática de 60 min · Integração e dossiê técnico</span>
+          </li>
+        </ol>
+      </section>
+
+      <section class="etapa">
+        <h2>Como registrar e entregar</h2>
+        <p>Em cada etapa, leia o cenário, execute o comando sugerido e anote suas observações no campo de resposta. O progresso é salvo automaticamente no seu navegador.</p>
+        <p>Ao terminar a prática, clique no botão <b>Baixar respostas</b> no topo da página para salvar o arquivo de texto com suas conclusões e enviá-lo ao professor.</p>
+        <p><a href="professor.html">Acesse o Guia do Professor com planejamento e gabarito →</a></p>
+      </section>
+    </main>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

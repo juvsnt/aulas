@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 5: Como o servidor grava logs e monitora o tráfego? P12 e P13. Buffers de E/S e métricas em /proc no Linux.">
+  <meta name="theme-color" content="#13202a">
+  <title>Como o servidor grava logs e monitora o tráfego? · Unidade 05 | Laboratório SO</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un05">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/2 práticas</span>
+      <progress max="2" value="0" aria-label="Práticas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina SO</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · SO · Unidade 05</p>
+      <h1>Como o servidor grava logs e monitora o tráfego?</h1>
+      <p class="lede">Investigue a camada de Entrada e Saída: o ganho absurdo de velocidade ao usar buffers para gravar logs de acesso e como extrair métricas de CPU e disco do pseudo-sistema de arquivos /proc.</p>
+      <div class="meta">
+        <span><b>2 encontros</b> de 60 min</span>
+        <span><b>P12 e P13</b> · Entrada/Saída, Buffers e /proc</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do servidor</p>
+        <h2>Dispositivos físicos, buffers de E/S e telemetria</h2>
+        <p>A cada página que um usuário carrega, o servidor web precisa registrar uma linha no arquivo de auditoria <code>access.log</code> (com IP, data e status da requisição). Se o servidor fizesse uma gravação individual no disco rígido ou SSD para cada visitante, a lentidão mecânica ou a latência de barramento paralisaria a CPU. Por isso, sistemas operacionais utilizam <b>buffers de E/S</b>. Além disso, o Linux expõe o estado de todos os dispositivos e drivers através de interfaces em memória como <code>/proc</code> e <code>/sys</code>.</p>
+        <nav class="steps-nav" aria-label="Práticas desta unidade">
+          <a href="#p12">P12</a>
+          <a href="#p13">P13</a>
+        </nav>
+      </section>
+
+      <section class="etapa">
+        <h2>Prepare sua pasta de trabalho</h2>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/so-servidor/un05
+cd ~/atividades/so-servidor/un05
+pwd</code></pre>
+        </div>
+      </section>
+
+      <!-- PRÁTICA P12 -->
+      <section class="etapa" id="p12">
+        <p class="label">P12 · 60 minutos · Buffers de E/S</p>
+        <h2>Gravando o access.log com e sem buffer</h2>
+        <p>Crie o programa <code>logs_buffer.c</code>. Ele simula a gravação de 100 requisições: primeiro de forma direta sem buffer (100 chamadas <code>write</code> ao kernel) e depois com bufferização na memória do processo (1 lote para o disco):</p>
+        <div class="command">
+          <div class="command-head"><span>Criar logs_buffer.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; logs_buffer.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+
+#define TOTAL_LOGS 100
+
+int main(void) {
+    const char *linha_log = "192.168.1.50 - GET /index.html 200 OK\n";
+    size_t len = strlen(linha_log);
+
+    printf("=== GRAVANDO %d LOGS DE ACESSO DO SERVIDOR NO DISCO ===\n", TOTAL_LOGS);
+
+    int fd_direto = open("logs_direto.txt", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd_direto < 0) return 1;
+
+    for (int i = 0; i < TOTAL_LOGS; i++) {
+        write(fd_direto, linha_log, len);
+    }
+    close(fd_direto);
+
+    FILE *f_buffer = fopen("logs_buffer.txt", "w");
+    if (!f_buffer) return 1;
+
+    for (int i = 0; i < TOTAL_LOGS; i++) {
+        fputs(linha_log, f_buffer);
+    }
+    fclose(f_buffer);
+
+    puts("Arquivo 'logs_direto.txt' gerado com 100 chamadas de sistema write().");
+    puts("Arquivo 'logs_buffer.txt' gerado com bufferizacao eficiente da biblioteca C.");
+    puts("\nConclusao de SO: Buffers reduzem drasticamente as mudancas de contexto para o kernel.");
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 logs_buffer.c -o logs_buffer
+./logs_buffer</code></pre>
+        </div>
+        <div class="question">
+          <label for="p12-resposta">Por que fazer 100 chamadas de sistema individuais é muito mais custoso para a CPU do que acumular os dados em um buffer de memória e gravar tudo de uma vez?</label>
+          <textarea id="p12-resposta" placeholder="Explique o custo de troca de contexto entre modo usuário e modo kernel em operações de E/S."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P12</label>
+      </section>
+
+      <!-- PRÁTICA P13 -->
+      <section class="etapa" id="p13">
+        <p class="label">P13 · 60 minutos · Telemetria do kernel e /proc</p>
+        <h2>Painel de monitoramento do servidor em tempo real</h2>
+        <p>No Linux, o diretório <code>/proc</code> não fica no disco: ele é uma janela direta para a memória do kernel. Inspecione a carga da CPU (load average), a memória consumida e as interrupções de hardware:</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>echo "=== CARGA DO SERVIDOR (1min, 5min, 15min) ==="
+cat /proc/loadavg
+
+echo "=== MEMORIA VIRTUAL E FISICA DO SERVIDOR ==="
+grep -E "MemTotal|MemFree|Cached|Buffers" /proc/meminfo
+
+echo "=== INTERRUPCOES DE DISCO E REDE ATENDIDAS PELO KERNEL ==="
+head -n 10 /proc/interrupts</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho esperado no terminal</div>
+          <pre tabindex="0">=== CARGA DO SERVIDOR ===
+0.0... 0.0... 0.0... ...
+=== MEMORIA VIRTUAL E FISICA DO SERVIDOR ===
+MemTotal: ... kB
+MemFree:  ... kB
+Cached:   ... kB
+Buffers:  ... kB</pre>
+        </div>
+        <div class="question">
+          <label for="p13-resposta">O que significa o valor 'Cached' exibido em /proc/meminfo? Por que o sistema operacional usa a memória RAM livre para guardar cache de arquivos de disco?</label>
+          <textarea id="p13-resposta" placeholder="Explique o papel do Page Cache do kernel Linux na velocidade de servidores web."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P13</label>
+      </section>
+
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo para salvar o relatório da Unidade 5.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un04/">← Prática anterior (Unidade 04)</a>
+      <a href="../sintese/">Próxima prática (Síntese P14) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

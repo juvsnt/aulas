@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 3: Onde as páginas do site ficam guardadas na memória? P07 a P09. Memória virtual, paginação e cache LRU/FIFO.">
+  <meta name="theme-color" content="#13202a">
+  <title>Onde as páginas do site ficam na memória? · Unidade 03 | Laboratório SO</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un03">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/3 práticas</span>
+      <progress max="3" value="0" aria-label="Práticas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina SO</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · SO · Unidade 03</p>
+      <h1>Onde as páginas do site ficam guardadas na memória?</h1>
+      <p class="lede">Compreenda o espaço de endereçamento do servidor, o isolamento proporcionado pela memória virtual, a tradução por páginas de 4 KB e a substituição no cache com LRU e FIFO.</p>
+      <div class="meta">
+        <span><b>3 encontros</b> de 60 min</span>
+        <span><b>P07, P08 e P09</b> · Memória Virtual e Paginação</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do servidor</p>
+        <h2>Cache de páginas, proteção de memória e paginação</h2>
+        <p>Para responder rapidamente aos visitantes sem sobrecarregar o disco rígido ou SSD, o servidor web mantém as páginas e imagens mais acessadas em um buffer na memória RAM. Mas como o sistema operacional organiza esse espaço? Ele cria a ilusão da <b>Memória Virtual</b>: cada processo enxerga um espaço limpo e contíguo, enquanto o hardware divide a memória real em blocos de <b>4 KB (páginas e molduras/frames)</b>. Quando a RAM enche, o algoritmo de substituição precisa decidir inteligentemente qual imagem antiga descartar.</p>
+        <nav class="steps-nav" aria-label="Práticas desta unidade">
+          <a href="#p07">P07</a>
+          <a href="#p08">P08</a>
+          <a href="#p09">P09</a>
+        </nav>
+      </section>
+
+      <section class="etapa">
+        <h2>Prepare sua pasta de trabalho</h2>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/so-servidor/un03
+cd ~/atividades/so-servidor/un03
+pwd</code></pre>
+        </div>
+      </section>
+
+      <!-- PRÁTICA P07 -->
+      <section class="etapa" id="p07">
+        <p class="label">P07 · 60 minutos · Espaço de endereçamento e alocação</p>
+        <h2>O buffer de cache no Heap do servidor</h2>
+        <p>Crie o programa <code>memoria_servidor.c</code>. Ele aloca dinamicamente 1 MB no Heap com <code>malloc()</code> para o cache de páginas e imprime os endereços virtuais das diferentes regiões de memória (Código, Dados, Heap e Stack):</p>
+        <div class="command">
+          <div class="command-head"><span>Criar memoria_servidor.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; memoria_servidor.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+int variavel_global = 10; // Segmento de Dados/BSS
+
+int main(void) {
+    int variavel_local = 20; // Pilha (Stack)
+
+    size_t tamanho_cache = 1024 * 1024; // 1 MB
+    char *cache_paginas = (char *)malloc(tamanho_cache);
+    if (!cache_paginas) {
+        perror("malloc");
+        return 1;
+    }
+
+    for (size_t i = 0; i < tamanho_cache; i += 4096) {
+        cache_paginas[i] = 'A'; // 1 escrita por pagina de 4 KB
+    }
+
+    printf("=== ESPACO DE ENDERECAMENTO DO SERVIDOR (PID: %ld) ===\n", (long)getpid());
+    printf("1. Codigo/Texto (funcao main):   %p\n", (void *)main);
+    printf("2. Dados Globais:                %p\n", (void *)&variavel_global);
+    printf("3. Heap (Buffer de 1MB alocado): %p\n", (void *)cache_paginas);
+    printf("4. Pilha/Stack (var local):      %p\n\n", (void *)&variavel_local);
+
+    puts("Memoria alocada com sucesso no Heap para cache do servidor.");
+    free(cache_paginas);
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 memoria_servidor.c -o memoria_servidor
+./memoria_servidor</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída típica esperada</div>
+          <pre tabindex="0">=== ESPACO DE ENDERECAMENTO DO SERVIDOR (PID: ...) ===
+1. Codigo/Texto (funcao main):   0x...
+2. Dados Globais:                0x...
+3. Heap (Buffer de 1MB alocado): 0x...
+4. Pilha/Stack (var local):      0x...</pre>
+        </div>
+        <div class="question">
+          <label for="p07-resposta">Compare os endereços do Heap (onde o buffer de 1MB foi alocado) e da Pilha (Stack). Qual dos dois possui endereços de memória mais altos?</label>
+          <textarea id="p07-resposta" placeholder="Registre a comparação entre os endereços observados no Heap e na Pilha."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P07</label>
+      </section>
+
+      <!-- PRÁTICA P08 -->
+      <section class="etapa" id="p08">
+        <p class="label">P08 · 60 minutos · Paginação e memória virtual</p>
+        <h2>Tradução de páginas virtuais e Falta de Página (Page Fault)</h2>
+        <p>Crie o programa <code>traducao_paginas.c</code>. Ele simula a MMU (Unidade de Gerenciamento de Memória) dividindo um endereço virtual em Número de Página e Deslocamento (com páginas de 4 KB). Teste com o endereço 9000 (página presente) e depois com 14000 (página ausente na RAM, causando Page Fault):</p>
+        <div class="command">
+          <div class="command-head"><span>Criar traducao_paginas.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; traducao_paginas.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#define TAMANHO_PAGINA 4096 // 4 KB por pagina
+
+int main(int argc, char **argv) {
+    long endereco_virtual = (argc > 1) ? atol(argv[1]) : 9000;
+
+    printf("=== TRADUCAO DE MEMORIA VIRTUAL NO SERVIDOR ===\n");
+    printf("Endereco virtual solicitado pelo processo: %ld\n", endereco_virtual);
+
+    long numero_pagina = endereco_virtual / TAMANHO_PAGINA;
+    long deslocamento  = endereco_virtual % TAMANHO_PAGINA;
+
+    printf("Numero da Pagina Virtual (VPN): %ld\n", numero_pagina);
+    printf("Deslocamento na Pagina (Offset): %ld bytes\n\n", deslocamento);
+
+    int tabela_frames[] = {5, 8, 2, -1};
+    int total_paginas = 4;
+
+    if (numero_pagina < total_paginas) {
+        int frame = tabela_frames[numero_pagina];
+        if (frame >= 0) {
+            long endereco_fisico = (frame * TAMANHO_PAGINA) + deslocamento;
+            printf("Status: PAGINA PRESENTE NA RAM!\n");
+            printf("Mapeada para o Frame Fisico: %d\n", frame);
+            printf("Endereco Fisico Real na RAM: %ld\n", endereco_fisico);
+        } else {
+            puts("Status: [PAGE FAULT] Pagina ausente da memoria RAM!");
+            puts("O kernel precisa suspender o processo e buscar a pagina no disco.");
+        }
+    } else {
+        puts("Status: [SEGMENTATION FAULT] Endereco fora do espaco alocado!");
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 traducao_paginas.c -o traducao_paginas
+./traducao_paginas 9000
+./traducao_paginas 14000</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída para o endereço 14000</div>
+          <pre tabindex="0">Numero da Pagina Virtual (VPN): 3
+Deslocamento na Pagina (Offset): 1712 bytes
+Status: [PAGE FAULT] Pagina ausente da memoria RAM!
+O kernel precisa suspender o processo e buscar a pagina no disco.</pre>
+        </div>
+        <div class="question">
+          <label for="p08-resposta">Para o endereço 9000, qual foi o número da página e o frame físico mapeado? O que aconteceu quando você solicitou o endereço 14000?</label>
+          <textarea id="p08-resposta" placeholder="Explique como a MMU calcula a página e o que é uma Falta de Página (Page Fault)."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P08</label>
+      </section>
+
+      <!-- PRÁTICA P09 -->
+      <section class="etapa" id="p09">
+        <p class="label">P09 · 60 minutos · Substituição de páginas</p>
+        <h2>Cache de imagens na RAM: FIFO vs. LRU</h2>
+        <p>Crie o programa <code>cache_paginas.c</code>. O servidor tem espaço para apenas 3 imagens na RAM. Compare a taxa de faltas de página entre o algoritmo <b>FIFO</b> (descarta a que entrou primeiro) e <b>LRU</b> (descarta a que foi usada menos recentemente):</p>
+        <div class="command">
+          <div class="command-head"><span>Criar cache_paginas.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; cache_paginas.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+#define TOTAL_ACESSOS 6
+#define MOLDURAS 3
+
+int main(int argc, char **argv) {
+    const char *algo = (argc > 1) ? argv[1] : "lru";
+    int acessos[TOTAL_ACESSOS] = {1, 2, 3, 1, 4, 2};
+
+    printf("=== CACHE DE IMAGENS DO SERVIDOR: ALGORITMO %s ===\n",
+           (strcmp(algo, "fifo") == 0) ? "FIFO (First-In First-Out)" : "LRU (Least Recently Used)");
+    printf("Capacidade da memoria RAM: %d imagens em cache\n\n", MOLDURAS);
+
+    int frames[MOLDURAS] = {-1, -1, -1};
+    int tempo_uso[MOLDURAS] = {0, 0, 0};
+    int ordem_chegada[MOLDURAS] = {0, 0, 0};
+    int faltas = 0, hits = 0;
+    int relogio = 0;
+
+    for (int i = 0; i < TOTAL_ACESSOS; i++) {
+        int pagina = acessos[i];
+        relogio++;
+        int hit = 0;
+
+        for (int m = 0; m < MOLDURAS; m++) {
+            if (frames[m] == pagina) {
+                hit = 1;
+                tempo_uso[m] = relogio;
+                break;
+            }
+        }
+
+        if (hit) {
+            hits++;
+            printf("Acesso a Imagem %d: [HIT] Ja estava em cache na RAM!\n", pagina);
+        } else {
+            faltas++;
+            int vitima = 0;
+            int encontrou_vazio = 0;
+            for (int m = 0; m < MOLDURAS; m++) {
+                if (frames[m] == -1) {
+                    vitima = m;
+                    encontrou_vazio = 1;
+                    break;
+                }
+            }
+
+            if (!encontrou_vazio) {
+                if (strcmp(algo, "fifo") == 0) {
+                    int menor_chegada = ordem_chegada[0];
+                    for (int m = 1; m < MOLDURAS; m++) {
+                        if (ordem_chegada[m] < menor_chegada) {
+                            menor_chegada = ordem_chegada[m];
+                            vitima = m;
+                        }
+                    }
+                } else {
+                    int menor_uso = tempo_uso[0];
+                    for (int m = 1; m < MOLDURAS; m++) {
+                        if (tempo_uso[m] < menor_uso) {
+                            menor_uso = tempo_uso[m];
+                            vitima = m;
+                        }
+                    }
+                }
+            }
+
+            int imagem_expulsa = frames[vitima];
+            frames[vitima] = pagina;
+            tempo_uso[vitima] = relogio;
+            ordem_chegada[vitima] = relogio;
+
+            if (imagem_expulsa != -1) {
+                printf("Acesso a Imagem %d: [FALTA DE PAGINA] Expulsou Imagem %d da RAM\n",
+                       pagina, imagem_expulsa);
+            } else {
+                printf("Acesso a Imagem %d: [FALTA DE PAGINA] Carregou no frame livre %d\n",
+                       pagina, vitima);
+            }
+        }
+    }
+
+    printf("\n=== RESULTADO DA SUBSTITUICAO (%s) ===\n", algo);
+    printf("Total de acessos: %d\n", TOTAL_ACESSOS);
+    printf("Faltas de pagina: %d | Hits em RAM: %d\n", faltas, hits);
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 cache_paginas.c -o cache_paginas
+./cache_paginas lru
+./cache_paginas fifo</code></pre>
+        </div>
+        <div class="question">
+          <label for="p09-resposta">No algoritmo LRU, qual imagem foi expulsa da RAM quando a Imagem 4 foi solicitada? Por que o LRU é amplamente preferido em caches de sistemas operacionais?</label>
+          <textarea id="p09-resposta" placeholder="Explique a decisão do algoritmo LRU baseada na recência de uso das páginas."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí a prática P09</label>
+      </section>
+
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo para salvar o relatório da Unidade 3.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un02/">← Prática anterior (Unidade 02)</a>
+      <a href="../un04/">Próxima prática (Unidade 04) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

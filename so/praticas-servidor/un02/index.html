@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Unidade 2: Como o servidor atende múltiplos clientes ao mesmo tempo? P03 a P06. Processos, fork, escalonamento e mutex.">
+  <meta name="theme-color" content="#13202a">
+  <title>Como o servidor atende múltiplos clientes? · Unidade 02 | Laboratório SO</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../script.js" defer></script>
+</head>
+<body data-unit="un02">
+  <div class="bar">
+    <div class="bar-in">
+      <span class="count" id="progress-count">0/4 práticas</span>
+      <progress max="4" value="0" aria-label="Práticas concluídas"></progress>
+    </div>
+  </div>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="wrap">
+    <nav class="topnav" aria-label="Navegação principal">
+      <a href="../../">← Disciplina SO</a>
+      <a href="../index.html">Percurso das práticas</a>
+      <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a>
+    </nav>
+
+    <header class="hero">
+      <p class="label">LIAC · UNEMAT · SO · Unidade 02</p>
+      <h1>Como o servidor atende múltiplos clientes ao mesmo tempo?</h1>
+      <p class="lede">Explore o ciclo de vida dos processos, a criação de trabalhadores com fork/exec, a fila de escalonamento da CPU e a proteção de dados compartilhados com Mutex.</p>
+      <div class="meta">
+        <span><b>4 encontros</b> de 60 min</span>
+        <span><b>P03, P04, P05 e P06</b> · Concorrência e Processos</span>
+      </div>
+      <p class="small">Prof. Me. Juvenal Silva Neto · Ciência da Computação</p>
+      <div class="controls">
+        <button type="button" id="theme" aria-pressed="false">Alternar tema</button>
+        <button type="button" id="download-answers">Baixar respostas</button>
+      </div>
+      <p class="status" id="save-status" aria-live="polite">Respostas salvas automaticamente neste navegador.</p>
+    </header>
+
+    <main id="conteudo">
+      <section class="etapa">
+        <p class="label">O cenário do servidor</p>
+        <h2>Multitarefa, trabalhadores e concorrência</h2>
+        <p>Um servidor web comercial precisa receber dezenas ou centenas de requisições por segundo. Como o sistema operacional organiza esse trabalho? Ele pode criar processos filhos isolados (arquitetura multi-processos), alternar a CPU rapidamente entre requisições usando algoritmos de escalonamento e permitir que múltiplas threads atualizem variáveis compartilhadas (como curtidas e visualizações) com segurança através de travas (Mutex).</p>
+        <nav class="steps-nav" aria-label="Práticas desta unidade">
+          <a href="#p03">P03</a>
+          <a href="#p04">P04</a>
+          <a href="#p05">P05</a>
+          <a href="#p06">P06</a>
+        </nav>
+      </section>
+
+      <section class="etapa">
+        <h2>Prepare sua pasta de trabalho</h2>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>mkdir -p ~/atividades/so-servidor/un02
+cd ~/atividades/so-servidor/un02
+pwd</code></pre>
+        </div>
+      </section>
+
+      <!-- PRÁTICA P03 -->
+      <section class="etapa" id="p03">
+        <p class="label">P03 · 60 minutos · Controle de processos e sinais</p>
+        <h2>O processo do servidor em segundo plano (Background)</h2>
+        <p>Um servidor não deve travar o terminal do administrador. Ele roda como serviço em segundo plano (background). Vamos simular o controle de um processo via sinais do Linux (<code>STOP</code> para pausar e <code>CONT</code> para retomar):</p>
+        <div class="command">
+          <div class="command-head"><span>Execute no terminal</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>sleep 2 &amp;
+pid_servidor=$!
+kill -STOP "$pid_servidor"
+ps -p "$pid_servidor" -o pid,ppid,stat,comm
+kill -CONT "$pid_servidor"
+wait "$pid_servidor"
+echo "Processo do servidor concluido e recolhido."</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída típica esperada</div>
+          <pre tabindex="0">PID   PPID STAT COMMAND
+...    ... T    sleep
+Processo do servidor concluido e recolhido.</pre>
+        </div>
+        <div class="question">
+          <label for="p03-resposta">Na coluna STAT do comando ps, a letra 'T' indica qual estado do processo? O que o sinal CONT fez em seguida?</label>
+          <textarea id="p03-resposta" placeholder="Explique os estados do processo e o efeito dos sinais STOP e CONT."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-1" data-step="1"> Concluí a prática P03</label>
+      </section>
+
+      <!-- PRÁTICA P04 -->
+      <section class="etapa" id="p04">
+        <p class="label">P04 · 60 minutos · Processos trabalhadores com fork</p>
+        <h2>Atendendo clientes com fork, exec e wait</h2>
+        <p>Crie o programa <code>servidor_fork.c</code>. O processo pai (master) recebe a conexão e cria um processo filho com <code>fork()</code> para atender o cliente. O filho substitui sua imagem com <code>execl()</code> e retorna o status HTTP 200:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar servidor_fork.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; servidor_fork.c &lt;&lt;'FIM'
+#define _POSIX_C_SOURCE 200809L
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;string.h&gt;
+
+int main(int argc, char **argv) {
+    if (argc == 2 && strcmp(argv[1], "trabalhador") == 0) {
+        printf("[PROCESSO FILHO APOS EXEC] PID = %ld | PPID = %ld\n",
+               (long)getpid(), (long)getppid());
+        puts("Trabalhador processou o pedido do cliente com sucesso.");
+        return 200; // Codigo HTTP 200 OK retornado como exit status
+    }
+
+    printf("=== SERVIDOR MASTER (PAI): GERENCIANDO REQUISICOES ===\n");
+    int conexoes_ativas = 1;
+    printf("Servidor Pai iniciado: PID = %ld | Conexoes = %d\n",
+           (long)getpid(), conexoes_ativas);
+
+    puts("\n[CLIENTE CONECTOU] Criando processo filho (fork) para atender o cliente...");
+    fflush(stdout);
+
+    pid_t pid = fork();
+
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+
+    if (pid == 0) {
+        conexoes_ativas = 99; // Altera apenas a memoria privada do filho
+        printf("[FILHO ANTES DO EXEC] PID = %ld | PPID = %ld | Minhas conexoes = %d\n",
+               (long)getpid(), (long)getppid(), conexoes_ativas);
+        fflush(stdout);
+
+        execl("./servidor_fork", "servidor_fork", "trabalhador", (char *)NULL);
+        perror("execl");
+        _exit(1);
+    }
+
+    int status;
+    waitpid(pid, &status, 0);
+
+    puts("\n=== RESUMO NO SERVIDOR PAI ===");
+    printf("Conexoes no Pai continuam intactas: %d (Memoria isolada do filho!)\n", conexoes_ativas);
+    if (WIFEXITED(status)) {
+        printf("Processo filho terminou com status HTTP = %d\n", WEXITSTATUS(status));
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 servidor_fork.c -o servidor_fork
+./servidor_fork</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Saída esperada</div>
+          <pre tabindex="0">=== SERVIDOR MASTER (PAI): GERENCIANDO REQUISICOES ===
+Servidor Pai iniciado: PID = ... | Conexoes = 1
+
+[CLIENTE CONECTOU] Criando processo filho (fork) para atender o cliente...
+[FILHO ANTES DO EXEC] PID = ... | PPID = ... | Minhas conexoes = 99
+[PROCESSO FILHO APOS EXEC] PID = ... | PPID = ...
+Trabalhador processou o pedido do cliente com sucesso.
+
+=== RESUMO NO SERVIDOR PAI ===
+Conexoes no Pai continuam intactas: 1 (Memoria isolada do filho!)
+Processo filho terminou com status HTTP = 200</pre>
+        </div>
+        <div class="question">
+          <label for="p04-resposta">Por que a variável 'conexoes_ativas' no pai continuou valendo 1 mesmo após o filho alterá-la para 99? O que isso prova sobre o espaço de endereçamento criado pelo fork?</label>
+          <textarea id="p04-resposta" placeholder="Explique o isolamento de memória entre processos criados por fork."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-2" data-step="2"> Concluí a prática P04</label>
+      </section>
+
+      <!-- PRÁTICA P05 -->
+      <section class="etapa" id="p05">
+        <p class="label">P05 · 60 minutos · Escalonamento da CPU</p>
+        <h2>Fila de requisições: FCFS, SJF e Round Robin</h2>
+        <p>Crie o programa <code>escalonador_web.c</code> para comparar como o sistema operacional decide a ordem de atendimento entre um download longo (5s) e um clique leve (1s):</p>
+        <div class="command">
+          <div class="command-head"><span>Criar escalonador_web.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; escalonador_web.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+int main(int argc, char **argv) {
+    const char *politica = (argc > 1) ? argv[1] : "fcfs";
+
+    // 3 Requisicoes chegam no instante t=0:
+    // Req 1: Download de video longo (burst = 5s)
+    // Req 2: Download de imagem media (burst = 3s)
+    // Req 3: Clique leve de texto     (burst = 1s)
+
+    printf("=== ESCALONAMENTO DE REQUISICOES NO SERVIDOR (%s) ===\n", politica);
+
+    if (strcmp(politica, "fcfs") == 0) {
+        puts("Ordem: 1. Video (5s) -> 2. Imagem (3s) -> 3. Texto (1s)");
+        int espera1 = 0;
+        int espera2 = 5;
+        int espera3 = 5 + 3; // 8s de espera
+        double media = (espera1 + espera2 + espera3) / 3.0;
+
+        puts("\nDiagrama de Gantt:");
+        puts("[Req1: 0 a 5s] [Req2: 5 a 8s] [Req3: 8 a 9s]");
+        printf("Tempo de espera: Req1=%ds | Req2=%ds | Req3=%ds\n", espera1, espera2, espera3);
+        printf("Tempo medio de espera: %.2f segundos\n", media);
+        puts("Problema do FCFS (Efeito Comboio): O clique rapido esperou 8s pelo video longo!");
+
+    } else if (strcmp(politica, "sjf") == 0) {
+        puts("Ordem: 1. Texto (1s) -> 2. Imagem (3s) -> 3. Video (5s)");
+        int espera3 = 0;
+        int espera2 = 1;
+        int espera1 = 1 + 3; // 4s de espera
+        double media = (espera3 + espera2 + espera1) / 3.0;
+
+        puts("\nDiagrama de Gantt:");
+        puts("[Req3: 0 a 1s] [Req2: 1 a 4s] [Req1: 4 a 9s]");
+        printf("Tempo de espera: Req3=%ds | Req2=%ds | Req1=%ds\n", espera3, espera2, espera1);
+        printf("Tempo medio de espera: %.2f segundos\n", media);
+        puts("Vantagem do SJF: Menor tempo medio de espera possivel!");
+
+    } else if (strcmp(politica, "rr") == 0) {
+        puts("Modo Round Robin (fatias de tempo de 2s):");
+        puts("[Req1(2s)] [Req2(2s)] [Req3(1s: Fim)] [Req1(2s)] [Req2(1s: Fim)] [Req1(1s: Fim)]");
+        puts("Tempo de resposta imediato para todos os clientes sem travamentos!");
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 escalonador_web.c -o escalonador_web
+./escalonador_web fcfs
+./escalonador_web sjf
+./escalonador_web rr</code></pre>
+        </div>
+        <div class="question">
+          <label for="p05-resposta">Qual foi o tempo médio de espera no FCFS versus no SJF? Por que o algoritmo Round Robin é o mais utilizado em sistemas interativos como servidores web?</label>
+          <textarea id="p05-resposta" placeholder="Compare os tempos de espera e explique a vantagem do compartilhamento de tempo no Round Robin."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-3" data-step="3"> Concluí a prática P05</label>
+      </section>
+
+      <!-- PRÁTICA P06 -->
+      <section class="etapa" id="p06">
+        <p class="label">P06 · 60 minutos · Concorrência e exclusão mútua</p>
+        <h2>O contador de curtidas (Likes) e o Mutex</h2>
+        <p>Crie o programa <code>contador_likes.c</code>. Ele cria 2 threads simultâneas simulando visitantes clicando em "Curtir" 50.000 vezes cada. Execute primeiro sem mutex (veja as curtidas se perdendo por condição de corrida) e depois com mutex:</p>
+        <div class="command">
+          <div class="command-head"><span>Criar contador_likes.c</span><button class="copy" type="button">Copiar</button></div>
+          <pre tabindex="0"><code>cat &gt; contador_likes.c &lt;&lt;'FIM'
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+#include &lt;string.h&gt;
+
+#define CLICKS_POR_CLIENTE 50000
+
+long contador_likes = 0;
+pthread_mutex_t trava_likes = PTHREAD_MUTEX_INITIALIZER;
+int usar_mutex = 0;
+
+void *cliente_clicando(void *arg) {
+    (void)arg;
+    for (int i = 0; i < CLICKS_POR_CLIENTE; i++) {
+        if (usar_mutex) {
+            pthread_mutex_lock(&trava_likes);
+            contador_likes++; // Regiao critica protegida
+            pthread_mutex_unlock(&trava_likes);
+        } else {
+            long temp = contador_likes;
+            for (volatile int j = 0; j < 5; j++);
+            contador_likes = temp + 1;
+        }
+    }
+    return NULL;
+}
+
+int main(int argc, char **argv) {
+    usar_mutex = (argc > 1 && strcmp(argv[1], "com_mutex") == 0);
+
+    printf("=== SERVIDOR WEB: 2 CLIENTES CLICANDO EM CURTIR (%s) ===\n",
+           usar_mutex ? "COM MUTEX" : "SEM MUTEX (RACE CONDITION)");
+    printf("Total esperado: 2 clientes x %d cliques = %d curtidas\n",
+           CLICKS_POR_CLIENTE, CLICKS_POR_CLIENTE * 2);
+
+    pthread_t thread1, thread2;
+    pthread_create(&thread1, NULL, cliente_clicando, NULL);
+    pthread_create(&thread2, NULL, cliente_clicando, NULL);
+
+    pthread_join(thread1, NULL);
+    pthread_join(thread2, NULL);
+
+    printf("Total REAL computado no servidor: %ld curtidas\n", contador_likes);
+
+    if (contador_likes == CLICKS_POR_CLIENTE * 2) {
+        puts("Sucesso! Mutex garantiu que nenhum clique fosse perdido.");
+    } else {
+        printf("Perda detectada! Faltaram %ld curtidas por falta de exclusao mutua.\n",
+               (CLICKS_POR_CLIENTE * 2) - contador_likes);
+    }
+
+    return 0;
+}
+FIM
+gcc -std=c11 -Wall -Wextra -O0 -pthread contador_likes.c -o contador_likes
+./contador_likes sem_mutex
+./contador_likes com_mutex</code></pre>
+        </div>
+        <div class="expected">
+          <div class="expected-label">Trecho esperado na execução com e sem mutex</div>
+          <pre tabindex="0">SEM MUTEX: Total REAL computado: ... (Perda detectada!)
+COM MUTEX: Total REAL computado: 100000 curtidas (Sucesso!)</pre>
+        </div>
+        <div class="question">
+          <label for="p06-resposta">Por que sem mutex o total de curtidas foi menor do que 100.000? Como a trava (pthread_mutex) resolve esse problema no sistema operacional?</label>
+          <textarea id="p06-resposta" placeholder="Explique o conceito de condição de corrida (race condition) e exclusão mútua."></textarea>
+        </div>
+        <label class="done"><input type="checkbox" id="feito-4" data-step="4"> Concluí a prática P06</label>
+      </section>
+
+      <section class="etapa">
+        <h2>Confira e baixe suas respostas</h2>
+        <p>Revise suas anotações e clique no botão <b>Baixar respostas</b> no topo para salvar o relatório da Unidade 2.</p>
+      </section>
+    </main>
+
+    <nav class="footer-nav" aria-label="Sequência das práticas">
+      <a href="../un01/">← Prática anterior (Unidade 01)</a>
+      <a href="../un03/">Próxima prática (Unidade 03) →</a>
+    </nav>
+
+    <footer>
+      Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia
+    </footer>
+  </div>
+</body>
+</html>

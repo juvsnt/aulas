@@ -10,6 +10,7 @@ on:
       - "so/terminal-de-bolso/**"
       - "so/materiais/**"
       - "so/praticas/**"
+      - "so/praticas-servidor/**"
       - "aoc/materiais/**"
       - "aoc/praticas/**"
       - "aoc/praticas-game/**"
@@ -82,6 +83,7 @@ jobs:
           cp -r so/terminal-de-bolso _site/so/terminal-de-bolso
           cp -r so/materiais _site/so/materiais
           cp -r so/praticas _site/so/praticas
+          cp -r so/praticas-servidor _site/so/praticas-servidor
           cp -r aoc/materiais _site/aoc/materiais
           cp -r aoc/praticas _site/aoc/praticas
           cp -r aoc/praticas-game _site/aoc/praticas-game
