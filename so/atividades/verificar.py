@@ -69,8 +69,10 @@ def verificar(unidade):
         out = r.stdout
         assert r.returncode == 0, f'roteiro falhou ({r.returncode})\n{out}\n{r.stderr}'
         verificacoes = [
-            ('compilacao', all(f'OK {x}' in out for x in
-                               'carga espera ciclo threads contador impasse'.split())),
+            ('compilacao', all(f'OK {x}\n' in out for x in
+                               'carga espera ciclo_exec ciclo_zumbi ciclo_orfao threads '
+                               'contador_sem contador_ingenuo contador_mutex contador_semaforo '
+                               'impasse_opostos impasse_ordenado'.split())),
             ('I1 carga em R', 'State:\tR (running)' in out),
             # espera dorme ~98% do tempo; a amostra pode cair na rajada de 1 ms (R).
             ('I1 espera amostrado', re.search(r'Name:\tespera\nState:\t[SR] ', out)),
@@ -113,12 +115,13 @@ def verificar(unidade):
             return subprocess.run(list(args), cwd=var, text=True, capture_output=True,
                                   timeout=30, check=True).stdout
 
-        compila('ciclo.c', fontes['ciclo.c'].replace('_exit(7)', '_exit(42)'))
-        assert 'codigo de saida 42' in roda('./ciclo', 'zumbi', '1')
+        compila('ciclo_zumbi.c', fontes['ciclo_zumbi.c'].replace('_exit(7)', '_exit(42)'))
+        assert 'codigo de saida 42' in roda('./ciclo_zumbi', '1')
         alvo = '    nanosleep(&pausa, NULL);'
-        assert alvo in fontes['impasse.c']
-        compila('impasse.c', fontes['impasse.c'].replace(alvo, '    /* nanosleep(&pausa, NULL); */'))
-        resultados = [roda('./impasse', 'opostos', '1').splitlines()[-1] for _ in range(10)]
+        assert fontes['impasse_opostos.c'].count(alvo) == 2, 'esperava as duas pausas (thread1 e thread2)'
+        compila('impasse_opostos.c',
+                fontes['impasse_opostos.c'].replace(alvo, '    /* nanosleep(&pausa, NULL); */'))
+        resultados = [roda('./impasse_opostos', '1').splitlines()[-1] for _ in range(10)]
         assert all(r.startswith('Resultado:') for r in resultados)
         print(f'Mudancas orientadas: exit 42 OK; impasse sem pausa em '
               f'{sum("IMPASSE" in r for r in resultados)}/10 execucoes (varia; pode ser 0)')

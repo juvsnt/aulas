@@ -3,12 +3,12 @@
 # Somente consulta processos do proprio usuario; sem sudo, instalacao ou rede.
 # Uso: ./investigar.sh compilar | estado PID | arvore | threads PID | disputa [s] | limpar
 set -u
-PROGRAMAS="carga espera ciclo threads contador impasse"
+PROGRAMAS="carga espera ciclo_exec ciclo_zumbi ciclo_orfao threads contador_sem contador_ingenuo contador_mutex contador_semaforo impasse_opostos impasse_ordenado"
 
 uso() {
   cat <<'TEXTO'
 Uso:
-  ./investigar.sh compilar        compila os seis programas
+  ./investigar.sh compilar        compila os doze programas
   ./investigar.sh estado PID      "prontuario" do processo (/proc/PID/status)
   ./investigar.sh arvore          seus processos em arvore (PID, PPID, estado, nice)
   ./investigar.sh threads PID     threads do processo (ps -T e /proc/PID/task)
