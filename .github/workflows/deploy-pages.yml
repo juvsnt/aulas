@@ -11,6 +11,7 @@ on:
       - "so/materiais/**"
       - "so/praticas/**"
       - "so/praticas-servidor/**"
+      - "so/atividades/**"
       - "aoc/materiais/**"
       - "aoc/praticas/**"
       - "aoc/praticas-game/**"
@@ -86,6 +87,8 @@ jobs:
           cp -r so/materiais _site/so/materiais
           cp -r so/praticas _site/so/praticas
           cp -r so/praticas-servidor _site/so/praticas-servidor
+          cp -r so/atividades _site/so/atividades
+          rm -f _site/so/atividades/*.py _site/so/atividades/README.md _site/so/atividades/.gitignore _site/so/atividades/*/pagina.modelo.html
           cp -r aoc/materiais _site/aoc/materiais
           cp -r aoc/praticas _site/aoc/praticas
           cp -r aoc/praticas-game _site/aoc/praticas-game

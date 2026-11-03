@@ -1,0 +1,294 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade da Unidade II de Sistemas Operacionais: estudo de caso investigativo no terminal Linux do LIAC e lista de problemas sobre processos, escalonamento, threads, sincronização e deadlock."><meta name="theme-color" content="#13202a"><title>Quem está usando a CPU? · Atividade da Unidade II | SO</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un02"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../../materiais/#unidade-2">Materiais da unidade II</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade da Unidade II · Sistemas Operacionais · UNEMAT</p><h1>Quem está usando a CPU — e por quê?</h1><p class="lede">Processos, gerência da CPU, threads, sincronização e deadlock investigados no terminal do LIAC.</p><div class="meta"><span><b>Parte A</b> estudo de caso em aula (2 h)</span><span><b>Parte B</b> problemas para o relatório</span><span><b>C11 + Bash</b></span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas salvas apenas neste navegador quando permitido; baixe antes de sair.</p><p id="progress-count">0/8 etapas</p><progress max="8" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa"><h2>O caso: três chamados no laboratório</h2>
+<p>Na véspera de uma entrega, a equipe de suporte do laboratório recebe três reclamações. Sua equipe vai investigá-las com programas próprios, observar o que o sistema operacional faz e, ao final, escrever um parecer técnico.</p>
+<ol class="chamados">
+<li><b>Chamado 1 — "O terminal ficou lento."</b><br>Quem está usando a CPU? Em que estado está cada processo? Como o escalonador divide o processador? <span class="small">(Investigações I1, I2 e I3)</span></li>
+<li><b>Chamado 2 — "O contador de acessos perde registros."</b><br>Por que uma simples soma dá resultado errado quando várias threads trabalham juntas? <span class="small">(I4 e I5)</span></li>
+<li><b>Chamado 3 — "O programa congelou e não termina."</b><br>O que prende duas threads para sempre — e como impedir? <span class="small">(I6)</span></li>
+</ol>
+<p>Em cada investigação, siga o ciclo <b>prever → executar → observar → interpretar → relacionar com a teoria</b>. Escreva a previsão <em>antes</em> de executar. PIDs, tempos, endereços e contagens mudam a cada execução: registre os <em>seus</em> valores, nunca copie os da referência.</p>
+<div class="dica"><b>Extensões.</b> Os trechos marcados como <b>extensão</b> (disputa com <code>nice</code> na I3 e semáforo na I5) são feitos em aula se houver tempo; caso contrário, complete-os depois, antes de entregar o relatório.</div>
+<p class="small">Teoria de apoio: <a href="../../materiais/pdfs/un02t01.pdf" target="_blank" rel="noopener">t01 Processos</a> · <a href="../../materiais/pdfs/un02t02.pdf" target="_blank" rel="noopener">t02 Execução</a> · <a href="../../materiais/pdfs/un02t03.pdf" target="_blank" rel="noopener">t03 fork/exec</a> · <a href="../../materiais/pdfs/un02t04.pdf" target="_blank" rel="noopener">t04 Threads</a> · <a href="../../materiais/pdfs/un02t05.pdf" target="_blank" rel="noopener">t05 Escalonamento</a> · <a href="../../materiais/pdfs/un02t06.pdf" target="_blank" rel="noopener">t06 Algoritmos</a> · <a href="../../materiais/pdfs/un02t07.pdf" target="_blank" rel="noopener">t07 Concorrência</a> · <a href="../../materiais/pdfs/un02t08.pdf" target="_blank" rel="noopener">t08 Sincronização e deadlock</a> (PDFs, nova aba).</p>
+</section>
+
+<section class="etapa" id="preparar"><p class="label">Parte A · 10 min</p><h2>Prepare a pasta e os programas</h2>
+<p>Entre com sua conta pessoal no terminal. Cole um bloco por vez, sem o símbolo <code>$</code>. Todos os comandos da atividade são executados <b>dentro desta pasta</b>.</p>
+@@CMD Execute no terminal
+mkdir -p ~/atividades/so-un02
+cd ~/atividades/so-un02
+pwd
+command -v bash gcc ps taskset nice
+@@END
+<p>O caminho deve terminar em <code>/atividades/so-un02</code>. Se faltar <code>gcc</code> ou <code>ps</code>, avise o professor. Se faltar só <code>taskset</code>, continue: a extensão da I3 indica o que fazer.</p>
+<p>Abra cada item abaixo, copie o bloco inteiro e cole no terminal. Cada bloco cria um arquivo; o shell mostra <code>&gt;</code> enquanto o bloco não termina na linha <code>FIM</code>. Você não precisa dominar todo o código, mas deve saber explicar as chamadas de SO comentadas.</p>
+@@SRC carga.c
+@@SRC espera.c
+@@SRC ciclo.c
+@@SRC threads.c
+@@SRC contador.c
+@@SRC impasse.c
+@@SRC investigar.sh
+<p>Agora compile tudo. Cada programa deve aparecer com <code>OK</code>.</p>
+@@CMD Execute no terminal
+chmod +x investigar.sh
+./investigar.sh compilar
+@@END
+@@OUT
+OK carga
+OK espera
+OK ciclo
+OK threads
+OK contador
+OK impasse
+@@END
+@@DONE 1 | Criei e compilei os seis programas
+</section>
+
+<nav class="steps-nav" aria-label="Investigações"><a href="#i1">I1</a> <a href="#i2">I2</a> <a href="#i3">I3</a> <a href="#i4">I4</a> <a href="#i5">I5</a> <a href="#i6">I6</a> <a href="#parecer">Parecer</a> <a href="#parte-b">Parte B</a></nav>
+
+<section class="etapa" id="i1"><p class="label">Chamado 1 · I1 · cerca de 16 min · t01, t02</p><h2>O prontuário do processo</h2>
+<p>O SO mantém para cada processo um <b>PCB</b> com identificação, estado, contexto e recursos. No Linux, parte dessas informações aparece em <code>/proc/PID/status</code>. Você vai iniciar dois processos em segundo plano: <code>carga</code> só calcula; <code>espera</code> calcula um pouco e dorme muito.</p>
+@@Q i1-previsao | Previsão: qual dos dois processos você espera encontrar no estado R e qual no estado S? Qual deles fará mais trocas de contexto voluntárias (quando o próprio processo cede a CPU)?
+@@CMD Execute no terminal
+./carga 15 &
+pid_carga=$!
+./espera 15 &
+pid_espera=$!
+sleep 1
+./investigar.sh estado "$pid_carga"
+./investigar.sh estado "$pid_espera"
+@@END
+<p>Agora provoque transições no processo <code>carga</code> com sinais: <code>STOP</code> suspende e <code>CONT</code> retoma. É o mesmo que fazer <kbd>Ctrl</kbd>+<kbd>Z</kbd> e <code>bg</code> num processo em primeiro plano.</p>
+@@CMD Execute no terminal
+kill -STOP "$pid_carga"
+./investigar.sh estado "$pid_carga" | grep State
+kill -CONT "$pid_carga"
+sleep 0.5
+./investigar.sh estado "$pid_carga" | grep State
+./investigar.sh arvore
+wait
+@@END
+@@OUT Referência para comparação · confira após prever
+State:   R (running)      carga, enquanto calcula
+State:   S (sleeping)     espera, quase sempre
+State:   T (stopped)      carga, depois de STOP
+State:   R (running)      carga, depois de CONT
+PPid de carga e de espera = PID do seu bash (veja na árvore)
+Ao final, carga e espera imprimem CPU usada e trocas de contexto.
+@@END
+<p class="small">O <code>wait</code> espera os dois processos terminarem (até 15 s). No Linux, <b>R</b> reúne <em>Pronto</em> e <em>Executando</em>; <b>S</b> corresponde a <em>Bloqueado/Esperando</em>; <b>T</b> (parado por sinal) não aparece no diagrama de cinco estados do t01; <b>Z</b> é o processo terminado que ainda não foi recolhido.</p>
+@@Q i1-resposta | Registre PID, PPID, State e as trocas de contexto de cada processo. Quais campos do PCB (t01) você reconheceu em /proc/PID/status e quais não aparecem ali (por exemplo, PC e registradores)? Desenhe as transições que STOP e CONT provocaram e explique por que um processo em segundo plano não está necessariamente parado (t02).
+@@DONE 2 | Concluí a I1
+</section>
+
+<section class="etapa" id="i2"><p class="label">Chamado 1 · I2 · cerca de 16 min · t03</p><h2>Nascimento, substituição e fim</h2>
+<p>No Unix, um processo nasce de outro por <code>fork()</code>, pode trocar de programa com <code>exec()</code> e termina com <code>exit()</code>; o pai recolhe o resultado com <code>wait()</code>. O programa <code>ciclo</code> mostra três momentos dessa vida.</p>
+@@Q i2-previsao | Previsão: depois do exec, o filho terá um PID novo? Um processo que já terminou pode continuar aparecendo no ps? Quem passa a ser o pai de um filho cujo pai terminou antes dele?
+@@CMD Execute no terminal
+./ciclo exec
+./ciclo zumbi 5
+./ciclo orfao
+sleep 3
+@@END
+@@OUT Referência para comparação · confira após prever
+exec : o filho continua com o MESMO PID, mas o comando passa a ser ps; status 0
+zumbi: o filho aparece com STAT Z até o wait; depois o PID não existe mais; código 7
+orfao: o PPID do filho muda depois que o pai termina
+       (no Linux tradicional, para o PID 1; em contêineres e no WSL pode ser
+        outro processo "adotante", chamado subreaper)
+@@END
+<p class="small">No modo <code>orfao</code>, o prompt pode voltar antes das últimas linhas do filho: o shell só espera o pai. É por isso que o bloco termina com <code>sleep 3</code>.</p>
+@@Q i2-resposta | Registre os PIDs e PPIDs de cada modo. Explique os valores que fork() retorna no pai e no filho; por que o exec preserva o PID; por que o zumbi existe (o que o SO ainda guarda dele?) e o que wait resolve; e quem adotou o órfão no seu ambiente.
+<div class="dica"><b>Mudança orientada.</b> Em <code>ciclo.c</code>, no modo zumbi, troque <code>_exit(7)</code> por <code>_exit(42)</code>. Preveja a saída, recompile com <code>./investigar.sh compilar</code> e execute <code>./ciclo zumbi 2</code>. Registre o resultado na resposta acima.</div>
+@@DONE 3 | Concluí a I2
+</section>
+
+<section class="etapa" id="i3"><p class="label">Chamado 1 · I3 · cerca de 16 min · t02, t05, t06</p><h2>Quem usa e quem espera a CPU</h2>
+<p>Processos alternam <b>rajadas de CPU</b> e <b>esperas de E/S</b>. Um processo <em>CPU-bound</em> quase não espera; um <em>I/O-bound</em> passa a maior parte do tempo bloqueado. As trocas de contexto <b>voluntárias</b> acontecem quando o processo cede a CPU (bloqueio); as <b>involuntárias</b>, quando o escalonador a retira (preempção).</p>
+@@Q i3-previsao | Previsão: em 3 segundos, quanto de CPU cada programa vai consumir? Qual terá mais trocas voluntárias e qual terá mais involuntárias?
+@@CMD Execute no terminal
+./carga 3
+./espera 3
+@@END
+@@OUT Referência para comparação · confira após prever
+carga  | parede=3.00 s | CPU perto de 3 s (perto de 100%) | voluntarias ~0  | involuntarias > 0
+espera | parede=3.0x s | CPU bem pequena (poucos %)        | voluntarias ~60 | involuntarias ~0
+@@END
+@@Q i3-resposta | Registre CPU, porcentagem e trocas de cada um. Classifique cada programa (CPU-bound ou I/O-bound) com base nas evidências. Por que misturar os dois tipos aumenta a utilização da CPU (t02)? Qual algoritmo clássico (t06) favoreceria o processo espera e por quê?
+<div class="extensao"><p class="label">Extensão · disputa pela CPU</p>
+<p>Duas cargas idênticas disputam o <b>mesmo núcleo</b>: uma com prioridade normal (nice 0) e outra rebaixada (nice 10). Quanto maior o nice, menor a prioridade. Usuários comuns só podem aumentar o nice.</p>
+@@Q i3-ext-previsao | Previsão: durante 5 s disputando um núcleo, que fração da CPU cada carga vai receber? A de nice 10 vai ficar parada até a outra terminar?
+@@CMD Execute no terminal
+./investigar.sh disputa 5
+@@END
+@@OUT Referência para comparação · confira após prever
+nice=0  recebe a maior parte da CPU (perto de 90%)
+nice=10 continua avançando, com uma fatia pequena (perto de 10%)
+As duas terminam juntas, porque cada uma calcula por 5 s de relógio.
+Se taskset estiver indisponível, as cargas podem ir para núcleos diferentes
+e as duas chegam perto de 100%: registre isso como limite do ambiente.
+@@END
+<div class="dica"><b>Mudança orientada.</b> Preveja a divisão com nice 5 e confira: <code>taskset -c 0 ./carga 5 &amp; taskset -c 0 nice -n 5 ./carga 5 &amp; wait</code></div>
+@@Q i3-ext-resposta | Registre as frações de CPU com nice 10 e com nice 5. O escalonador do Linux se comporta como Prioridade estrita (t06), em que o processo de menor prioridade só roda quando o outro termina? Relacione com inanição.
+</div>
+@@DONE 4 | Concluí a I3
+</section>
+
+<section class="etapa" id="i4"><p class="label">Chamado 2 · I4 · cerca de 16 min · t04</p><h2>Um processo, vários fluxos</h2>
+<p>Uma <b>thread</b> é um fluxo de execução dentro de um processo. As threads de um processo compartilham código, dados globais e arquivos abertos, mas cada uma tem seus próprios registradores, contador de programa e <b>pilha</b> (o TCB guarda esse contexto). O programa <code>threads</code> cria três threads que ficam ativas por alguns segundos.</p>
+@@Q i4-previsao | Previsão: as três threads terão o mesmo PID? O endereço da variável global será igual ou diferente entre elas? E o endereço da variável local?
+@@CMD Execute no terminal
+./threads 8 &
+pid_threads=$!
+sleep 1
+./investigar.sh threads "$pid_threads"
+wait "$pid_threads"
+@@END
+@@OUT Referência para comparação · confira após prever
+Todas as linhas mostram o mesmo PID; cada thread tem um TID (SPID) diferente.
+&global é idêntico em todas; &local muda de uma thread para outra.
+ps -T e /proc/PID/task listam 4 entradas: a main e as 3 threads criadas.
+@@END
+@@Q i4-resposta | Registre PID, TIDs e endereços. Explique, com base nos endereços, o que é compartilhado e o que é privado entre as threads, e relacione com o TCB. Por que um erro de escrita na variável global de uma thread pode afetar as outras, mas não outro processo?
+@@DONE 5 | Concluí a I4
+</section>
+
+<section class="etapa" id="i5"><p class="label">Chamado 2 · I5 · cerca de 16 min · t07, t08</p><h2>O contador que perde registros</h2>
+<p>Quatro threads somam 1 no mesmo contador, 20 000 vezes cada. Para a CPU, <code>contador = contador + 1</code> são três passos: <b>LER, PROCESSAR, ESCREVER</b> (t07). Se o escalonador trocar de thread entre eles, uma atualização pode apagar outra. O programa tem três modos de proteção.</p>
+@@Q i5-previsao | Previsão: qual será o valor final em cada modo (sem proteção, trava ingênua e mutex)? O resultado será igual nas três rodadas?
+@@CMD Execute no terminal
+./contador sem
+./contador ingenuo
+./contador mutex
+@@END
+@@OUT Referência para comparação · confira após prever
+sem     : contador bem abaixo de 80000; perdidos > 0
+ingenuo : ainda abaixo de 80000, embora exista uma "trava"
+mutex   : contador=80000 e perdidos=0 em todas as rodadas
+Os números exatos dependem da máquina e da carga do servidor.
+@@END
+<p class="small">A trava ingênua usa uma variável <code>ocupado</code>: espera ela valer 0 e então a marca com 1. Leia o trecho <code>INGENUO</code> em <code>contador.c</code> e localize a janela entre o teste e a marcação.</p>
+@@Q i5-resposta | Registre os valores das três rodadas de cada modo. Onde está a região crítica? Por que a trava ingênua falha e qual dos três requisitos de uma solução correta (t07) ela viola? Como uma instrução atômica como TSL ou CAS fecharia essa janela? Por que o mutex resolve?
+<div class="extensao"><p class="label">Extensão · semáforo contador</p>
+<p>Cinco threads disputam <b>três vagas</b>. O semáforo começa com S = 3: <code>wait(S)</code> ocupa uma vaga ou bloqueia; <code>signal(S)</code> libera uma vaga e acorda quem espera (t08).</p>
+@@Q i5-ext-previsao | Previsão: quantas threads estarão dentro ao mesmo tempo, no máximo? O que acontece com a 4ª e a 5ª threads que chegam?
+@@CMD Execute no terminal
+./contador semaforo
+@@END
+@@OUT Referência para comparação · confira após prever
+Três threads entram logo; duas chegam e ficam esperando (dentro=3).
+Quando as primeiras saem, as que esperavam entram.
+Maximo de threads dentro ao mesmo tempo: 3 (limite 3)
+@@END
+@@Q i5-ext-resposta | Transcreva a sequência de eventos e o valor de "dentro". Em que linha uma thread ficou bloqueada no wait(S)? Compare mutex e semáforo contador: quando usar cada um?
+</div>
+@@DONE 6 | Concluí a I5
+</section>
+
+<section class="etapa" id="i6"><p class="label">Chamado 3 · I6 · cerca de 16 min · t08</p><h2>O programa que congela</h2>
+<p>A thread 1 pega o mutex A e pede o B; a thread 2 pega o B e pede o A. Para a atividade não travar o laboratório, cada thread desiste depois de um prazo e o programa termina sozinho, informando se houve impasse. Enquanto as threads esperam, observe o estado delas.</p>
+@@Q i6-previsao | Previsão: as threads vão conseguir os dois recursos? Enquanto esperam, estarão em R (usando CPU) ou em S (bloqueadas)? E no modo ordenado, em que as duas pedem A antes de B?
+@@CMD Execute no terminal
+./impasse opostos 4 &
+pid_impasse=$!
+sleep 1.5
+ps -L -o pid,lwp,stat,pcpu,comm -p "$pid_impasse"
+wait "$pid_impasse"
+./impasse ordenado
+@@END
+@@OUT Referência para comparação · confira após prever
+opostos : thread 1 segura A e pede B; thread 2 segura B e pede A.
+          Durante a espera: STAT S e %CPU 0.0 nas threads (bloqueadas).
+          Após o prazo: ambas DESISTEM -> "IMPASSE detectado".
+ordenado: as duas concluem, uma depois da outra -> "Sem impasse".
+@@END
+<div class="dica"><b>Mudança orientada.</b> O impasse depende de as duas threads pegarem o primeiro recurso antes de pedir o segundo. Em <code>impasse.c</code>, transforme a linha <code>nanosleep(&amp;pausa, NULL);</code> em comentário (<code>/* ... */</code>), recompile (o aviso de variável não usada é esperado) e execute dez vezes: <code>for i in 1 2 3 4 5 6 7 8 9 10; do ./impasse opostos 1 | tail -1; done</code>. O impasse continua acontecendo sempre? O que isso diz sobre erros de concorrência em testes? Desfaça a mudança e recompile ao terminar.</div>
+@@Q i6-resposta | Identifique no código as quatro condições de Coffman. Desenhe o grafo de alocação de recursos no momento do impasse. Por que as threads aparecem em S com 0% de CPU? A desistência por prazo corresponde a qual estratégia de tratamento (t08) e qual condição o modo ordenado elimina?
+@@DONE 7 | Concluí a I6
+</section>
+
+<section class="etapa" id="parecer"><p class="label">Parte A · fechamento · cerca de 16 min</p><h2>Parecer técnico dos três chamados</h2>
+<p>Antes de escrever, encerre qualquer programa da atividade que tenha ficado ativo, inclusive um processo parado:</p>
+@@CMD Execute no terminal
+./investigar.sh limpar
+@@END
+<p>Para cada chamado, escreva: <b>diagnóstico</b> (o que acontece), <b>evidência</b> (cole uma ou duas linhas das suas saídas), <b>conceito</b> (da teoria) e <b>recomendação</b> (o que fazer).</p>
+@@Q parecer-1 | Chamado 1 — "O terminal ficou lento."
+@@Q parecer-2 | Chamado 2 — "O contador de acessos perde registros."
+@@Q parecer-3 | Chamado 3 — "O programa congelou e não termina."
+</section>
+
+<section class="etapa" id="parte-b"><p class="label">Parte B · relatório</p><h2>Problemas conceituais</h2>
+<p>Resolva individualmente, mostrando o raciocínio. Os dados são novos — não são os dos slides. Convenções: tempos em unidades de tempo (u.t.); <b>retorno</b> = término − chegada; <b>espera</b> = retorno − rajada; <b>resposta</b> = primeira execução − chegada; na prioridade, <b>menor número = maior prioridade</b>; empates são resolvidos pela menor chegada; no Round Robin, quem chega no mesmo instante em que outro é preemptado entra na fila antes dele. Diagramas de Gantt podem ser feitos em texto, por exemplo <code>0-2:P1 2-5:P2</code>.</p>
+
+<div class="problema"><h3>B1 · Estados e PCB</h3><p>O processo <code>relatorio</code> passa pelos eventos: (1) é criado; (2) entra na fila de prontos; (3) recebe a CPU; (4) pede a leitura de um arquivo; (5) a leitura termina; (6) recebe a CPU; (7) seu quantum se esgota; (8) recebe a CPU; (9) chama <code>exit()</code>.</p><p>a) Escreva a sequência de estados e o nome de cada transição. b) Em quais eventos ocorre troca de contexto? c) Que campos do PCB são atualizados nos eventos 4 e 7?</p></div>
+@@Q b01 | B1 · Estados e PCB
+
+<div class="problema"><h3>B2 · Troca de contexto</h3><p>a) Diferencie escalonador e despachante. b) Liste os passos de uma troca de contexto do processo A para o processo B. c) Classifique cada situação como <em>apenas mudança de estado</em> ou <em>troca de contexto</em> e justifique: (i) um processo novo é admitido na fila de prontos; (ii) o quantum de A expira e B assume a CPU; (iii) a leitura de disco de C termina e C volta para a fila de prontos, enquanto A continua executando.</p></div>
+@@Q b02 | B2 · Troca de contexto
+
+<div class="problema"><h3>B3 · fork em código</h3><pre>int main(void) {
+    for (int i = 0; i &lt; 2; i++) {
+        pid_t p = fork();
+        if (p == 0) printf("filho i=%d\n", i);
+    }
+    printf("fim %d\n", getpid());
+    return 0;
+}</pre><p>Considere a saída num terminal (sem redirecionamento). a) Quantos processos existem ao todo, incluindo o original? Desenhe a árvore. b) Quantas linhas <code>filho</code> e quantas <code>fim</code> aparecem? c) A ordem das linhas é sempre a mesma? Por quê? d) Nenhum processo chama <code>wait</code>: que situações das observadas na I2 podem ocorrer? e) No trecho <code>if (fork() == 0) { execlp("ls", "ls", NULL); printf("A\n"); } else { wait(NULL); printf("B\n"); }</code>, quando <code>A</code> é impresso?</p></div>
+@@Q b03 | B3 · fork em código
+
+<div class="problema"><h3>B4 · Processo × thread</h3><pre>int total = 0;
+void *tarefa(void *arg) {
+    int parcial = *(int *)arg * 10;
+    total = total + parcial;
+    return NULL;
+}
+int main(void) {
+    int a = 1, b = 2;
+    pthread_t t1, t2;
+    pthread_create(&amp;t1, NULL, tarefa, &amp;a);
+    pthread_create(&amp;t2, NULL, tarefa, &amp;b);
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    printf("total=%d\n", total);
+}</pre><p>a) Quais variáveis ficam em área compartilhada e quais em área privada de cada thread? b) Quais valores finais de <code>total</code> são possíveis? Mostre uma intercalação para cada valor. c) Corrija o código. d) O que poderia acontecer se <code>main</code> não chamasse <code>pthread_join</code>? e) Se, em vez de threads, fossem usados dois processos com <code>fork</code>, o pai veria a soma? Por quê?</p></div>
+@@Q b04 | B4 · Processo × thread
+
+<div class="problema"><h3>B5 · Critérios de escalonamento</h3><p>Para cada sistema, indique a métrica mais importante e justifique: (a) terminal interativo do laboratório; (b) processamento noturno de notas de toda a universidade; (c) servidor web com muitos clientes. Depois explique por que reduzir o quantum melhora uma métrica e piora outra.</p></div>
+@@Q b05 | B5 · Critérios de escalonamento
+
+<div class="problema"><h3>B6 · Algoritmos de escalonamento</h3><div class="tbl"><table><thead><tr><th>Processo</th><th>Chegada</th><th>Rajada</th><th>Prioridade</th></tr></thead><tbody><tr><td>P1</td><td>0</td><td>6</td><td>2</td></tr><tr><td>P2</td><td>1</td><td>3</td><td>3</td></tr><tr><td>P3</td><td>2</td><td>7</td><td>1</td></tr><tr><td>P4</td><td>4</td><td>2</td><td>4</td></tr></tbody></table></div><p>Para FCFS, SJF (não preemptivo), SRTF, Prioridade preemptiva e Round Robin com quantum 2: desenhe o Gantt e calcule espera, retorno e resposta de cada processo e as médias. Monte uma tabela comparativa e indique o melhor algoritmo para cada média.</p></div>
+@@Q b06 | B6 · Algoritmos de escalonamento
+
+<div class="problema"><h3>B7 · O custo do quantum</h3><p>Com a carga de B6, suponha que cada troca de contexto entre processos diferentes custe 1 u.t. (o primeiro despacho não conta). Para RR com quantum 2 e com quantum 4: a) quantas trocas ocorrem? b) qual o tempo total até o último término? c) qual a utilização útil da CPU (tempo útil ÷ tempo total)? d) compare a resposta média dos dois quanta (calculada sem o custo das trocas, como em B6) e conclua.</p></div>
+@@Q b07 | B7 · O custo do quantum
+
+<div class="problema"><h3>B8 · Inanição e envelhecimento</h3><p>Num escalonador de prioridade não preemptivo, o processo X (prioridade 5) chega em t = 0. A partir de t = 0, a cada 2 u.t. chega um novo processo de prioridade 1 com rajada 2, sem parar (em t = 0, 2, 4, …). a) Quando X executa? Dê o nome do fenômeno. b) Agora aplique envelhecimento: a cada 4 u.t. de espera, a prioridade de X melhora 1 nível (5 → 4 → …). Em que instante X passa a ter prioridade 1 e, pela regra de desempate, executa? c) Explique como filas multinível com realimentação tratam processos CPU-bound e I/O-bound, usando os resultados da I3.</p></div>
+@@Q b08 | B8 · Inanição e envelhecimento
+
+<div class="problema"><h3>B9 · Condição de corrida</h3><p>O saldo começa em 1000. A thread D executa <code>saldo = saldo + 100</code> e a thread S executa <code>saldo = saldo - 50</code>, cada uma em três passos (LER, PROCESSAR, ESCREVER). a) Quais saldos finais são possíveis? Mostre uma intercalação para cada. b) Para a trava ingênua <code>while (ocupado) {} ocupado = 1; [região crítica] ocupado = 0;</code>, mostre uma intercalação em que as duas threads entram na região crítica e diga qual requisito (exclusão mútua, progresso ou espera limitada) é violado. c) Explique como Test-and-Set resolve o problema.</p></div>
+@@Q b09 | B9 · Condição de corrida
+
+<div class="problema"><h3>B10 · Semáforo passo a passo</h3><p>Um semáforo começa com S = 2. Use a definição do t08: <code>wait</code> decrementa e bloqueia se S ficar negativo; <code>signal</code> incrementa e acorda uma thread da fila, se houver. Eventos: T1 wait, T2 wait, T3 wait, T1 signal, T4 wait, T2 signal, T3 signal, T4 signal. Monte uma tabela com, após cada evento: valor de S, threads dentro e fila de espera. Qual o significado de S negativo?</p></div>
+@@Q b10 | B10 · Semáforo passo a passo
+
+<div class="problema"><h3>B11 · Deadlock</h3><pre>Thread 1: lock(M1); lock(M2); ... unlock(M2); unlock(M1);
+Thread 2: lock(M2); lock(M3); ... unlock(M3); unlock(M2);
+Thread 3: lock(M3); lock(M1); ... unlock(M1); unlock(M3);</pre><p>a) Existe execução que leva a deadlock? Descreva-a e desenhe o grafo de alocação. b) Mostre as quatro condições de Coffman nesse cenário. c) Corrija aplicando ordenação global dos locks. d) Outro sistema: R1 tem 2 instâncias e R2 tem 1. P1 detém uma instância de R1 e pede R2; P2 detém R2 e pede R1; P3 detém a outra instância de R1 e não pede nada. O grafo tem ciclo? Há deadlock? Justifique.</p></div>
+@@Q b11 | B11 · Deadlock
+
+<div class="problema"><h3>B12 · Ponte com a Parte A</h3><p>Use os <b>seus</b> dados da Parte A: a) com as trocas de contexto da I3, justifique qual programa seria favorecido por SRTF e qual seria rebaixado numa fila multinível com realimentação; b) com a disputa por nice, explique por que o Linux não se comporta como Prioridade estrita; c) com a I5, explique por que o mutex sempre dá 80000 mesmo sendo mais lento; d) com a I6, diga qual estratégia contra deadlock você recomendaria para o programa do Chamado 3 e por quê.</p></div>
+@@Q b12 | B12 · Ponte com a Parte A
+@@DONE 8 | Resolvi a Parte B
+</section>
+
+<section class="etapa"><h2>Confira antes de entregar</h2>
+<ul><li>Escreveu cada previsão antes de executar?</li><li>As respostas usam os seus valores, com PIDs, tempos e contagens reais?</li><li>Fez as mudanças orientadas ou justificou o que impediu?</li><li>As extensões feitas em casa estão respondidas?</li><li>O parecer traz diagnóstico, evidência, conceito e recomendação para os três chamados?</li><li>Executou <code>./investigar.sh limpar</code> antes de sair?</li></ul>
+<p>Baixe as respostas pelo botão no início e envie pelo canal definido pelo professor. O arquivo é baixado no aparelho que abriu a página, não no servidor. As respostas ficam só neste navegador e não são enviadas automaticamente. Ao terminar a sessão, digite <code>exit</code>.</p>
+<details><summary>Se algo der errado</summary><div><p><b>Prompt &gt;:</b> o shell espera o fim de um bloco. Digite <code>FIM</code> sozinho numa linha ou interrompa com <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro de compilação:</b> confira se copiou o bloco inteiro do fonte. Recrie o arquivo e rode <code>./investigar.sh compilar</code>.</p><p><b>Variável vazia (por exemplo, <code>$pid_carga</code>):</b> o bloco anterior foi executado em outra aba ou sessão. Repita o bloco que inicia o processo.</p><p><b>Processo esquecido ou parado:</b> <code>./investigar.sh limpar</code> encerra os programas desta atividade, inclusive os parados com <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p><p><b>Permissão, quota ou thread bloqueada:</b> registre a mensagem e avise o professor, sem tentar contornar as políticas do servidor. Não use <code>sudo</code> nem instale pacotes.</p><p><b>Sem JavaScript:</b> comandos e textos continuam disponíveis; responda em outro meio. Botões, progresso e download dependem de JavaScript.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Operacionais · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>
