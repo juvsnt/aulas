@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Unidade 5 · P05 · investigações em C11"><meta name="theme-color" content="#13202a"><title>Comunicação em grupo · Práticas SD | LIAC</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head>
+<body data-unit="un05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SD</a><a href="../index.html">Percurso das práticas</a><a href="../professor.html">Guia docente</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav><header class="hero"><p class="label">LIAC · UNEMAT · Sistemas Distribuídos</p><h1>Comunicação em grupo</h1><p class="lede">Unidade 5 · P05 · investigações em C11</p><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas ficam apenas neste navegador quando permitido. Baixe antes de sair; não há envio automático.</p><p id="progress-count">0/1 etapas</p><progress max="1" value="0" aria-label="Investigações concluídas"></progress></header><main id="conteudo"><section class="etapa"><h2>Uma estação, vários nós</h2><p>Leituras didáticas: 12, 18, 24 e 30; total 84 e média 21. O mesmo serviço de AOC e SO agora é investigado por suas fronteiras de comunicação, ordem de eventos e hipóteses de falha. Os participantes dos modelos não são máquinas reais.</p><p>Ciclo de trabalho: prever → executar → interpretar → mudar uma condição → registrar uma decisão. Guarde trechos de saída acompanhados de explicação; eles serão retomados no dossiê final. Um modelo em C continua sendo um modelo, mesmo quando produz resultados exatos.</p></section><section class="etapa"><h2>Prepare sua pasta</h2><p>Use sua conta pessoal no terminal Linux. Faça a prática indicada pelo professor. Cole um bloco por vez; as pastas são independentes por unidade. O bloco do programa cria ou substitui somente o fonte com o nome indicado. Recompile se editar o código. Não é necessário Python para estas atividades.</p><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/sd-estacao/un05
+cd ~/atividades/sd-estacao/un05
+pwd
+command -v bash gcc</code></pre></div><p>Confira o caminho e a presença do GCC. Se faltar uma ferramenta ou fork/pipe forem bloqueados, registre a mensagem e avise o professor; use a saída docente identificada como análise documental. Download no celular não transfere arquivos ao terminal. Não há instalação com sudo, acesso à conta de colegas ou necessidade de rede no núcleo das práticas.</p></section><nav class="steps-nav" aria-label="Investigações desta unidade"><a href="#p05">P05</a></nav><section class="etapa" id="p05"><p class="label">P05 · Modelo de chegada e entrega causal em dois receptores</p><h2>Todos receberam na mesma ordem?</h2><p class="small">Base conceitual: <a href="../../materiais/pdfs/un05t01.pdf" target="_blank" rel="noopener">Material da unidade 5 (PDF, nova aba)</a>. Tempo de referência: 60–90 min, ajustável pelo professor.</p><p>X define calibração +2; Y avalia uma leitura 22 usando essa calibração; Z é um registro independente. Quem gerou Y já conhecia X: X → Y. Os receptores recebem R1: Y,X,Z e R2: Z,X,Y.</p><div class="question"><label for="p05-previsao">Antes de executar: Preveja o alerta de Y em cada receptor se a aplicação processar imediatamente na chegada. Ordenação FIFO por remetente resolveria uma dependência entre X e Y enviados por remetentes diferentes?</label><textarea id="p05-previsao" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><details class="source"><summary>Programa C fornecido · abra, leia e copie</summary><p>A infraestrutura está pronta. Antes de executar, localize as operações destacadas na explicação da prática. O bloco abaixo escreve o fonte e compila com C11, avisos e sem otimização.</p><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Criar e compilar grupo.c</span><button class="copy" type="button" aria-label="Copiar: Criar e compilar grupo.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; grupo.c &lt;&lt;&#x27;FIM&#x27;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+typedef struct { char nome; int depende; } Mensagem;
+static const Mensagem mensagens[] = {{&#x27;X&#x27;, -1}, {&#x27;Y&#x27;, 0}, {&#x27;Z&#x27;, -1}};
+static void observar(int r, const int ordem[3], int causal, int perde) {
+    int chegou[3] = {0}, entregue[3] = {0}, calibracao = 0;
+    printf(&quot;Receptor R%d\n&quot;, r);
+    for (int passo = 0; passo &lt; 3; ++passo) {
+        int m = ordem[passo];
+        if (perde &amp;&amp; m == 0) { puts(&quot;X ausente no roteiro de entregas&quot;); continue; }
+        chegou[m] = 1;
+        printf(&quot;Chegou %c\n&quot;, mensagens[m].nome);
+        int mudou;
+        do {
+            mudou = 0;
+            for (int i = 0; i &lt; 3; ++i) {
+                int dep = mensagens[i].depende;
+                if (!chegou[i] || entregue[i] || (causal &amp;&amp; dep &gt;= 0 &amp;&amp; !entregue[dep])) continue;
+                entregue[i] = 1; mudou = 1;
+                if (i == 0) calibracao = 2;
+                printf(&quot;Entrega %c&quot;, mensagens[i].nome);
+                if (i == 1) printf(&quot; leitura=22 correcao=%d alerta=%s&quot;, calibracao,
+                                   22 + calibracao &gt;= 24 ? &quot;SIM&quot; : &quot;NAO&quot;);
+                putchar(&#x27;\n&#x27;);
+            }
+        } while (mudou);
+    }
+    int pendentes = 0;
+    for (int i = 0; i &lt; 3; ++i) if (chegou[i] &amp;&amp; !entregue[i]) ++pendentes;
+    printf(&quot;Pendentes=%d\n&quot;, pendentes);
+}
+int main(int argc, char **argv) {
+    int causal = argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;causal&quot;) == 0;
+    int perde = argc &gt; 2 &amp;&amp; strcmp(argv[2], &quot;sem-x&quot;) == 0;
+    if (argc &gt; 3 || (argc &gt; 1 &amp;&amp; !causal &amp;&amp; strcmp(argv[1], &quot;chegada&quot;)) ||
+        (argc &gt; 2 &amp;&amp; !perde)) {
+        fputs(&quot;Uso: ./grupo [chegada|causal] [sem-x]\n&quot;, stderr); return 2;
+    }
+    const int r1[] = {1, 0, 2}, r2[] = {2, 0, 1};
+    observar(1, r1, causal, perde); observar(2, r2, causal, perde);
+    return 0;
+}
+FIM
+gcc -std=c11 -O0 -Wall -Wextra -Wpedantic grupo.c -o grupo</code></pre></div><p><a href="../arquivos/grupo.c" download>Baixar fonte grupo.c</a> para revisão ou preparação.</p></details><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./grupo chegada</code></pre></div><details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">R1: Entrega Y leitura=22 correcao=0 alerta=NAO
+R2: Entrega Y leitura=22 correcao=2 alerta=SIM
+Pendentes=0 em ambos.</pre></details><h3>Interprete o programa e a saída</h3><p>chegou e entregue são estados distintos. No modo causal, Y fica retida até que sua dependência X esteja entregue; o laço reexamina mensagens após cada avanço. Z não depende de X nem de Y. Entregar causalmente não exige uma ordem total entre eventos independentes. Os dois receptores representam um grupo selecionado, não todos os computadores de uma rede.</p><h3>Mudança orientada</h3><p>Mude apenas a política de chegada para causal. Depois mantenha a política causal e retire X do roteiro de chegada com sem-x. Preveja os alertas e a fila pendente.</p><div class="question"><label for="p05-mudanca">Preveja a variante antes de executá-la. Que condição muda, que resultado você espera e por quê?</label><textarea id="p05-mudanca" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><div class="command" data-run="variant" data-status="0"><div class="command-head"><span>Executar mudança orientada</span><button class="copy" type="button" aria-label="Copiar: Executar mudança orientada">Copiar</button></div><pre tabindex="0"><code>./grupo causal
+./grupo causal sem-x</code></pre></div><details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">Causal: ambos entregam Y com correcao=2 alerta=SIM.
+R1 entrega X,Y,Z; R2 entrega Z,X,Y: ordens totais diferentes.
+Causal sem-x: Pendentes=1 em cada receptor; Y não é entregue.</pre></details><div class="question"><label for="p05-evidencia">Evidência e decisão: Compare as ordens de chegada e entrega. Explique por que bloquear Y preserva a dependência, mas não recupera X. Para distribuir uma calibração aos sensores interessados, escolha unicast, broadcast ou grupo e justifique. O que flooding precisaria para evitar retransmitir duplicatas indefinidamente? Qual custo ou atraso gossip acrescentaria à convergência?</label><textarea id="p05-evidencia" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><div class="dica"><strong>Limites da conclusão:</strong> O programa conhece uma dependência explícita e três mensagens; não implementa multicast de rede nem um algoritmo geral de relógios vetoriais. Ausência e reordenação são injetadas. Garantia de ordem e garantia de entrega são propriedades diferentes.</div><label class="done"><input type="checkbox" id="feito-5" data-step="5">Concluí a investigação e expliquei as evidências</label></section><section class="etapa"><h2>Leve uma evidência para o dossiê</h2><p>Baixe suas respostas neste aparelho e guarde as saídas que justificam suas decisões. O arquivo exportado não é enviado ao professor. Use o canal e o prazo definidos na disciplina. Se trabalhar em grupo, alterne operador, observador e relator; cada estudante deve conseguir explicar uma decisão.</p><p><a href="../sintese/">Consultar os requisitos do dossiê final →</a></p></section></main><nav class="footer-nav" aria-label="Sequência do percurso"><a href="../un04/">← Anterior</a><a href="../un06/">Próxima →</a></nav><footer>Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia<br><a href="../professor.html">Guia docente e referências</a></footer></div></body></html>

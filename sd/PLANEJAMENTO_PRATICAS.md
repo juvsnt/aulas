@@ -1,5 +1,10 @@
 # SD — retomada das práticas
 
+> Atualização de 03/11/2026: este documento preserva o planejamento inicial.
+> O percurso produzido está em [praticas/](praticas/), com 12 investigações,
+> síntese, fontes em C e guia docente. As pendências descritas abaixo
+> registram o estado da proposta na retomada de 02/11.
+
 ## Base consultada e decisão de ambiente
 
 Retomada em 02/11/2026. Referências: os 12 materiais em

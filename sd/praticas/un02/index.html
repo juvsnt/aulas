@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Unidade 2 · P02 · investigações em C11"><meta name="theme-color" content="#13202a"><title>Mensagens e comunicação · Práticas SD | LIAC</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head>
+<body data-unit="un02"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SD</a><a href="../index.html">Percurso das práticas</a><a href="../professor.html">Guia docente</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav><header class="hero"><p class="label">LIAC · UNEMAT · Sistemas Distribuídos</p><h1>Mensagens e comunicação</h1><p class="lede">Unidade 2 · P02 · investigações em C11</p><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas</button></div><p class="status" id="save-status" aria-live="polite">Respostas ficam apenas neste navegador quando permitido. Baixe antes de sair; não há envio automático.</p><p id="progress-count">0/1 etapas</p><progress max="1" value="0" aria-label="Investigações concluídas"></progress></header><main id="conteudo"><section class="etapa"><h2>Uma estação, vários nós</h2><p>Leituras didáticas: 12, 18, 24 e 30; total 84 e média 21. O mesmo serviço de AOC e SO agora é investigado por suas fronteiras de comunicação, ordem de eventos e hipóteses de falha. Os participantes dos modelos não são máquinas reais.</p><p>Ciclo de trabalho: prever → executar → interpretar → mudar uma condição → registrar uma decisão. Guarde trechos de saída acompanhados de explicação; eles serão retomados no dossiê final. Um modelo em C continua sendo um modelo, mesmo quando produz resultados exatos.</p></section><section class="etapa"><h2>Prepare sua pasta</h2><p>Use sua conta pessoal no terminal Linux. Faça a prática indicada pelo professor. Cole um bloco por vez; as pastas são independentes por unidade. O bloco do programa cria ou substitui somente o fonte com o nome indicado. Recompile se editar o código. Não é necessário Python para estas atividades.</p><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/sd-estacao/un02
+cd ~/atividades/sd-estacao/un02
+pwd
+command -v bash gcc</code></pre></div><p>Confira o caminho e a presença do GCC. Se faltar uma ferramenta ou fork/pipe forem bloqueados, registre a mensagem e avise o professor; use a saída docente identificada como análise documental. Download no celular não transfere arquivos ao terminal. Não há instalação com sudo, acesso à conta de colegas ou necessidade de rede no núcleo das práticas.</p></section><nav class="steps-nav" aria-label="Investigações desta unidade"><a href="#p02">P02</a></nav><section class="etapa" id="p02"><p class="label">P02 · Enquadramento em pipe real; extensão TCP opcional</p><h2>Como bytes viram mensagens?</h2><p class="small">Base conceitual: <a href="../../materiais/pdfs/un02t01.pdf" target="_blank" rel="noopener">Material da unidade 2 (PDF, nova aba)</a>. Tempo de referência: 60–90 min, ajustável pelo professor.</p><p>O agregador deve reconhecer um registro mesmo quando o fluxo chega em pequenos fragmentos. O formato da aplicação é id espaço valor seguido por quebra de linha. Investigue serialização, limites e completude.</p><div class="question"><label for="p02-previsao">Antes de executar: Uma chamada write obriga o receptor a receber tudo em uma única read? O que delimita a mensagem no nosso formato? Preveja se ler um byte por chamada muda o total das quatro leituras.</label><textarea id="p02-previsao" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><details class="source"><summary>Programa C fornecido · abra, leia e copie</summary><p>A infraestrutura está pronta. Antes de executar, localize as operações destacadas na explicação da prática. O bloco abaixo escreve o fonte e compila com C11, avisos e sem otimização.</p><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Criar e compilar estacao.c</span><button class="copy" type="button" aria-label="Copiar: Criar e compilar estacao.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; estacao.c &lt;&lt;&#x27;FIM&#x27;
+#define _POSIX_C_SOURCE 200809L
+#include &lt;errno.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;unistd.h&gt;
+
+/* Pipe real; texto com id, valor e delimitador. Sem rede. */
+static int numero(const char *s, long min, long max) {
+    char *fim; errno = 0; long n = strtol(s, &amp;fim, 10);
+    if (errno || !*s || *fim || n &lt; min || n &gt; max) return -1;
+    return (int)n;
+}
+static int enviar(int fd, const char *s, size_t n) {
+    while (n) {
+        ssize_t k = write(fd, s, n);
+        if (k &lt; 0 &amp;&amp; errno == EINTR) continue;
+        if (k &lt;= 0) return -1;
+        s += k; n -= (size_t)k;
+    }
+    return 0;
+}
+int main(int argc, char **argv) {
+    int passo = argc &gt; 1 ? numero(argv[1], 1, 16) : 8;
+    int ultimo = argc &gt; 2 ? numero(argv[2], 0, 100) : 30;
+    int corte = argc &gt; 3 &amp;&amp; strcmp(argv[3], &quot;corte&quot;) == 0;
+    if (argc &gt; 4 || passo &lt; 0 || ultimo &lt; 0 || (argc &gt; 3 &amp;&amp; !corte)) {
+        fputs(&quot;Uso: ./estacao [bytes:1..16] [ultima:0..100] [corte]\n&quot;, stderr);
+        return 2;
+    }
+    signal(SIGPIPE, SIG_IGN);
+    alarm(5); /* Limite de contingencia; nao mede timeout distribuido. */
+    int canal[2];
+    if (pipe(canal) &lt; 0) { perror(&quot;pipe&quot;); return 1; }
+    pid_t filho = fork();
+    if (filho &lt; 0) { perror(&quot;fork&quot;); close(canal[0]); close(canal[1]); return 1; }
+    if (filho == 0) {
+        alarm(5); close(canal[0]);
+        int dados[] = {12, 18, 24, ultimo};
+        for (int i = 0; i &lt; 4; ++i) {
+            char linha[32];
+            int n = snprintf(linha, sizeof linha, &quot;%d %d\n&quot;, i + 1, dados[i]);
+            if (corte &amp;&amp; i == 3) --n;
+            if (enviar(canal[1], linha, (size_t)n) &lt; 0) _exit(1);
+        }
+        close(canal[1]); _exit(0);
+    }
+    close(canal[1]);
+    char bloco[16], linha[32]; size_t usados = 0;
+    int total = 0, recebidos = 0, falhou = 0, chamadas = 0;
+    for (;;) {
+        ssize_t n = read(canal[0], bloco, (size_t)passo);
+        if (n &lt; 0 &amp;&amp; errno == EINTR) continue;
+        if (n &lt; 0) { perror(&quot;read&quot;); falhou = 1; break; }
+        if (!n) break;
+        ++chamadas;
+        printf(&quot;Fragmento: %zd bytes\n&quot;, n);
+        for (ssize_t i = 0; i &lt; n; ++i) {
+            if (bloco[i] != &#x27;\n&#x27;) {
+                if (usados + 1 &gt;= sizeof linha) { falhou = 1; break; }
+                linha[usados++] = bloco[i];
+            } else {
+                int id, valor; char extra;
+                linha[usados] = &#x27;\0&#x27;;
+                if (sscanf(linha, &quot;%d %d %c&quot;, &amp;id, &amp;valor, &amp;extra) != 2 ||
+                    id != recebidos + 1 || valor &lt; 0 || valor &gt; 100 || recebidos &gt;= 4) {
+                    falhou = 1; break;
+                }
+                ++recebidos; total += valor; usados = 0;
+                printf(&quot;Mensagem: produtor=P id=%d valor=%d\n&quot;, id, valor);
+            }
+        }
+        if (falhou) break;
+    }
+    close(canal[0]);
+    int status;
+    while (waitpid(filho, &amp;status, 0) &lt; 0) {
+        if (errno != EINTR) { perror(&quot;waitpid&quot;); return 1; }
+    }
+    if (!WIFEXITED(status) || WEXITSTATUS(status)) falhou = 1;
+    printf(&quot;Chamadas com dados=%d\n&quot;, chamadas);
+    if (usados) { puts(&quot;Registro incompleto: nao incorporado&quot;); falhou = 1; }
+    if (recebidos != 4) falhou = 1;
+    printf(&quot;Leituras=%d Total=%d Media=%.2f Relatorio=%s\n&quot;, recebidos, total,
+           recebidos ? (double)total / recebidos : 0.0, falhou ? &quot;INCOMPLETO&quot; : &quot;COMPLETO&quot;);
+    alarm(0); return falhou ? 1 : 0;
+}
+FIM
+gcc -std=c11 -O0 -Wall -Wextra -Wpedantic estacao.c -o estacao</code></pre></div><p><a href="../arquivos/estacao.c" download>Baixar fonte estacao.c</a> para revisão ou preparação.</p></details><div class="command" data-run="main" data-status="0"><div class="command-head"><span>Execute no terminal</span><button class="copy" type="button" aria-label="Copiar: Execute no terminal">Copiar</button></div><pre tabindex="0"><code>./estacao 8 30</code></pre></div><details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">Leituras=4 Total=84 Media=21.00 Relatorio=COMPLETO
+As linhas Fragmento variam; cada Mensagem só aparece após o delimitador.</pre></details><h3>Interprete o programa e a saída</h3><p>enviar repete write se necessário. O laço do pai aceita read parcial, acumula bytes em linha e só interpreta ao encontrar \n. O limite do buffer evita aceitar registros sem tamanho máximo. EOF é fim de fluxo, não um delimitador implícito de mensagem. Fechar todas as pontas de escrita permite observar EOF. O texto evita depender do layout, padding e ordem dos bytes de uma struct C. read bloqueante não transforma a aplicação inteira em um protocolo de requisição e resposta; um pipe também não implementa uma fila persistente.</p><h3>Mudança orientada</h3><p>Reduza apenas o limite de leitura para 1 byte. Depois use o caso corte, que retira a quebra de linha do último registro. Preveja o que será aceito e se o relatório poderá ser declarado completo.</p><div class="question"><label for="p02-mudanca">Preveja a variante antes de executá-la. Que condição muda, que resultado você espera e por quê?</label><textarea id="p02-mudanca" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><div class="command" data-run="variant" data-status="1"><div class="command-head"><span>Executar mudança orientada</span><button class="copy" type="button" aria-label="Copiar: Executar mudança orientada">Copiar</button></div><pre tabindex="0"><code>./estacao 1 30
+./estacao 1 30 corte</code></pre></div><details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">Sem corte: Leituras=4 Total=84 Media=21.00 Relatorio=COMPLETO
+Com corte: Registro incompleto: nao incorporado
+Leituras=3 Total=54 Media=18.00 Relatorio=INCOMPLETO
+O último comando termina com código 1, intencionalmente.</pre></details><div class="question"><label for="p02-evidencia">Evidência e decisão: Compare fragmentos com registros. Explique por que o total válido não depende do tamanho de read e por que o último registro cortado fica fora do relatório. Proponha campos de uma chamada remota enviar_leitura(id, valor) e diga o que um stub de RPC esconderia e que falhas continuariam possíveis.</label><textarea id="p02-evidencia" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><div class="dica"><strong>Limites da conclusão:</strong> A fragmentação é provocada pelo limite de read; não mede pacotes, perdas ou latência de rede. TCP é fluxo de bytes e também exige enquadramento na aplicação. UDP preserva fronteiras de datagramas, mas a aplicação precisa tratar truncamento, perdas, duplicatas e ordenação conforme seus requisitos. Não equipare TCP a confirmação de processamento da leitura.</div><label class="done"><input type="checkbox" id="feito-2" data-step="2">Concluí a investigação e expliquei as evidências</label></section><section class="etapa"><h2>Extensão opcional — comunicação TCP real em loopback</h2><p>Execute somente se o professor confirmar que sockets locais são permitidos na conta utilizada, ou em WSL/laboratório autorizado. O núcleo em pipe continua completo sem esta extensão. Não altere firewall nem procure outras portas. O programa usa 127.0.0.1, porta atribuída pelo sistema, um filho e limite de cinco segundos. Não escuta nas interfaces da rede.</p><div class="question"><label for="tcp-previsao">Que partes de pipe são substituídas por socket, bind, listen, connect e accept? A quebra de linha ainda é necessária?</label><textarea id="tcp-previsao" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div><details class="source"><summary>Programa C fornecido · abra, leia e copie</summary><p>A infraestrutura está pronta. Antes de executar, localize as operações destacadas na explicação da prática. O bloco abaixo escreve o fonte e compila com C11, avisos e sem otimização.</p><div class="command" data-run="optional" data-status="0"><div class="command-head"><span>Criar e compilar tcp_local.c</span><button class="copy" type="button" aria-label="Copiar: Criar e compilar tcp_local.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; tcp_local.c &lt;&lt;&#x27;FIM&#x27;
+#define _POSIX_C_SOURCE 200809L
+#include &lt;arpa/inet.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;unistd.h&gt;
+
+/* Extensao somente em ambiente autorizado. Loopback; porta efemera. */
+static void erro(const char *onde) { perror(onde); exit(1); }
+int main(void) {
+    signal(SIGPIPE, SIG_IGN); alarm(5);
+    int servidor = socket(AF_INET, SOCK_STREAM, 0);
+    if (servidor &lt; 0) erro(&quot;socket&quot;);
+    struct sockaddr_in endereco = {0};
+    endereco.sin_family = AF_INET;
+    endereco.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    endereco.sin_port = 0;
+    if (bind(servidor, (struct sockaddr *)&amp;endereco, sizeof endereco) &lt; 0) erro(&quot;bind&quot;);
+    socklen_t tamanho = sizeof endereco;
+    if (getsockname(servidor, (struct sockaddr *)&amp;endereco, &amp;tamanho) &lt; 0) erro(&quot;getsockname&quot;);
+    if (listen(servidor, 1) &lt; 0) erro(&quot;listen&quot;);
+    pid_t filho = fork();
+    if (filho &lt; 0) erro(&quot;fork&quot;);
+    if (filho == 0) {
+        alarm(5); close(servidor);
+        int cliente = socket(AF_INET, SOCK_STREAM, 0);
+        if (cliente &lt; 0) _exit(1);
+        if (connect(cliente, (struct sockaddr *)&amp;endereco, sizeof endereco) &lt; 0) { perror(&quot;connect&quot;); _exit(1); }
+        const char texto[] = &quot;12\n18\n24\n30\n&quot;;
+        size_t enviados = 0;
+        while (enviados &lt; sizeof texto - 1) {
+            ssize_t n = send(cliente, texto + enviados, sizeof texto - 1 - enviados, 0);
+            if (n &lt; 0 &amp;&amp; errno == EINTR) continue;
+            if (n &lt;= 0) _exit(1);
+            enviados += (size_t)n;
+        }
+        close(cliente); _exit(0);
+    }
+    int conexao;
+    do { conexao = accept(servidor, NULL, NULL); } while (conexao &lt; 0 &amp;&amp; errno == EINTR);
+    if (conexao &lt; 0) { perror(&quot;accept&quot;); close(servidor); (void)waitpid(filho, NULL, 0); return 1; }
+    close(servidor);
+    char linha[16], c; size_t usados = 0; int total = 0, registros = 0, falhou = 0;
+    for (;;) {
+        ssize_t n = recv(conexao, &amp;c, 1, 0);
+        if (n &lt; 0 &amp;&amp; errno == EINTR) continue;
+        if (n &lt; 0) { perror(&quot;recv&quot;); falhou = 1; break; }
+        if (!n) break;
+        if (c == &#x27;\n&#x27;) {
+            linha[usados] = &#x27;\0&#x27;; char *fim;
+            errno = 0; long valor = strtol(linha, &amp;fim, 10);
+            if (errno || !usados || *fim || valor &lt; 0 || valor &gt; 100 || registros &gt;= 4) { falhou = 1; break; }
+            total += (int)valor; ++registros; usados = 0;
+        } else if (usados + 1 &lt; sizeof linha) linha[usados++] = c;
+        else { falhou = 1; break; }
+    }
+    close(conexao); int status;
+    while (waitpid(filho, &amp;status, 0) &lt; 0) if (errno != EINTR) erro(&quot;waitpid&quot;);
+    if (usados || registros != 4 || !WIFEXITED(status) || WEXITSTATUS(status)) falhou = 1;
+    printf(&quot;TCP loopback: leituras=%d total=%d resultado=%s\n&quot;, registros, total, falhou ? &quot;ERRO&quot; : &quot;OK&quot;);
+    alarm(0); return falhou ? 1 : 0;
+}
+FIM
+gcc -std=c11 -O0 -Wall -Wextra -Wpedantic tcp_local.c -o tcp_local</code></pre></div><p><a href="../arquivos/tcp_local.c" download>Baixar fonte tcp_local.c</a> para revisão ou preparação.</p></details><div class="command" data-run="optional" data-status="0"><div class="command-head"><span>Executar TCP após autorização do ambiente</span><button class="copy" type="button" aria-label="Copiar: Executar TCP após autorização do ambiente">Copiar</button></div><pre tabindex="0"><code>./tcp_local</code></pre></div><details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">TCP loopback: leituras=4 total=84 resultado=OK
+Se bloqueado, registre o erro ou encerramento por tempo limite e mantenha a investigação em pipe.</pre></details><p>O filho conecta, envia quatro linhas e fecha a conexão. O pai aceita uma conexão, recebe um byte por chamada, recompõe linhas e soma. send pode aceitar só parte dos bytes: o laço completa o envio. recv é deliberadamente limitado a um byte; isso não demonstra como o TCP segmentou pacotes. A conexão é unidirecional nos dados da aplicação: o cliente não recebe uma resposta de processamento. O alarme é contingência do programa, não detector de falhas distribuídas. Em caminhos de erro, o sistema fecha descritores ao encerrar o processo; no caminho normal o pai também recolhe o filho.</p><div class="question"><label for="tcp-evidencia">Registre ambiente, resultado ou bloqueio, operação de conexão e enquadramento. O que foi observado em TCP que não havia no pipe? O que ainda faltaria para afirmar comunicação entre máquinas distintas?</label><textarea id="tcp-evidencia" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div></section><section class="etapa"><h2>Leve uma evidência para o dossiê</h2><p>Baixe suas respostas neste aparelho e guarde as saídas que justificam suas decisões. O arquivo exportado não é enviado ao professor. Use o canal e o prazo definidos na disciplina. Se trabalhar em grupo, alterne operador, observador e relator; cada estudante deve conseguir explicar uma decisão.</p><p><a href="../sintese/">Consultar os requisitos do dossiê final →</a></p></section></main><nav class="footer-nav" aria-label="Sequência do percurso"><a href="../un01/">← Anterior</a><a href="../un03/">Próxima →</a></nav><footer>Prof. Me. Juvenal Silva Neto · LIAC · UNEMAT, Campus de Alto Araguaia<br><a href="../professor.html">Guia docente e referências</a></footer></div></body></html>
