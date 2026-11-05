@@ -6,8 +6,10 @@
 .entrega-resumo{background:var(--surface);border:2px solid var(--ok);border-radius:12px;padding:1.4rem 1.2rem;margin-top:1.6rem}
 .entrega-resumo .label{color:var(--ok);font-weight:700}
 .partes{counter-reset:p;list-style:none;padding:0;gap:.7rem}
-.partes li{counter-increment:p;display:grid;grid-template-columns:2rem minmax(0,1fr);gap:.6rem;align-items:start}
-.partes li::before{content:counter(p);font-family:var(--f-display);font-weight:800;color:var(--paper);background:var(--ok);border-radius:50%;width:1.8rem;height:1.8rem;display:grid;place-items:center;font-size:.95rem}
+/* Numero posicionado a parte: o texto do item corre normalmente (em grade,
+   cada trecho em negrito ou codigo virava uma celula e espremia o texto). */
+.partes li{counter-increment:p;position:relative;padding-left:2.6rem;min-height:1.8rem}
+.partes li::before{content:counter(p);position:absolute;left:0;top:0;font-family:var(--f-display);font-weight:800;color:var(--paper);background:var(--ok);border-radius:50%;width:1.8rem;height:1.8rem;display:grid;place-items:center;font-size:.95rem}
 .destaque-entrega{background:var(--accent-soft);padding:0 .2em;border-radius:3px}
 
 /* Etiquetas: o que entra na entrega e o que serve só para pensar. */
