@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade P05 de Sistemas Distribuídos: unicast, difusão, falha, reenvio, ordem de mensagens e custo da comunicação em grupo, no Terminal Linux do LIAC."><meta name="theme-color" content="#13202a"><title>P05 · Uma mensagem para todos | SD</title><link rel="stylesheet" href="../../praticas/styles.css"><link rel="stylesheet" href="../atividades.css"><script src="../script.js" defer></script></head>
+<body data-unit="p05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap">
+<nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SD</a><a href="../../praticas/">Práticas do percurso</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade P05 · Sistemas Distribuídos · UNEMAT</p><h1>Uma mensagem para todos</h1><p class="lede">Difusão e comunicação em grupo, no seu terminal Linux do LIAC.</p>
+<div class="meta"><span><b>60 min</b> em aula</span><span><b>Individual</b></span><span><b>Unidade 5</b> difusão e grupos</span><span><b>Python 3</b> só biblioteca padrão</span></div>
+<div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button></div>
+<p class="status" id="save-status" aria-live="polite">O que você escreve aqui fica só neste navegador. Nada é enviado automaticamente.</p></header>
+<main id="conteudo">
+
+<section class="etapa entrega-resumo" id="o-que-entregar" aria-labelledby="titulo-entrega"><p class="label">Leia antes de começar</p><h2 id="titulo-entrega">O que você vai entregar</h2>
+<p><b>Um único arquivo de texto</b>, gerado pelo botão <a href="#gerar">Gerar arquivo de entrega</a> no fim desta página. O nome sai pronto: <code>P05_SD_seu-nome.txt</code>.</p>
+<ol class="partes">
+<li><b>Identificação:</b> nome completo e matrícula.</li>
+<li><b>Evidências:</b> a saída do comando <code>python3 p05.py evidencias</code>, colada no campo indicado. Se não conseguir copiar do terminal (comum no celular), marque a opção e envie <b>uma captura de tela</b> dessa saída junto com o arquivo.</li>
+<li><b>Tabela de mensagens:</b> os números que o programa mostrar para 1, 3 e 6 destinatários.</li>
+<li><b>Respostas às 5 perguntas</b> marcadas com a etiqueta <span class="tag-entrega">ENTREGA</span>.</li>
+</ol>
+<p><b>Onde e até quando:</b> <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>. O prazo é o da própria Tarefa.</p>
+<p class="small">Só as quatro partes acima contam. As perguntas marcadas <span class="tag-pensar">Para pensar</span> ajudam a entender, mas não entram na entrega. O botão confere se falta alguma parte antes de gerar o arquivo.</p>
+</section>
+
+<section class="etapa" aria-labelledby="cenario"><h2 id="cenario">O cenário</h2>
+<p>Você é o participante <b>A</b>. Seus “colegas” <b>B</b>, <b>C</b> e <b>D</b> são outros participantes do grupo. Cada um deles é um <b>processo independente</b> do Linux, criado pelo programa <code>p05.py</code> só durante cada comando. Você não depende de nenhum colega de turma: tudo acontece na sua conta.</p>
+<div class="diagram" role="img" aria-label="O participante A envia mensagens para B, C e D, cada um um processo separado.">A ──▶ B<br>A ──▶ C<br>A ──▶ D</div>
+<div class="dica"><strong>O que este experimento é, e o que não é.</strong><p>Os processos trocam mensagens de verdade, por <i>sockets Unix</i>: um canal do Linux entre processos da <b>mesma máquina</b>. Não é rede, não é TCP/IP e não é multicast IP: no LIAC, a rede entre contas é bloqueada por segurança. Os conceitos (cópias, confirmações, falhas, duplicatas e ordem) são os mesmos de um grupo distribuído em várias máquinas.</p></div>
+<p class="small">Material de apoio: <a href="../../materiais/">materiais teóricos da Unidade 5</a>.</p>
+</section>
+
+<section class="etapa" id="etapa0" aria-labelledby="t0"><p class="label">Etapa 0 · 5 min</p><h2 id="t0">Preparação</h2>
+<p><b>O que fazer:</b> abra o <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal do LIAC</a>, crie a pasta da atividade e copie o programa. Copie cada bloco com o botão <b>Copiar</b> e cole no terminal. Não digite o <code>$</code>: ele só indica onde começa cada comando.</p>
+@@CMD Crie a pasta e copie o programa
+mkdir -p ~/atividades/sd-p05
+cd ~/atividades/sd-p05
+cp ~/material/sd/p05.py .
+python3 --version
+@@END
+<p><b>O que os comandos fazem:</b> <code>mkdir -p</code> cria a pasta (sem erro se já existir); <code>cd</code> entra nela; <code>cp ~/material/sd/p05.py .</code> copia o programa da pasta de material do professor para “aqui” (o ponto final); <code>python3 --version</code> confirma que o Python 3 está disponível. Deve aparecer <code>Python 3.</code> seguido de números.</p>
+<p>Se o <code>cp</code> disser que o arquivo não existe, use o Plano B abaixo (colar o código) e avise o professor.</p>
+@@SRC p05.py
+<p><b>O que fazer:</b> veja a ajuda do programa e comece do zero.</p>
+@@CMD Veja a ajuda e reinicie a atividade
+python3 p05.py ajuda
+python3 p05.py reiniciar
+@@END
+@@OUT exata
+P05 - difusão e comunicação em grupo
+Uso: python3 p05.py COMANDO [opções]
+
+Preparação:
+  reiniciar   começa a atividade do zero
+  estado      mostra o grupo e a última
+              mensagem
+Experimentos:
+  unicast --de A --para B --mensagem "oi"
+  difundir --de A --mensagem "oi"
+  falha --no C       C fica indisponível
+  recuperar --no C   C volta
+  reenviar --ultima  reenvia a última
+    --dedup          destinos descartam
+                     as repetidas
+    --pendentes      só para quem não
+                     confirmou
+  ordem              2 emissores e
+                     2 receptores
+  custo              grupos de 3 e 6
+    --tamanhos 3,6,8
+Entrega:
+  evidencias  resumo para copiar
+
+Grupo: A, B, C, D. Cada um é um processo.
+Mensagens por socket Unix (mesma máquina):
+não é rede nem multicast IP.
+Atividade reiniciada nesta conta.
+Todos disponíveis; próxima mensagem: 001
+@@END
+<p><b>O que observar:</b> <code>reiniciar</code> zera a numeração das mensagens. Assim seus números (001, 002…) coincidem com os desta página. Se você repetir um comando, os números avançam; isso não é erro.</p>
+<label class="done"><input type="checkbox" id="feito-0" data-step="0">Preparei a pasta e vi a ajuda</label>
+</section>
+
+<section class="etapa" id="exp1" aria-labelledby="t1"><p class="label">Experimento 1 · 10 min</p><h2 id="t1">Uma mensagem para um destinatário</h2>
+<p><b>Conceito.</b> No <b>unicast</b>, um emissor envia uma mensagem para <b>um único</b> destinatário, como uma mensagem privada. Os outros membros do grupo não recebem nada. Aqui, cada mensagem recebida é <b>confirmada</b>: o destinatário devolve um aviso de recebimento ao emissor.</p>
+<p><b>O que fazer:</b> envie “Bom dia!” de A para B.</p>
+@@CMD Envie de A para B
+python3 p05.py unicast --de A --para B --mensagem "Bom dia!"
+@@END
+<p><b>O que o comando faz:</b> cria os processos B, C e D; o processo A envia uma cópia da mensagem 001 só para B; B registra o recebimento e devolve a confirmação; no fim, todos os processos são encerrados.</p>
+@@OUT exata
+UNICAST: A -> B
+[A] enviou 001 para [B]
+[B] recebeu 001: Bom dia!
+[C] nada recebeu
+[D] nada recebeu
+[A] confirmações: B
+Destinatários: 1
+Mensagens de dados: 1
+Entregas: 1 | Confirmações: 1
+@@END
+<p><b>O que observar:</b> C e D estavam em execução, mas não receberam nada. Uma mensagem de dados gerou uma entrega e uma confirmação.</p>
+@@PENSAR Por que a mensagem não apareceu para C e D, se eles estavam ativos?
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Concluí o Experimento 1</label>
+</section>
+
+<section class="etapa" id="exp2" aria-labelledby="t2"><p class="label">Experimento 2 · 10 min</p><h2 id="t2">Uma mensagem para todos</h2>
+<p><b>Conceito.</b> Na <b>difusão</b> (comunicação em grupo), uma mensagem deve chegar a <b>todos os membros</b>, como um aviso enviado à turma. Aqui o emissor A faz isso enviando <b>uma cópia separada a cada membro</b>. Isso é replicação de mensagens na aplicação: não é o broadcast ou o multicast nativos do IP, em que a própria rede faria as cópias.</p>
+<p><b>O que fazer:</b> difunda “A aula começou!” de A para o grupo.</p>
+@@CMD Difunda para B, C e D
+python3 p05.py difundir --de A --mensagem "A aula começou!"
+@@END
+<p><b>O que o comando faz:</b> A envia três cópias da mensagem 002, uma para cada membro, e espera as três confirmações.</p>
+@@OUT exata
+DIFUSÃO: de A para B, C, D
+[A] iniciou difusão da mensagem 002
+[A] enviou 002 para [B]
+[A] enviou 002 para [C]
+[A] enviou 002 para [D]
+[B] recebeu 002: A aula começou!
+[C] recebeu 002: A aula começou!
+[D] recebeu 002: A aula começou!
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 3 | Confirmações: 3
+@@END
+<p><b>O que observar:</b> compare com o Experimento 1. Para alcançar 3 destinatários, A enviou 3 mensagens de dados e recebeu 3 confirmações.</p>
+@@PENSAR Neste modelo, quantas mensagens de dados A precisaria enviar para um grupo de 30 membros?
+@@ENTREGA p1 | Pergunta 1. Qual a diferença que você observou entre unicast e difusão? Compare quem recebeu e quantas mensagens de dados e confirmações houve nos Experimentos 1 e 2.
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Concluí o Experimento 2</label>
+</section>
+
+<section class="etapa" id="exp3" aria-labelledby="t3"><p class="label">Experimento 3 · 15 min</p><h2 id="t3">Participante indisponível</h2>
+<p><b>Conceito.</b> Em um sistema distribuído, um membro pode estar fora do ar. O emissor só sabe que algo deu errado porque <b>não recebe a confirmação</b>. Uma reação comum é <b>reenviar</b>. Mas, se o destino não lembrar o que já recebeu, o reenvio pode gerar <b>duplicatas</b>: a mesma mensagem processada duas vezes.</p>
+<p><b>Passo 1.</b> Deixe C indisponível.</p>
+@@CMD Deixe C indisponível
+python3 p05.py falha --no C
+@@END
+<p><b>O que o comando faz:</b> anota, na sua pasta privada, que o processo de C não deve ser iniciado nos próximos comandos.</p>
+@@OUT exata
+[C] agora está INDISPONÍVEL.
+O processo dele não será iniciado nas
+próximas mensagens, até você usar:
+python3 p05.py recuperar --no C
+@@END
+<p><b>Passo 2.</b> Difunda um aviso com C fora do ar.</p>
+@@CMD Difunda com C indisponível
+python3 p05.py difundir --de A --mensagem "Aviso importante"
+@@END
+<p><b>O que o comando faz:</b> A tenta enviar a mensagem 003 aos três membros. Como o processo de C não existe, o envio para C falha.</p>
+@@OUT exata
+DIFUSÃO: de A para B, C, D
+[A] iniciou difusão da mensagem 003
+[A] enviou 003 para [B]
+[A] falhou ao enviar 003 para [C]
+    (C não está em execução)
+[A] enviou 003 para [D]
+[B] recebeu 003: Aviso importante
+[C] indisponível, nada recebeu
+[D] recebeu 003: Aviso importante
+[A] confirmações: B, D
+Sem confirmação: C
+Destinatários: 3
+Mensagens de dados: 2
+Falhas de envio: 1
+Entregas: 2 | Confirmações: 2
+@@END
+<p><b>O que observar:</b> B e D receberam e confirmaram; C ficou sem a mensagem. Aqui A percebe a falha na hora, porque está na mesma máquina. Em uma rede real, A só notaria pela <b>falta da confirmação</b> depois de esperar um tempo.</p>
+<p><b>Passo 3.</b> Recupere C e reenvie a última mensagem ao grupo.</p>
+@@CMD Recupere C
+python3 p05.py recuperar --no C
+@@END
+@@OUT exata
+[C] voltou a ficar disponível.
+@@END
+@@CMD Reenvie a última mensagem
+python3 p05.py reenviar --ultima
+@@END
+<p><b>O que o comando faz:</b> A envia de novo a mensagem 003, com o mesmo número, para todo o grupo. Os destinos <b>não</b> descartam repetidas.</p>
+@@OUT exata
+REENVIO de 003 para B, C, D
+(sem deduplicação nos destinos)
+[A] enviou 003 para [B]
+[A] enviou 003 para [C]
+[A] enviou 003 para [D]
+[B] recebeu 003 de novo: DUPLICATA
+[C] recebeu 003: Aviso importante
+[D] recebeu 003 de novo: DUPLICATA
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 3 | Confirmações: 3
+Duplicatas processadas: 2
+@@END
+<p><b>O que observar:</b> C finalmente recebeu, mas B e D processaram 003 <b>pela segunda vez</b>. Reenviar resolveu a falta de C e criou duas duplicatas. Confirmar o recebimento também não garante que a mensagem foi processada ou guardada: só diz que ela chegou.</p>
+@@ENTREGA p2 | Pergunta 2. O que aconteceu com a entrega quando C estava indisponível? Quem recebeu, quem não recebeu e como A percebeu?
+@@ENTREGA p3 | Pergunta 3. Por que o reenvio gerou mensagens duplicadas? Reenviar garante que não haverá duplicatas?
+<details class="extensao-p05"><summary>Para ir além (opcional): destinos que descartam repetidas</summary>
+<p>Repita o reenvio, agora com <b>deduplicação</b>: cada destino lembra os números já recebidos e descarta o que já viu, mas ainda confirma, para o emissor parar de reenviar.</p>
+@@CMD Reenvie com deduplicação
+python3 p05.py reenviar --ultima --dedup
+@@END
+@@OUT exata
+REENVIO de 003 para B, C, D
+(com deduplicação nos destinos)
+[A] enviou 003 para [B]
+[A] enviou 003 para [C]
+[A] enviou 003 para [D]
+[B] descartou 003 (já recebida)
+[C] descartou 003 (já recebida)
+[D] descartou 003 (já recebida)
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 0 | Confirmações: 3
+Duplicatas descartadas: 3
+@@END
+<p>Isso evita processar duas vezes enquanto o destino lembrar o número. Não é garantia de entrega “exatamente uma vez”: se o destino perder essa memória, a duplicata volta.</p>
+</details>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Concluí o Experimento 3</label>
+</section>
+
+<section class="etapa" id="exp4" aria-labelledby="t4"><p class="label">Experimento 4 · 10 min</p><h2 id="t4">Ordem das mensagens</h2>
+<p><b>Conceito.</b> Mensagens percorrem caminhos com atrasos diferentes. Por isso, dois participantes podem receber as mesmas mensagens em <b>ordens diferentes</b>, mesmo que todas tenham sido enviadas numa ordem bem definida. Na Unidade 3, vimos que a ordem de chegada não é, por si só, a ordem em que as coisas aconteceram.</p>
+<p><b>O que fazer:</b> execute o cenário de ordem. Dois emissores (A e D) enviam uma mensagem cada a dois receptores (B e C).</p>
+@@CMD Execute o cenário de ordem
+python3 p05.py ordem
+@@END
+<p><b>O que o comando faz:</b> cria 8 processos: os emissores A e D, os receptores B e C e <b>um processo para cada canal</b> (A→B, A→C, D→B, D→C). Cada canal segura a mensagem pelo atraso fixo indicado e só então a entrega. A envia primeiro; D, 0,1 s depois. Os tempos de chegada são medidos de verdade.</p>
+@@OUT aprox
+ORDEM: 2 emissores, 2 receptores
+Atraso fixo de cada canal:
+  A->B 0,2 s   A->C 0,8 s
+  D->B 0,8 s   D->C 0,2 s
+Envio:
+  1º [A] envia 004 (t=0,0 s)
+  2º [D] envia 005 (t=0,1 s)
+Chegada (t medido):
+  [B] 004 (0,2 s)  005 (0,9 s)
+  [C] 005 (0,3 s)  004 (0,8 s)
+Ordem em [B]: 004, 005
+Ordem em [C]: 005, 004
+Resultado: B e C viram ordens
+diferentes para as mesmas mensagens.
+@@END
+<p><b>O que observar:</b> a mensagem 004 foi enviada antes de 005, mas C recebeu 005 primeiro, porque o canal A→C é o mais lento. A inversão vem dos <b>atrasos diferentes de canais separados</b>. Ela não vem de uma conexão TCP: dentro de uma única conexão TCP, os bytes chegam na ordem em que foram enviados.</p>
+@@ENTREGA p4 | Pergunta 4. Por que B e C viram ordens diferentes? Use os atrasos e os tempos medidos da sua saída.
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Concluí o Experimento 4</label>
+</section>
+
+<section class="etapa" id="etapa5" aria-labelledby="t5"><p class="label">Etapa 5 · 10 min</p><h2 id="t5">Custo da difusão e entrega</h2>
+<p><b>Conceito.</b> Quando a difusão é feita com cópias individuais, cada novo membro custa mais mensagens. Um <b>distribuidor</b> (S) pode receber uma única mensagem de A e fazer as cópias, mas as cópias continuam existindo: só mudam de lugar.</p>
+<p><b>O que fazer:</b> meça o custo com grupos de 3 e de 6 destinatários.</p>
+@@CMD Meça o custo da difusão
+python3 p05.py custo
+@@END
+<p><b>O que o comando faz:</b> executa difusões de verdade, com 3 e com 6 processos destinatários, primeiro com cópias enviadas por A e depois passando por um processo distribuidor S. As mensagens são contadas pelos próprios processos.</p>
+@@OUT exata
+CUSTO DA DIFUSÃO (medido)
+Grupo de teste: todos disponíveis.
+1) Cópias individuais (A -> cada um)
+ Dest  Dados  Conf  Total
+    3      3     3      6
+    6      6     6     12
+2) Com distribuidor S (A -> S -> cada)
+ Dest  A->S  S->dest  Conf  Total
+    3     1        3     4      8
+    6     1        6     7     14
+Dados = mensagens com o conteúdo;
+Conf = confirmações de recebimento.
+@@END
+<p><b>O que observar:</b> com cópias individuais, dobrar o grupo dobrou as mensagens. Com o distribuidor, A envia só 1, mas S envia uma cópia por destino, e o total ainda cresce com o grupo.</p>
+<div class="question entrega" id="tabela"><span class="tag-entrega">ENTREGA · Tabela</span><p class="tabela-titulo">Preencha com os números da <b>sua</b> saída: o unicast do Experimento 1 e a parte “1) Cópias individuais” do custo.</p>
+<div class="tbl"><table class="tabela-entrega"><thead><tr><th scope="col">Situação</th><th scope="col">Destinatários</th><th scope="col">Dados</th><th scope="col">Confirmações</th><th scope="col">Total</th></tr></thead><tbody>
+<tr><th scope="row">Unicast</th><td>1</td><td><input id="t1-dados" inputmode="numeric" aria-label="Unicast: mensagens de dados" data-tabela></td><td><input id="t1-conf" inputmode="numeric" aria-label="Unicast: confirmações" data-tabela></td><td><input id="t1-total" inputmode="numeric" aria-label="Unicast: total" data-tabela></td></tr>
+<tr><th scope="row">Difusão</th><td>3</td><td><input id="t3-dados" inputmode="numeric" aria-label="Grupo de 3: mensagens de dados" data-tabela></td><td><input id="t3-conf" inputmode="numeric" aria-label="Grupo de 3: confirmações" data-tabela></td><td><input id="t3-total" inputmode="numeric" aria-label="Grupo de 3: total" data-tabela></td></tr>
+<tr><th scope="row">Difusão</th><td>6</td><td><input id="t6-dados" inputmode="numeric" aria-label="Grupo de 6: mensagens de dados" data-tabela></td><td><input id="t6-conf" inputmode="numeric" aria-label="Grupo de 6: confirmações" data-tabela></td><td><input id="t6-total" inputmode="numeric" aria-label="Grupo de 6: total" data-tabela></td></tr>
+</tbody></table></div></div>
+@@ENTREGA p5 | Pergunta 5. Como o número de mensagens cresce com o tamanho do grupo? Use a sua tabela e compare com o caso do distribuidor S.
+<p><b>O que fazer agora:</b> gere o resumo das evidências.</p>
+@@CMD Gere o resumo das evidências
+python3 p05.py evidencias
+@@END
+<p><b>O que o comando faz:</b> lista o que você executou nesta conta e avisa se falta algum experimento. A data e a hora serão as suas.</p>
+@@OUT aprox Saída esperada · data, hora e itens opcionais variam
+EVIDÊNCIAS P05 - copie para a entrega
+p05.py 1.0 - 05/11/2026 14:30
+ 1. unicast 001 A->B: 1 entrega
+ 2. difusão 002: 3/3 entregas
+ 3. falha: C indisponível
+ 4. difusão 003: 2/3 entregas, sem conf. C
+ 5. recuperar: C disponível
+ 6. reenvio 003 sem dedup: 3 entregas, duplicatas 2
+ 7. reenvio 003 com dedup: 0 entregas, descartadas 3
+ 8. ordem: B=004,005 C=005,004
+ 9. custo (dest->total): 3->6 6->12
+Situação: completa
+@@END
+<p>Se aparecer <code>Falta:</code>, volte e execute o experimento indicado. O item 7 só aparece se você fez a parte opcional.</p>
+<label class="done"><input type="checkbox" id="feito-5" data-step="5">Concluí a Etapa 5</label>
+</section>
+
+<section class="etapa" id="gerar" aria-labelledby="t6"><p class="label">Entrega</p><h2 id="t6">Monte e gere o seu arquivo</h2>
+<p>Preencha os campos abaixo e clique em <b>Gerar arquivo de entrega</b>. As perguntas e a tabela que você já respondeu entram automaticamente.</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Identificação</span><label for="nome">Nome completo</label><input id="nome" autocomplete="name" required><label for="matricula">Matrícula</label><input id="matricula" inputmode="numeric" required></div>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Evidências</span><label for="evidencias">Cole aqui a saída de <code>python3 p05.py evidencias</code></label><textarea id="evidencias" class="mono" placeholder="EVIDÊNCIAS P05 - copie para a entrega ..."></textarea>
+<label class="opcao"><input type="checkbox" id="evid-captura"> Não consegui copiar do terminal: vou enviar uma captura de tela dessa saída junto com o arquivo.</label></div>
+<ul class="checklist" aria-label="Situação da entrega" id="situacao"></ul>
+<button type="button" class="gerar" id="gerar-entrega">Gerar arquivo de entrega (.txt)</button>
+<p class="status" id="gerar-status" aria-live="polite"></p>
+<div class="dica"><strong>Depois de gerar</strong><p>O arquivo é baixado no aparelho em que esta página está aberta (pasta Downloads), não no servidor. Envie esse arquivo, mais a captura de tela se você marcou a opção, <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>, dentro do prazo da Tarefa. Por fim, digite <code>exit</code> no terminal.</p></div>
+<details><summary>Se algo der errado</summary><div>
+<p><b>Erro: Outro comando da P05 está em execução:</b> você tem outra aba do terminal rodando a atividade. Espere terminar ou feche a outra aba.</p>
+<p><b>Números diferentes dos da página:</b> você executou comandos a mais. Use <code>python3 p05.py reiniciar</code> e refaça a partir do Experimento 1, ou apenas use os seus números nas respostas.</p>
+<p><b>O comando parou ou você apertou Ctrl+C:</b> o programa encerra todos os processos que criou. Basta executar de novo.</p>
+<p><b>Sem JavaScript:</b> os textos e comandos continuam visíveis, mas o botão de gerar não funciona. Escreva as quatro partes da entrega em um arquivo de texto próprio.</p>
+</div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Distribuídos · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

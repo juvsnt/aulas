@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade P05 de Sistemas Distribuídos: unicast, difusão, falha, reenvio, ordem de mensagens e custo da comunicação em grupo, no Terminal Linux do LIAC."><meta name="theme-color" content="#13202a"><title>P05 · Uma mensagem para todos | SD</title><link rel="stylesheet" href="../../praticas/styles.css"><link rel="stylesheet" href="../atividades.css"><script src="../script.js" defer></script></head>
+<body data-unit="p05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap">
+<nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SD</a><a href="../../praticas/">Práticas do percurso</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade P05 · Sistemas Distribuídos · UNEMAT</p><h1>Uma mensagem para todos</h1><p class="lede">Difusão e comunicação em grupo, no seu terminal Linux do LIAC.</p>
+<div class="meta"><span><b>60 min</b> em aula</span><span><b>Individual</b></span><span><b>Unidade 5</b> difusão e grupos</span><span><b>Python 3</b> só biblioteca padrão</span></div>
+<div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button></div>
+<p class="status" id="save-status" aria-live="polite">O que você escreve aqui fica só neste navegador. Nada é enviado automaticamente.</p></header>
+<main id="conteudo">
+
+<section class="etapa entrega-resumo" id="o-que-entregar" aria-labelledby="titulo-entrega"><p class="label">Leia antes de começar</p><h2 id="titulo-entrega">O que você vai entregar</h2>
+<p><b>Um único arquivo de texto</b>, gerado pelo botão <a href="#gerar">Gerar arquivo de entrega</a> no fim desta página. O nome sai pronto: <code>P05_SD_seu-nome.txt</code>.</p>
+<ol class="partes">
+<li><b>Identificação:</b> nome completo e matrícula.</li>
+<li><b>Evidências:</b> a saída do comando <code>python3 p05.py evidencias</code>, colada no campo indicado. Se não conseguir copiar do terminal (comum no celular), marque a opção e envie <b>uma captura de tela</b> dessa saída junto com o arquivo.</li>
+<li><b>Tabela de mensagens:</b> os números que o programa mostrar para 1, 3 e 6 destinatários.</li>
+<li><b>Respostas às 5 perguntas</b> marcadas com a etiqueta <span class="tag-entrega">ENTREGA</span>.</li>
+</ol>
+<p><b>Onde e até quando:</b> <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>. O prazo é o da própria Tarefa.</p>
+<p class="small">Só as quatro partes acima contam. As perguntas marcadas <span class="tag-pensar">Para pensar</span> ajudam a entender, mas não entram na entrega. O botão confere se falta alguma parte antes de gerar o arquivo.</p>
+</section>
+
+<section class="etapa" aria-labelledby="cenario"><h2 id="cenario">O cenário</h2>
+<p>Você é o participante <b>A</b>. Seus “colegas” <b>B</b>, <b>C</b> e <b>D</b> são outros participantes do grupo. Cada um deles é um <b>processo independente</b> do Linux, criado pelo programa <code>p05.py</code> só durante cada comando. Você não depende de nenhum colega de turma: tudo acontece na sua conta.</p>
+<div class="diagram" role="img" aria-label="O participante A envia mensagens para B, C e D, cada um um processo separado.">A ──▶ B<br>A ──▶ C<br>A ──▶ D</div>
+<div class="dica"><strong>O que este experimento é, e o que não é.</strong><p>Os processos trocam mensagens de verdade, por <i>sockets Unix</i>: um canal do Linux entre processos da <b>mesma máquina</b>. Não é rede, não é TCP/IP e não é multicast IP: no LIAC, a rede entre contas é bloqueada por segurança. Os conceitos (cópias, confirmações, falhas, duplicatas e ordem) são os mesmos de um grupo distribuído em várias máquinas.</p></div>
+<p class="small">Material de apoio: <a href="../../materiais/">materiais teóricos da Unidade 5</a>.</p>
+</section>
+
+<section class="etapa" id="etapa0" aria-labelledby="t0"><p class="label">Etapa 0 · 5 min</p><h2 id="t0">Preparação</h2>
+<p><b>O que fazer:</b> abra o <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal do LIAC</a>, crie a pasta da atividade e copie o programa. Copie cada bloco com o botão <b>Copiar</b> e cole no terminal. Não digite o <code>$</code>: ele só indica onde começa cada comando.</p>
+<div class="command"><div class="command-head"><span>Crie a pasta e copie o programa</span><button class="copy" type="button" aria-label="Copiar: Crie a pasta e copie o programa">Copiar</button></div><pre tabindex="0"><code><span class="cmd">mkdir -p ~/atividades/sd-p05</span>
+<span class="cmd">cd ~/atividades/sd-p05</span>
+<span class="cmd">cp ~/material/sd/p05.py .</span>
+<span class="cmd">python3 --version</span></code></pre></div>
+<p><b>O que os comandos fazem:</b> <code>mkdir -p</code> cria a pasta (sem erro se já existir); <code>cd</code> entra nela; <code>cp ~/material/sd/p05.py .</code> copia o programa da pasta de material do professor para “aqui” (o ponto final); <code>python3 --version</code> confirma que o Python 3 está disponível. Deve aparecer <code>Python 3.</code> seguido de números.</p>
+<p>Se o <code>cp</code> disser que o arquivo não existe, use o Plano B abaixo (colar o código) e avise o professor.</p>
+<details class="source"><summary>Plano B: criar <code>p05.py</code> colando o código</summary><div class="command"><div class="command-head"><span>Cole no terminal para criar p05.py</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar p05.py">Copiar</button></div><pre tabindex="0"><code><span class="cmd">cat &gt; p05.py &lt;&lt;&#x27;FIM&#x27;</span>
+<span class="heredoc">#!/usr/bin/env python3</span>
+<span class="heredoc">&quot;&quot;&quot;p05.py - P05 de Sistemas Distribuidos: difusao e comunicacao em grupo.</span>
+<span class="heredoc"></span>
+<span class="heredoc">Uso: python3 p05.py ajuda</span>
+<span class="heredoc"></span>
+<span class="heredoc">Cada participante (A, B, C, D...) e um PROCESSO independente do Linux.</span>
+<span class="heredoc">Os processos trocam mensagens por sockets Unix de datagramas (AF_UNIX)</span>
+<span class="heredoc">dentro da pasta privada do aluno. Isso e comunicacao real entre processos</span>
+<span class="heredoc">na MESMA maquina: nao e rede, nao e TCP/IP e nao e multicast IP.</span>
+<span class="heredoc"></span>
+<span class="heredoc">Somente biblioteca padrao do Python 3. Sem sudo, sem portas de rede e sem</span>
+<span class="heredoc">servicos permanentes: cada comando cria os processos, espera o resultado,</span>
+<span class="heredoc">encerra todos e apaga os sockets. O estado da atividade (participantes</span>
+<span class="heredoc">indisponiveis, ultima mensagem, mensagens ja recebidas) fica em</span>
+<span class="heredoc">~/atividades/sd-p05/.p05/ com permissao 700 (so o dono acessa).</span>
+<span class="heredoc"></span>
+<span class="heredoc">UNEMAT - Campus de Alto Araguaia - Prof. Me. Juvenal Silva Neto</span>
+<span class="heredoc">&quot;&quot;&quot;</span>
+<span class="heredoc">import fcntl</span>
+<span class="heredoc">import json</span>
+<span class="heredoc">import os</span>
+<span class="heredoc">import select</span>
+<span class="heredoc">import shutil</span>
+<span class="heredoc">import signal</span>
+<span class="heredoc">import socket</span>
+<span class="heredoc">import sys</span>
+<span class="heredoc">import time</span>
+<span class="heredoc">from datetime import datetime</span>
+<span class="heredoc"></span>
+<span class="heredoc">VERSAO = &#x27;1.0&#x27;</span>
+<span class="heredoc">PASTA = os.path.expanduser(os.environ.get(&#x27;P05_PASTA&#x27;, &#x27;~/atividades/sd-p05&#x27;))</span>
+<span class="heredoc">PRIV = os.path.join(PASTA, &#x27;.p05&#x27;)</span>
+<span class="heredoc">ARQ_ESTADO = os.path.join(PRIV, &#x27;estado.json&#x27;)</span>
+<span class="heredoc">ARQ_TRAVA = os.path.join(PRIV, &#x27;trava&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc">GRUPO = [&#x27;A&#x27;, &#x27;B&#x27;, &#x27;C&#x27;, &#x27;D&#x27;]                         # grupo dos experimentos 1 a 4</span>
+<span class="heredoc">DESTINOS_CUSTO = [&#x27;B&#x27;, &#x27;C&#x27;, &#x27;D&#x27;, &#x27;E&#x27;, &#x27;F&#x27;, &#x27;G&#x27;, &#x27;H&#x27;, &#x27;I&#x27;]  # ate 8 destinatarios</span>
+<span class="heredoc">MAX_TEXTO = 60          # caracteres por mensagem</span>
+<span class="heredoc">MAX_HIST = 100          # registros guardados para &quot;evidencias&quot;</span>
+<span class="heredoc">ESPERA_CONF = 1.0       # segundos que o emissor espera confirmacoes</span>
+<span class="heredoc">VIDA_MAX = 8.0          # segundos maximos de vida de um participante</span>
+<span class="heredoc">LIMITE_CMD = 25         # segundos maximos de um comando inteiro</span>
+<span class="heredoc"></span>
+<span class="heredoc"># Experimento 4: atraso fixo de cada canal (segundos) e instante de envio.</span>
+<span class="heredoc">ATRASOS = {(&#x27;A&#x27;, &#x27;B&#x27;): 0.2, (&#x27;A&#x27;, &#x27;C&#x27;): 0.8, (&#x27;D&#x27;, &#x27;B&#x27;): 0.8, (&#x27;D&#x27;, &#x27;C&#x27;): 0.2}</span>
+<span class="heredoc">PARTIDA = {&#x27;A&#x27;: 0.0, &#x27;D&#x27;: 0.1}</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">class Erro(Exception):</span>
+<span class="heredoc">    &quot;&quot;&quot;Erro esperado: mostrado ao aluno sem rastreamento do Python.&quot;&quot;&quot;</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def num(n):</span>
+<span class="heredoc">    return f&#x27;{n:03d}&#x27;</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def seg(x):</span>
+<span class="heredoc">    return f&#x27;{x:.1f}&#x27;.replace(&#x27;.&#x27;, &#x27;,&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc"># ---------------------------------------------------------------- estado</span>
+<span class="heredoc"></span>
+<span class="heredoc">def preparar_pasta():</span>
+<span class="heredoc">    os.makedirs(PASTA, exist_ok=True)</span>
+<span class="heredoc">    if os.path.islink(PRIV):</span>
+<span class="heredoc">        raise Erro(f&#x27;{PRIV} é um link simbólico; remova-o e tente de novo.&#x27;)</span>
+<span class="heredoc">    os.makedirs(PRIV, mode=0o700, exist_ok=True)</span>
+<span class="heredoc">    os.chmod(PRIV, 0o700)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def travar():</span>
+<span class="heredoc">    &quot;&quot;&quot;Uma execucao por vez nesta conta (duas abas do terminal, por exemplo).&quot;&quot;&quot;</span>
+<span class="heredoc">    fd = os.open(ARQ_TRAVA, os.O_RDWR | os.O_CREAT, 0o600)</span>
+<span class="heredoc">    limite = time.monotonic() + 10</span>
+<span class="heredoc">    while True:</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)</span>
+<span class="heredoc">            return fd</span>
+<span class="heredoc">        except BlockingIOError:</span>
+<span class="heredoc">            if time.monotonic() &gt; limite:</span>
+<span class="heredoc">                raise Erro(&#x27;Outro comando da P05 está em execução nesta conta.\n&#x27;</span>
+<span class="heredoc">                           &#x27;Espere ele terminar e tente de novo.&#x27;)</span>
+<span class="heredoc">            time.sleep(0.2)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def estado_novo():</span>
+<span class="heredoc">    return {&#x27;versao&#x27;: 1, &#x27;proximo&#x27;: 1, &#x27;indisponiveis&#x27;: [], &#x27;ultima&#x27;: None,</span>
+<span class="heredoc">            &#x27;recebidas&#x27;: {}, &#x27;historico&#x27;: [], &#x27;feitos&#x27;: []}</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def carregar():</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        with open(ARQ_ESTADO, encoding=&#x27;utf-8&#x27;) as f:</span>
+<span class="heredoc">            e = json.load(f)</span>
+<span class="heredoc">        if not isinstance(e, dict) or e.get(&#x27;versao&#x27;) != 1:</span>
+<span class="heredoc">            raise ValueError</span>
+<span class="heredoc">        return e</span>
+<span class="heredoc">    except FileNotFoundError:</span>
+<span class="heredoc">        return estado_novo()</span>
+<span class="heredoc">    except (ValueError, OSError):</span>
+<span class="heredoc">        print(&#x27;Aviso: estado anterior ilegível; recomeçando do zero.&#x27;)</span>
+<span class="heredoc">        return estado_novo()</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def salvar(e):</span>
+<span class="heredoc">    e[&#x27;historico&#x27;] = e[&#x27;historico&#x27;][-MAX_HIST:]</span>
+<span class="heredoc">    tmp = ARQ_ESTADO + &#x27;.tmp&#x27;</span>
+<span class="heredoc">    with open(os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), &#x27;w&#x27;, encoding=&#x27;utf-8&#x27;) as f:</span>
+<span class="heredoc">        json.dump(e, f, ensure_ascii=False)</span>
+<span class="heredoc">    os.replace(tmp, ARQ_ESTADO)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def registrar(e, feito, linha):</span>
+<span class="heredoc">    e[&#x27;historico&#x27;].append(linha)</span>
+<span class="heredoc">    if feito and feito not in e[&#x27;feitos&#x27;]:</span>
+<span class="heredoc">        e[&#x27;feitos&#x27;].append(feito)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def limpar_rodadas_antigas():</span>
+<span class="heredoc">    # Com a trava obtida, nenhuma outra rodada desta conta esta ativa.</span>
+<span class="heredoc">    for nome in os.listdir(PRIV):</span>
+<span class="heredoc">        if nome.startswith(&#x27;r&#x27;) and nome[1:].isdigit():</span>
+<span class="heredoc">            shutil.rmtree(os.path.join(PRIV, nome), ignore_errors=True)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc"># ---------------------------------------------------------------- processos</span>
+<span class="heredoc"></span>
+<span class="heredoc">class Rodada:</span>
+<span class="heredoc">    &quot;&quot;&quot;Uma execucao: cria processos participantes, coleta registros e limpa.&quot;&quot;&quot;</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def __init__(self):</span>
+<span class="heredoc">        self.dir = os.path.join(PRIV, f&#x27;r{os.getpid()}&#x27;)</span>
+<span class="heredoc">        shutil.rmtree(self.dir, ignore_errors=True)</span>
+<span class="heredoc">        os.mkdir(self.dir, 0o700)</span>
+<span class="heredoc">        if len(self.endereco(&#x27;A-B&#x27;)) &gt; 100:</span>
+<span class="heredoc">            raise Erro(&#x27;Caminho da pasta longo demais para sockets Unix.&#x27;)</span>
+<span class="heredoc">        self.filhos = []</span>
+<span class="heredoc">        self.recolhidos = set()</span>
+<span class="heredoc">        self.eventos = []</span>
+<span class="heredoc">        self.obs = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">        self.obs.bind(self.endereco(&#x27;_observador&#x27;))</span>
+<span class="heredoc">        self.t0 = time.monotonic()</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def endereco(self, nome):</span>
+<span class="heredoc">        return os.path.join(self.dir, nome + &#x27;.sock&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def iniciar(self, funcao, *args):</span>
+<span class="heredoc">        &quot;&quot;&quot;Cria um processo filho independente que executa funcao(self, *args).&quot;&quot;&quot;</span>
+<span class="heredoc">        sys.stdout.flush()</span>
+<span class="heredoc">        pid = os.fork()</span>
+<span class="heredoc">        if pid == 0:</span>
+<span class="heredoc">            codigo = 0</span>
+<span class="heredoc">            try:</span>
+<span class="heredoc">                signal.signal(signal.SIGINT, signal.SIG_IGN)</span>
+<span class="heredoc">                signal.signal(signal.SIGALRM, signal.SIG_DFL)</span>
+<span class="heredoc">                signal.alarm(int(VIDA_MAX) + 2)   # rede de seguranca</span>
+<span class="heredoc">                self.obs.close()</span>
+<span class="heredoc">                funcao(self, *args)</span>
+<span class="heredoc">            except BaseException:</span>
+<span class="heredoc">                codigo = 1</span>
+<span class="heredoc">            finally:</span>
+<span class="heredoc">                os._exit(codigo)</span>
+<span class="heredoc">        self.filhos.append(pid)</span>
+<span class="heredoc">        return pid</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def relatar(self, **ev):</span>
+<span class="heredoc">        &quot;&quot;&quot;Chamado nos filhos: envia um registro ao observador (o comando).&quot;&quot;&quot;</span>
+<span class="heredoc">        ev[&#x27;tm&#x27;] = time.monotonic()</span>
+<span class="heredoc">        s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            s.sendto(json.dumps(ev).encode(), self.endereco(&#x27;_observador&#x27;))</span>
+<span class="heredoc">        except OSError:</span>
+<span class="heredoc">            pass</span>
+<span class="heredoc">        finally:</span>
+<span class="heredoc">            s.close()</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def drenar(self, espera):</span>
+<span class="heredoc">        self.obs.settimeout(espera)</span>
+<span class="heredoc">        while True:</span>
+<span class="heredoc">            try:</span>
+<span class="heredoc">                dados = self.obs.recv(8192)</span>
+<span class="heredoc">            except (socket.timeout, BlockingIOError):</span>
+<span class="heredoc">                return</span>
+<span class="heredoc">            try:</span>
+<span class="heredoc">                ev = json.loads(dados)</span>
+<span class="heredoc">                ev[&#x27;t&#x27;] = round(ev.get(&#x27;tm&#x27;, self.t0) - self.t0, 3)</span>
+<span class="heredoc">                self.eventos.append(ev)</span>
+<span class="heredoc">            except ValueError:</span>
+<span class="heredoc">                pass</span>
+<span class="heredoc">            self.obs.settimeout(0)</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def esperar(self, pids, limite):</span>
+<span class="heredoc">        fim = time.monotonic() + limite</span>
+<span class="heredoc">        vivos = [p for p in pids if p not in self.recolhidos]</span>
+<span class="heredoc">        while vivos and time.monotonic() &lt; fim:</span>
+<span class="heredoc">            self.drenar(0.05)</span>
+<span class="heredoc">            for pid in list(vivos):</span>
+<span class="heredoc">                try:</span>
+<span class="heredoc">                    pronto, _ = os.waitpid(pid, os.WNOHANG)</span>
+<span class="heredoc">                except ChildProcessError:</span>
+<span class="heredoc">                    pronto = pid</span>
+<span class="heredoc">                if pronto:</span>
+<span class="heredoc">                    self.recolhidos.add(pid)</span>
+<span class="heredoc">                    vivos.remove(pid)</span>
+<span class="heredoc">        self.drenar(0.05)</span>
+<span class="heredoc">        return not vivos</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def esperar_prontos(self, leitura, n, limite=4.0):</span>
+<span class="heredoc">        lidos, fim = 0, time.monotonic() + limite</span>
+<span class="heredoc">        while lidos &lt; n:</span>
+<span class="heredoc">            resto = fim - time.monotonic()</span>
+<span class="heredoc">            if resto &lt;= 0:</span>
+<span class="heredoc">                raise Erro(&#x27;Os participantes não iniciaram a tempo. Tente de novo.&#x27;)</span>
+<span class="heredoc">            r, _, _ = select.select([leitura], [], [], resto)</span>
+<span class="heredoc">            if r:</span>
+<span class="heredoc">                dados = os.read(leitura, 64)</span>
+<span class="heredoc">                if not dados:</span>
+<span class="heredoc">                    raise Erro(&#x27;Um participante terminou antes de iniciar.&#x27;)</span>
+<span class="heredoc">                lidos += len(dados)</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def avisar_fim(self, nomes):</span>
+<span class="heredoc">        s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">        for nome in nomes:</span>
+<span class="heredoc">            try:</span>
+<span class="heredoc">                s.sendto(b&#x27;{&quot;tipo&quot;: &quot;fim&quot;}&#x27;, self.endereco(nome))</span>
+<span class="heredoc">            except OSError:</span>
+<span class="heredoc">                pass</span>
+<span class="heredoc">        s.close()</span>
+<span class="heredoc"></span>
+<span class="heredoc">    def encerrar(self):</span>
+<span class="heredoc">        &quot;&quot;&quot;Sempre executado: nenhum processo ou socket da rodada sobrevive.&quot;&quot;&quot;</span>
+<span class="heredoc">        pendentes = [p for p in self.filhos if p not in self.recolhidos]</span>
+<span class="heredoc">        for sinal in (signal.SIGTERM, signal.SIGKILL):</span>
+<span class="heredoc">            for pid in pendentes:</span>
+<span class="heredoc">                try:</span>
+<span class="heredoc">                    os.kill(pid, sinal)</span>
+<span class="heredoc">                except ProcessLookupError:</span>
+<span class="heredoc">                    pass</span>
+<span class="heredoc">            fim = time.monotonic() + 1</span>
+<span class="heredoc">            while pendentes and time.monotonic() &lt; fim:</span>
+<span class="heredoc">                for pid in list(pendentes):</span>
+<span class="heredoc">                    try:</span>
+<span class="heredoc">                        pronto, _ = os.waitpid(pid, os.WNOHANG)</span>
+<span class="heredoc">                    except ChildProcessError:</span>
+<span class="heredoc">                        pronto = pid</span>
+<span class="heredoc">                    if pronto:</span>
+<span class="heredoc">                        pendentes.remove(pid)</span>
+<span class="heredoc">                time.sleep(0.02)</span>
+<span class="heredoc">        self.obs.close()</span>
+<span class="heredoc">        shutil.rmtree(self.dir, ignore_errors=True)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def participante(r, nome, ja_recebidas, deduplicar, pronto):</span>
+<span class="heredoc">    &quot;&quot;&quot;Processo de um membro do grupo: recebe, registra e confirma.&quot;&quot;&quot;</span>
+<span class="heredoc">    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">    s.bind(r.endereco(nome))</span>
+<span class="heredoc">    os.write(pronto, b&#x27;1&#x27;)</span>
+<span class="heredoc">    vistas, chegada = set(ja_recebidas), 0</span>
+<span class="heredoc">    fim = time.monotonic() + VIDA_MAX</span>
+<span class="heredoc">    while True:</span>
+<span class="heredoc">        resto = fim - time.monotonic()</span>
+<span class="heredoc">        if resto &lt;= 0:</span>
+<span class="heredoc">            break</span>
+<span class="heredoc">        s.settimeout(resto)</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            dados, origem = s.recvfrom(4096)</span>
+<span class="heredoc">        except socket.timeout:</span>
+<span class="heredoc">            break</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            m = json.loads(dados)</span>
+<span class="heredoc">        except ValueError:</span>
+<span class="heredoc">            continue</span>
+<span class="heredoc">        if m.get(&#x27;tipo&#x27;) == &#x27;fim&#x27;:</span>
+<span class="heredoc">            break</span>
+<span class="heredoc">        if m.get(&#x27;tipo&#x27;) != &#x27;dados&#x27;:</span>
+<span class="heredoc">            continue</span>
+<span class="heredoc">        chegada += 1</span>
+<span class="heredoc">        repetida = m[&#x27;id&#x27;] in vistas</span>
+<span class="heredoc">        vistas.add(m[&#x27;id&#x27;])</span>
+<span class="heredoc">        r.relatar(ev=&#x27;recebeu&#x27;, no=nome, id=m[&#x27;id&#x27;], de=m[&#x27;de&#x27;], texto=m.get(&#x27;texto&#x27;, &#x27;&#x27;),</span>
+<span class="heredoc">                  repetida=repetida, descartada=repetida and deduplicar, ordem=chegada)</span>
+<span class="heredoc">        if m.get(&#x27;confirmar&#x27;) and origem:</span>
+<span class="heredoc">            try:</span>
+<span class="heredoc">                s.sendto(json.dumps({&#x27;tipo&#x27;: &#x27;conf&#x27;, &#x27;id&#x27;: m[&#x27;id&#x27;], &#x27;de&#x27;: nome}).encode(), origem)</span>
+<span class="heredoc">                r.relatar(ev=&#x27;confirmou&#x27;, no=nome, id=m[&#x27;id&#x27;], para=m[&#x27;de&#x27;])</span>
+<span class="heredoc">            except OSError:</span>
+<span class="heredoc">                pass</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def emissor(r, nome, msg, destinos):</span>
+<span class="heredoc">    &quot;&quot;&quot;Processo emissor: envia uma copia a cada destino e espera confirmacoes.&quot;&quot;&quot;</span>
+<span class="heredoc">    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">    s.bind(r.endereco(nome))</span>
+<span class="heredoc">    aguardando = []</span>
+<span class="heredoc">    for d in destinos:</span>
+<span class="heredoc">        dados = json.dumps({&#x27;tipo&#x27;: &#x27;dados&#x27;, &#x27;id&#x27;: msg[&#x27;id&#x27;], &#x27;de&#x27;: nome,</span>
+<span class="heredoc">                            &#x27;texto&#x27;: msg[&#x27;texto&#x27;], &#x27;confirmar&#x27;: True}).encode()</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            s.sendto(dados, r.endereco(d))</span>
+<span class="heredoc">            r.relatar(ev=&#x27;enviou&#x27;, no=nome, id=msg[&#x27;id&#x27;], para=d)</span>
+<span class="heredoc">            aguardando.append(d)</span>
+<span class="heredoc">        except (FileNotFoundError, ConnectionRefusedError):</span>
+<span class="heredoc">            r.relatar(ev=&#x27;falhou&#x27;, no=nome, id=msg[&#x27;id&#x27;], para=d)</span>
+<span class="heredoc">    fim = time.monotonic() + ESPERA_CONF</span>
+<span class="heredoc">    while aguardando and time.monotonic() &lt; fim:</span>
+<span class="heredoc">        s.settimeout(max(0.01, fim - time.monotonic()))</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            dados, _ = s.recvfrom(4096)</span>
+<span class="heredoc">        except socket.timeout:</span>
+<span class="heredoc">            break</span>
+<span class="heredoc">        m = json.loads(dados)</span>
+<span class="heredoc">        if m.get(&#x27;tipo&#x27;) == &#x27;conf&#x27; and m.get(&#x27;de&#x27;) in aguardando:</span>
+<span class="heredoc">            aguardando.remove(m[&#x27;de&#x27;])</span>
+<span class="heredoc">            r.relatar(ev=&#x27;conf_recebida&#x27;, no=nome, de=m[&#x27;de&#x27;], id=m[&#x27;id&#x27;])</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def distribuidor(r, nome, destinos, pronto):</span>
+<span class="heredoc">    &quot;&quot;&quot;Processo S: recebe uma mensagem de A e encaminha uma copia a cada destino.&quot;&quot;&quot;</span>
+<span class="heredoc">    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">    s.bind(r.endereco(nome))</span>
+<span class="heredoc">    os.write(pronto, b&#x27;1&#x27;)</span>
+<span class="heredoc">    s.settimeout(VIDA_MAX)</span>
+<span class="heredoc">    dados, origem = s.recvfrom(4096)</span>
+<span class="heredoc">    m = json.loads(dados)</span>
+<span class="heredoc">    aguardando = []</span>
+<span class="heredoc">    for d in destinos:</span>
+<span class="heredoc">        copia = json.dumps({&#x27;tipo&#x27;: &#x27;dados&#x27;, &#x27;id&#x27;: m[&#x27;id&#x27;], &#x27;de&#x27;: nome,</span>
+<span class="heredoc">                            &#x27;texto&#x27;: m[&#x27;texto&#x27;], &#x27;confirmar&#x27;: True}).encode()</span>
+<span class="heredoc">        s.sendto(copia, r.endereco(d))</span>
+<span class="heredoc">        r.relatar(ev=&#x27;enviou&#x27;, no=nome, id=m[&#x27;id&#x27;], para=d)</span>
+<span class="heredoc">        aguardando.append(d)</span>
+<span class="heredoc">    fim = time.monotonic() + ESPERA_CONF</span>
+<span class="heredoc">    while aguardando and time.monotonic() &lt; fim:</span>
+<span class="heredoc">        s.settimeout(max(0.01, fim - time.monotonic()))</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            resposta, _ = s.recvfrom(4096)</span>
+<span class="heredoc">        except socket.timeout:</span>
+<span class="heredoc">            break</span>
+<span class="heredoc">        c = json.loads(resposta)</span>
+<span class="heredoc">        if c.get(&#x27;tipo&#x27;) == &#x27;conf&#x27; and c.get(&#x27;de&#x27;) in aguardando:</span>
+<span class="heredoc">            aguardando.remove(c[&#x27;de&#x27;])</span>
+<span class="heredoc">            r.relatar(ev=&#x27;conf_recebida&#x27;, no=nome, de=c[&#x27;de&#x27;], id=c[&#x27;id&#x27;])</span>
+<span class="heredoc">    if origem:</span>
+<span class="heredoc">        s.sendto(json.dumps({&#x27;tipo&#x27;: &#x27;conf&#x27;, &#x27;id&#x27;: m[&#x27;id&#x27;], &#x27;de&#x27;: nome}).encode(), origem)</span>
+<span class="heredoc">        r.relatar(ev=&#x27;confirmou&#x27;, no=nome, id=m[&#x27;id&#x27;], para=m[&#x27;de&#x27;])</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def canal(r, origem, destino, atraso, pronto):</span>
+<span class="heredoc">    &quot;&quot;&quot;Processo que representa o enlace origem-&gt;destino com atraso fixo.&quot;&quot;&quot;</span>
+<span class="heredoc">    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">    s.bind(r.endereco(f&#x27;{origem}-{destino}&#x27;))</span>
+<span class="heredoc">    os.write(pronto, b&#x27;1&#x27;)</span>
+<span class="heredoc">    s.settimeout(VIDA_MAX)</span>
+<span class="heredoc">    dados = s.recv(4096)</span>
+<span class="heredoc">    time.sleep(atraso)</span>
+<span class="heredoc">    s.sendto(dados, r.endereco(destino))</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def emissor_ordem(r, nome, msg, destinos, partida):</span>
+<span class="heredoc">    time.sleep(partida)</span>
+<span class="heredoc">    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)</span>
+<span class="heredoc">    dados = json.dumps({&#x27;tipo&#x27;: &#x27;dados&#x27;, &#x27;id&#x27;: msg[&#x27;id&#x27;], &#x27;de&#x27;: nome,</span>
+<span class="heredoc">                        &#x27;texto&#x27;: msg[&#x27;texto&#x27;], &#x27;confirmar&#x27;: False}).encode()</span>
+<span class="heredoc">    r.relatar(ev=&#x27;enviou&#x27;, no=nome, id=msg[&#x27;id&#x27;], para=&#x27;,&#x27;.join(destinos))</span>
+<span class="heredoc">    for d in destinos:</span>
+<span class="heredoc">        s.sendto(dados, r.endereco(f&#x27;{nome}-{d}&#x27;))</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc"># ---------------------------------------------------------------- cenarios</span>
+<span class="heredoc"></span>
+<span class="heredoc">def rodar_envio(membros, de, destinos, msg, ja_recebidas, deduplicar=False, via=None):</span>
+<span class="heredoc">    &quot;&quot;&quot;Inicia os membros disponiveis, executa o envio e devolve os registros.&quot;&quot;&quot;</span>
+<span class="heredoc">    r = Rodada()</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        leitura, escrita = os.pipe()</span>
+<span class="heredoc">        receptores = [n for n in membros if n != de]</span>
+<span class="heredoc">        for n in receptores:</span>
+<span class="heredoc">            r.iniciar(participante, n, ja_recebidas.get(n, []), deduplicar, escrita)</span>
+<span class="heredoc">        pid_via = r.iniciar(distribuidor, via, destinos, escrita) if via else None</span>
+<span class="heredoc">        r.esperar_prontos(leitura, len(receptores) + (1 if via else 0))</span>
+<span class="heredoc">        os.close(leitura)</span>
+<span class="heredoc">        os.close(escrita)</span>
+<span class="heredoc">        if via:</span>
+<span class="heredoc">            pid = r.iniciar(emissor, de, msg, [via])</span>
+<span class="heredoc">        else:</span>
+<span class="heredoc">            pid = r.iniciar(emissor, de, msg, destinos)</span>
+<span class="heredoc">        r.esperar([pid], ESPERA_CONF * 3 + 2)</span>
+<span class="heredoc">        if pid_via:</span>
+<span class="heredoc">            r.esperar([pid_via], ESPERA_CONF * 2 + 1)</span>
+<span class="heredoc">        r.avisar_fim(receptores)</span>
+<span class="heredoc">        r.esperar(r.filhos, 3)</span>
+<span class="heredoc">        return r.eventos</span>
+<span class="heredoc">    finally:</span>
+<span class="heredoc">        r.encerrar()</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def disponiveis(e):</span>
+<span class="heredoc">    return [n for n in GRUPO if n not in e[&#x27;indisponiveis&#x27;]]</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def mostrar_envio(e, ev, de, destinos, msg):</span>
+<span class="heredoc">    i = msg[&#x27;id&#x27;]</span>
+<span class="heredoc">    for d in destinos:</span>
+<span class="heredoc">        if any(x[&#x27;ev&#x27;] == &#x27;enviou&#x27; and x[&#x27;para&#x27;] == d for x in ev):</span>
+<span class="heredoc">            print(f&#x27;[{de}] enviou {i} para [{d}]&#x27;)</span>
+<span class="heredoc">        elif any(x[&#x27;ev&#x27;] == &#x27;falhou&#x27; and x[&#x27;para&#x27;] == d for x in ev):</span>
+<span class="heredoc">            print(f&#x27;[{de}] falhou ao enviar {i} para [{d}]&#x27;)</span>
+<span class="heredoc">            print(f&#x27;    ({d} não está em execução)&#x27;)</span>
+<span class="heredoc">    entregas = repetidas = descartadas = 0</span>
+<span class="heredoc">    for n in GRUPO:</span>
+<span class="heredoc">        if n == de:</span>
+<span class="heredoc">            continue</span>
+<span class="heredoc">        rec = [x for x in ev if x[&#x27;ev&#x27;] == &#x27;recebeu&#x27; and x[&#x27;no&#x27;] == n and x[&#x27;id&#x27;] == i]</span>
+<span class="heredoc">        if not rec:</span>
+<span class="heredoc">            situacao = &#x27;indisponível, &#x27; if n in e[&#x27;indisponiveis&#x27;] else &#x27;&#x27;</span>
+<span class="heredoc">            print(f&#x27;[{n}] {situacao}nada recebeu&#x27;)</span>
+<span class="heredoc">            continue</span>
+<span class="heredoc">        x = rec[0]</span>
+<span class="heredoc">        if x[&#x27;descartada&#x27;]:</span>
+<span class="heredoc">            descartadas += 1</span>
+<span class="heredoc">            print(f&#x27;[{n}] descartou {i} (já recebida)&#x27;)</span>
+<span class="heredoc">        elif x[&#x27;repetida&#x27;]:</span>
+<span class="heredoc">            entregas += 1</span>
+<span class="heredoc">            repetidas += 1</span>
+<span class="heredoc">            print(f&#x27;[{n}] recebeu {i} de novo: DUPLICATA&#x27;)</span>
+<span class="heredoc">        else:</span>
+<span class="heredoc">            entregas += 1</span>
+<span class="heredoc">            print(f&#x27;[{n}] recebeu {i}: {x[&quot;texto&quot;]}&#x27;)</span>
+<span class="heredoc">    confs = sorted(x[&#x27;de&#x27;] for x in ev if x[&#x27;ev&#x27;] == &#x27;conf_recebida&#x27; and x[&#x27;no&#x27;] == de)</span>
+<span class="heredoc">    sem = [d for d in destinos if d not in confs]</span>
+<span class="heredoc">    dados = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;enviou&#x27;)</span>
+<span class="heredoc">    falhas = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;falhou&#x27;)</span>
+<span class="heredoc">    print(f&#x27;[{de}] confirmações: {&quot;, &quot;.join(confs) if confs else &quot;nenhuma&quot;}&#x27;)</span>
+<span class="heredoc">    if sem:</span>
+<span class="heredoc">        print(f&#x27;Sem confirmação: {&quot;, &quot;.join(sem)}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;Destinatários: {len(destinos)}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;Mensagens de dados: {dados}&#x27;)</span>
+<span class="heredoc">    if falhas:</span>
+<span class="heredoc">        print(f&#x27;Falhas de envio: {falhas}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;Entregas: {entregas} | Confirmações: {len(confs)}&#x27;)</span>
+<span class="heredoc">    if repetidas:</span>
+<span class="heredoc">        print(f&#x27;Duplicatas processadas: {repetidas}&#x27;)</span>
+<span class="heredoc">    if descartadas:</span>
+<span class="heredoc">        print(f&#x27;Duplicatas descartadas: {descartadas}&#x27;)</span>
+<span class="heredoc">    return {&#x27;entregas&#x27;: entregas, &#x27;confs&#x27;: confs, &#x27;sem&#x27;: sem, &#x27;dados&#x27;: dados,</span>
+<span class="heredoc">            &#x27;repetidas&#x27;: repetidas, &#x27;descartadas&#x27;: descartadas}</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def guardar_recebidas(e, ev):</span>
+<span class="heredoc">    for x in ev:</span>
+<span class="heredoc">        if x[&#x27;ev&#x27;] == &#x27;recebeu&#x27;:</span>
+<span class="heredoc">            lista = e[&#x27;recebidas&#x27;].setdefault(x[&#x27;no&#x27;], [])</span>
+<span class="heredoc">            if x[&#x27;id&#x27;] not in lista:</span>
+<span class="heredoc">                lista.append(x[&#x27;id&#x27;])</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def nova_mensagem(e, texto):</span>
+<span class="heredoc">    msg = {&#x27;id&#x27;: num(e[&#x27;proximo&#x27;]), &#x27;texto&#x27;: texto}</span>
+<span class="heredoc">    e[&#x27;proximo&#x27;] += 1</span>
+<span class="heredoc">    return msg</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc"># ---------------------------------------------------------------- comandos</span>
+<span class="heredoc"></span>
+<span class="heredoc">def opcoes(args, com_valor=(), sem_valor=()):</span>
+<span class="heredoc">    o, i = {}, 0</span>
+<span class="heredoc">    while i &lt; len(args):</span>
+<span class="heredoc">        a = args[i]</span>
+<span class="heredoc">        if a in com_valor:</span>
+<span class="heredoc">            if i + 1 &gt;= len(args):</span>
+<span class="heredoc">                raise Erro(f&#x27;Faltou o valor depois de {a}.&#x27;)</span>
+<span class="heredoc">            o[a] = args[i + 1]</span>
+<span class="heredoc">            i += 2</span>
+<span class="heredoc">        elif a in sem_valor:</span>
+<span class="heredoc">            o[a] = True</span>
+<span class="heredoc">            i += 1</span>
+<span class="heredoc">        else:</span>
+<span class="heredoc">            raise Erro(f&#x27;Opção desconhecida: {a}\nVeja: python3 p05.py ajuda&#x27;)</span>
+<span class="heredoc">    return o</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def membro(o, chave, obrigatorio=True):</span>
+<span class="heredoc">    if chave not in o:</span>
+<span class="heredoc">        if obrigatorio:</span>
+<span class="heredoc">            raise Erro(f&#x27;Informe {chave}. Exemplo: {chave} B&#x27;)</span>
+<span class="heredoc">        return None</span>
+<span class="heredoc">    nome = o[chave].strip().upper()</span>
+<span class="heredoc">    if nome not in GRUPO:</span>
+<span class="heredoc">        raise Erro(f&#x27;{chave} {o[chave]}: use um destes: {&quot;, &quot;.join(GRUPO)}.&#x27;)</span>
+<span class="heredoc">    return nome</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def texto_valido(o):</span>
+<span class="heredoc">    texto = o.get(&#x27;--mensagem&#x27;, &#x27;&#x27;).strip()</span>
+<span class="heredoc">    if not texto:</span>
+<span class="heredoc">        raise Erro(&#x27;Informe --mensagem &quot;texto&quot; (entre aspas).&#x27;)</span>
+<span class="heredoc">    if len(texto) &gt; MAX_TEXTO or not texto.isprintable():</span>
+<span class="heredoc">        raise Erro(f&#x27;Mensagem com até {MAX_TEXTO} caracteres, sem símbolos de controle.&#x27;)</span>
+<span class="heredoc">    return texto</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def exigir_disponivel(e, nome):</span>
+<span class="heredoc">    if nome in e[&#x27;indisponiveis&#x27;]:</span>
+<span class="heredoc">        raise Erro(f&#x27;{nome} está indisponível. Recupere com:\n&#x27;</span>
+<span class="heredoc">                   f&#x27;python3 p05.py recuperar --no {nome}&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_unicast(e, args):</span>
+<span class="heredoc">    o = opcoes(args, (&#x27;--de&#x27;, &#x27;--para&#x27;, &#x27;--mensagem&#x27;))</span>
+<span class="heredoc">    de, para, texto = membro(o, &#x27;--de&#x27;), membro(o, &#x27;--para&#x27;), texto_valido(o)</span>
+<span class="heredoc">    if de == para:</span>
+<span class="heredoc">        raise Erro(&#x27;Origem e destino precisam ser diferentes.&#x27;)</span>
+<span class="heredoc">    exigir_disponivel(e, de)</span>
+<span class="heredoc">    msg = nova_mensagem(e, texto)</span>
+<span class="heredoc">    print(f&#x27;UNICAST: {de} -&gt; {para}&#x27;)</span>
+<span class="heredoc">    ev = rodar_envio(disponiveis(e), de, [para], msg, e[&#x27;recebidas&#x27;])</span>
+<span class="heredoc">    res = mostrar_envio(e, ev, de, [para], msg)</span>
+<span class="heredoc">    guardar_recebidas(e, ev)</span>
+<span class="heredoc">    e[&#x27;ultima&#x27;] = {&#x27;id&#x27;: msg[&#x27;id&#x27;], &#x27;de&#x27;: de, &#x27;texto&#x27;: texto, &#x27;destinos&#x27;: [para],</span>
+<span class="heredoc">                   &#x27;sem&#x27;: res[&#x27;sem&#x27;]}</span>
+<span class="heredoc">    registrar(e, &#x27;unicast&#x27;, f&#x27;unicast {msg[&quot;id&quot;]} {de}-&gt;{para}: {res[&quot;entregas&quot;]} entrega&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_difundir(e, args):</span>
+<span class="heredoc">    o = opcoes(args, (&#x27;--de&#x27;, &#x27;--mensagem&#x27;))</span>
+<span class="heredoc">    de, texto = membro(o, &#x27;--de&#x27;), texto_valido(o)</span>
+<span class="heredoc">    exigir_disponivel(e, de)</span>
+<span class="heredoc">    destinos = [n for n in GRUPO if n != de]</span>
+<span class="heredoc">    msg = nova_mensagem(e, texto)</span>
+<span class="heredoc">    print(f&#x27;DIFUSÃO: de {de} para {&quot;, &quot;.join(destinos)}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;[{de}] iniciou difusão da mensagem {msg[&quot;id&quot;]}&#x27;)</span>
+<span class="heredoc">    ev = rodar_envio(disponiveis(e), de, destinos, msg, e[&#x27;recebidas&#x27;])</span>
+<span class="heredoc">    res = mostrar_envio(e, ev, de, destinos, msg)</span>
+<span class="heredoc">    guardar_recebidas(e, ev)</span>
+<span class="heredoc">    e[&#x27;ultima&#x27;] = {&#x27;id&#x27;: msg[&#x27;id&#x27;], &#x27;de&#x27;: de, &#x27;texto&#x27;: texto, &#x27;destinos&#x27;: destinos,</span>
+<span class="heredoc">                   &#x27;sem&#x27;: res[&#x27;sem&#x27;]}</span>
+<span class="heredoc">    falhas = f&#x27;, sem conf. {&quot;,&quot;.join(res[&quot;sem&quot;])}&#x27; if res[&#x27;sem&#x27;] else &#x27;&#x27;</span>
+<span class="heredoc">    registrar(e, &#x27;falha&#x27; if res[&#x27;sem&#x27;] else &#x27;difusao&#x27;,</span>
+<span class="heredoc">              f&#x27;difusão {msg[&quot;id&quot;]}: {res[&quot;entregas&quot;]}/{len(destinos)} entregas{falhas}&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_falha(e, args):</span>
+<span class="heredoc">    nome = membro(opcoes(args, (&#x27;--no&#x27;,)), &#x27;--no&#x27;)</span>
+<span class="heredoc">    if nome not in e[&#x27;indisponiveis&#x27;]:</span>
+<span class="heredoc">        e[&#x27;indisponiveis&#x27;].append(nome)</span>
+<span class="heredoc">    print(f&#x27;[{nome}] agora está INDISPONÍVEL.&#x27;)</span>
+<span class="heredoc">    print(&#x27;O processo dele não será iniciado nas&#x27;)</span>
+<span class="heredoc">    print(&#x27;próximas mensagens, até você usar:&#x27;)</span>
+<span class="heredoc">    print(f&#x27;python3 p05.py recuperar --no {nome}&#x27;)</span>
+<span class="heredoc">    registrar(e, None, f&#x27;falha: {nome} indisponível&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_recuperar(e, args):</span>
+<span class="heredoc">    nome = membro(opcoes(args, (&#x27;--no&#x27;,)), &#x27;--no&#x27;)</span>
+<span class="heredoc">    if nome in e[&#x27;indisponiveis&#x27;]:</span>
+<span class="heredoc">        e[&#x27;indisponiveis&#x27;].remove(nome)</span>
+<span class="heredoc">        print(f&#x27;[{nome}] voltou a ficar disponível.&#x27;)</span>
+<span class="heredoc">    else:</span>
+<span class="heredoc">        print(f&#x27;[{nome}] já estava disponível.&#x27;)</span>
+<span class="heredoc">    registrar(e, None, f&#x27;recuperar: {nome} disponível&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_reenviar(e, args):</span>
+<span class="heredoc">    o = opcoes(args, (), (&#x27;--ultima&#x27;, &#x27;--dedup&#x27;, &#x27;--pendentes&#x27;))</span>
+<span class="heredoc">    if &#x27;--ultima&#x27; not in o:</span>
+<span class="heredoc">        raise Erro(&#x27;Use: python3 p05.py reenviar --ultima&#x27;)</span>
+<span class="heredoc">    u = e.get(&#x27;ultima&#x27;)</span>
+<span class="heredoc">    if not u:</span>
+<span class="heredoc">        raise Erro(&#x27;Ainda não há mensagem para reenviar.\nEnvie uma com unicast ou difundir.&#x27;)</span>
+<span class="heredoc">    exigir_disponivel(e, u[&#x27;de&#x27;])</span>
+<span class="heredoc">    destinos = u[&#x27;sem&#x27;] if &#x27;--pendentes&#x27; in o else u[&#x27;destinos&#x27;]</span>
+<span class="heredoc">    if not destinos:</span>
+<span class="heredoc">        print(f&#x27;Nenhum destino pendente para {u[&quot;id&quot;]}.&#x27;)</span>
+<span class="heredoc">        return</span>
+<span class="heredoc">    dedup = &#x27;--dedup&#x27; in o</span>
+<span class="heredoc">    msg = {&#x27;id&#x27;: u[&#x27;id&#x27;], &#x27;texto&#x27;: u[&#x27;texto&#x27;]}</span>
+<span class="heredoc">    modo = &#x27;com&#x27; if dedup else &#x27;sem&#x27;</span>
+<span class="heredoc">    print(f&#x27;REENVIO de {u[&quot;id&quot;]} para {&quot;, &quot;.join(destinos)}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;({modo} deduplicação nos destinos)&#x27;)</span>
+<span class="heredoc">    ev = rodar_envio(disponiveis(e), u[&#x27;de&#x27;], destinos, msg, e[&#x27;recebidas&#x27;], deduplicar=dedup)</span>
+<span class="heredoc">    res = mostrar_envio(e, ev, u[&#x27;de&#x27;], destinos, msg)</span>
+<span class="heredoc">    guardar_recebidas(e, ev)</span>
+<span class="heredoc">    u[&#x27;sem&#x27;] = res[&#x27;sem&#x27;]</span>
+<span class="heredoc">    extra = f&#x27;, descartadas {res[&quot;descartadas&quot;]}&#x27; if dedup else f&#x27;, duplicatas {res[&quot;repetidas&quot;]}&#x27;</span>
+<span class="heredoc">    registrar(e, &#x27;reenvio_dedup&#x27; if dedup else &#x27;reenvio&#x27;,</span>
+<span class="heredoc">              f&#x27;reenvio {u[&quot;id&quot;]} {modo} dedup: {res[&quot;entregas&quot;]} entregas{extra}&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_ordem(e, args):</span>
+<span class="heredoc">    opcoes(args)</span>
+<span class="heredoc">    for n in GRUPO:</span>
+<span class="heredoc">        exigir_disponivel(e, n)</span>
+<span class="heredoc">    mx, my = nova_mensagem(e, &#x27;X&#x27;), nova_mensagem(e, &#x27;Y&#x27;)</span>
+<span class="heredoc">    msgs = {&#x27;A&#x27;: mx, &#x27;D&#x27;: my}</span>
+<span class="heredoc">    print(&#x27;ORDEM: 2 emissores, 2 receptores&#x27;)</span>
+<span class="heredoc">    print(&#x27;Atraso fixo de cada canal:&#x27;)</span>
+<span class="heredoc">    print(f&#x27;  A-&gt;B {seg(ATRASOS[&quot;A&quot;, &quot;B&quot;])} s   A-&gt;C {seg(ATRASOS[&quot;A&quot;, &quot;C&quot;])} s&#x27;)</span>
+<span class="heredoc">    print(f&#x27;  D-&gt;B {seg(ATRASOS[&quot;D&quot;, &quot;B&quot;])} s   D-&gt;C {seg(ATRASOS[&quot;D&quot;, &quot;C&quot;])} s&#x27;)</span>
+<span class="heredoc">    r = Rodada()</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        leitura, escrita = os.pipe()</span>
+<span class="heredoc">        for n in (&#x27;B&#x27;, &#x27;C&#x27;):</span>
+<span class="heredoc">            r.iniciar(participante, n, [], False, escrita)</span>
+<span class="heredoc">        for (o, d), atraso in ATRASOS.items():</span>
+<span class="heredoc">            r.iniciar(canal, o, d, atraso, escrita)</span>
+<span class="heredoc">        r.esperar_prontos(leitura, 6)</span>
+<span class="heredoc">        os.close(leitura)</span>
+<span class="heredoc">        os.close(escrita)</span>
+<span class="heredoc">        r.t0 = time.monotonic()</span>
+<span class="heredoc">        envios = [r.iniciar(emissor_ordem, n, msgs[n], [&#x27;B&#x27;, &#x27;C&#x27;], PARTIDA[n]) for n in (&#x27;A&#x27;, &#x27;D&#x27;)]</span>
+<span class="heredoc">        r.esperar(envios, 3)</span>
+<span class="heredoc">        fim = time.monotonic() + 3</span>
+<span class="heredoc">        while time.monotonic() &lt; fim:</span>
+<span class="heredoc">            r.drenar(0.05)</span>
+<span class="heredoc">            if sum(1 for x in r.eventos if x[&#x27;ev&#x27;] == &#x27;recebeu&#x27;) &gt;= 4:</span>
+<span class="heredoc">                break</span>
+<span class="heredoc">        r.avisar_fim([&#x27;B&#x27;, &#x27;C&#x27;])</span>
+<span class="heredoc">        r.esperar(r.filhos, 3)</span>
+<span class="heredoc">        ev = r.eventos</span>
+<span class="heredoc">    finally:</span>
+<span class="heredoc">        r.encerrar()</span>
+<span class="heredoc">    print(&#x27;Envio:&#x27;)</span>
+<span class="heredoc">    for pos, n in enumerate((&#x27;A&#x27;, &#x27;D&#x27;), 1):</span>
+<span class="heredoc">        print(f&#x27;  {pos}º [{n}] envia {msgs[n][&quot;id&quot;]} (t={seg(PARTIDA[n])} s)&#x27;)</span>
+<span class="heredoc">    print(&#x27;Chegada (t medido):&#x27;)</span>
+<span class="heredoc">    ordens = {}</span>
+<span class="heredoc">    for n in (&#x27;B&#x27;, &#x27;C&#x27;):</span>
+<span class="heredoc">        rec = sorted((x for x in ev if x[&#x27;ev&#x27;] == &#x27;recebeu&#x27; and x[&#x27;no&#x27;] == n),</span>
+<span class="heredoc">                     key=lambda x: x[&#x27;ordem&#x27;])</span>
+<span class="heredoc">        ordens[n] = [x[&#x27;id&#x27;] for x in rec]</span>
+<span class="heredoc">        partes = &#x27;  &#x27;.join(f&#x27;{x[&quot;id&quot;]} ({seg(x[&quot;t&quot;])} s)&#x27; for x in rec)</span>
+<span class="heredoc">        print(f&#x27;  [{n}] {partes}&#x27;)</span>
+<span class="heredoc">    for n in (&#x27;B&#x27;, &#x27;C&#x27;):</span>
+<span class="heredoc">        print(f&#x27;Ordem em [{n}]: {&quot;, &quot;.join(ordens[n])}&#x27;)</span>
+<span class="heredoc">    if ordens[&#x27;B&#x27;] != ordens[&#x27;C&#x27;]:</span>
+<span class="heredoc">        print(&#x27;Resultado: B e C viram ordens&#x27;)</span>
+<span class="heredoc">        print(&#x27;diferentes para as mesmas mensagens.&#x27;)</span>
+<span class="heredoc">    else:</span>
+<span class="heredoc">        print(&#x27;Resultado: B e C viram a mesma ordem.&#x27;)</span>
+<span class="heredoc">    registrar(e, &#x27;ordem&#x27;, f&#x27;ordem: B={&quot;,&quot;.join(ordens[&quot;B&quot;])} C={&quot;,&quot;.join(ordens[&quot;C&quot;])}&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def medir_custo(n, via):</span>
+<span class="heredoc">    destinos = DESTINOS_CUSTO[:n]</span>
+<span class="heredoc">    msg = {&#x27;id&#x27;: &#x27;T&#x27;, &#x27;texto&#x27;: &#x27;teste de custo&#x27;}</span>
+<span class="heredoc">    membros = [&#x27;A&#x27;] + destinos</span>
+<span class="heredoc">    ev = rodar_envio(membros, &#x27;A&#x27;, destinos, msg, {}, via=via)</span>
+<span class="heredoc">    entregas = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;recebeu&#x27;)</span>
+<span class="heredoc">    dados_a = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;enviou&#x27; and x[&#x27;no&#x27;] == &#x27;A&#x27;)</span>
+<span class="heredoc">    dados_s = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;enviou&#x27; and x[&#x27;no&#x27;] == &#x27;S&#x27;)</span>
+<span class="heredoc">    confs = sum(1 for x in ev if x[&#x27;ev&#x27;] == &#x27;confirmou&#x27;)</span>
+<span class="heredoc">    return entregas, dados_a, dados_s, confs</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_custo(e, args):</span>
+<span class="heredoc">    o = opcoes(args, (&#x27;--tamanhos&#x27;,))</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        tamanhos = [int(x) for x in o.get(&#x27;--tamanhos&#x27;, &#x27;3,6&#x27;).split(&#x27;,&#x27;)]</span>
+<span class="heredoc">    except ValueError:</span>
+<span class="heredoc">        raise Erro(&#x27;Use --tamanhos com números separados por vírgula, ex.: 3,6&#x27;)</span>
+<span class="heredoc">    if not 1 &lt;= len(tamanhos) &lt;= 4 or any(not 1 &lt;= t &lt;= len(DESTINOS_CUSTO) for t in tamanhos):</span>
+<span class="heredoc">        raise Erro(f&#x27;Tamanhos de 1 a {len(DESTINOS_CUSTO)}, no máximo 4 valores.&#x27;)</span>
+<span class="heredoc">    print(&#x27;CUSTO DA DIFUSÃO (medido)&#x27;)</span>
+<span class="heredoc">    print(&#x27;Grupo de teste: todos disponíveis.&#x27;)</span>
+<span class="heredoc">    print(&#x27;1) Cópias individuais (A -&gt; cada um)&#x27;)</span>
+<span class="heredoc">    print(&#x27; Dest  Dados  Conf  Total&#x27;)</span>
+<span class="heredoc">    resumo = []</span>
+<span class="heredoc">    diretas = {}</span>
+<span class="heredoc">    for t in tamanhos:</span>
+<span class="heredoc">        entregas, dados, _, confs = medir_custo(t, None)</span>
+<span class="heredoc">        if entregas != t:</span>
+<span class="heredoc">            print(f&#x27;  aviso: {entregas} de {t} entregas&#x27;)</span>
+<span class="heredoc">        diretas[t] = dados + confs</span>
+<span class="heredoc">        print(f&#x27; {t:&gt;4}  {dados:&gt;5}  {confs:&gt;4}  {dados + confs:&gt;5}&#x27;)</span>
+<span class="heredoc">        resumo.append(f&#x27;{t}-&gt;{dados + confs}&#x27;)</span>
+<span class="heredoc">    print(&#x27;2) Com distribuidor S (A -&gt; S -&gt; cada)&#x27;)</span>
+<span class="heredoc">    print(&#x27; Dest  A-&gt;S  S-&gt;dest  Conf  Total&#x27;)</span>
+<span class="heredoc">    for t in tamanhos:</span>
+<span class="heredoc">        entregas, dados_a, dados_s, confs = medir_custo(t, &#x27;S&#x27;)</span>
+<span class="heredoc">        if entregas != t:</span>
+<span class="heredoc">            print(f&#x27;  aviso: {entregas} de {t} entregas&#x27;)</span>
+<span class="heredoc">        total = dados_a + dados_s + confs</span>
+<span class="heredoc">        print(f&#x27; {t:&gt;4}  {dados_a:&gt;4}  {dados_s:&gt;7}  {confs:&gt;4}  {total:&gt;5}&#x27;)</span>
+<span class="heredoc">    print(&#x27;Dados = mensagens com o conteúdo;&#x27;)</span>
+<span class="heredoc">    print(&#x27;Conf = confirmações de recebimento.&#x27;)</span>
+<span class="heredoc">    registrar(e, &#x27;custo&#x27;, &#x27;custo (dest-&gt;total): &#x27; + &#x27; &#x27;.join(resumo))</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_estado(e, args):</span>
+<span class="heredoc">    opcoes(args)</span>
+<span class="heredoc">    indisp = e[&#x27;indisponiveis&#x27;]</span>
+<span class="heredoc">    print(f&#x27;Grupo: {&quot;, &quot;.join(GRUPO)}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;Indisponíveis: {&quot;, &quot;.join(indisp) if indisp else &quot;nenhum&quot;}&#x27;)</span>
+<span class="heredoc">    u = e.get(&#x27;ultima&#x27;)</span>
+<span class="heredoc">    if u:</span>
+<span class="heredoc">        print(f&#x27;Última mensagem: {u[&quot;id&quot;]} de {u[&quot;de&quot;]}&#x27;)</span>
+<span class="heredoc">        print(f&#x27;  para: {&quot;, &quot;.join(u[&quot;destinos&quot;])}&#x27;)</span>
+<span class="heredoc">        if u[&#x27;sem&#x27;]:</span>
+<span class="heredoc">            print(f&#x27;  sem confirmação: {&quot;, &quot;.join(u[&quot;sem&quot;])}&#x27;)</span>
+<span class="heredoc">    print(f&#x27;Próxima mensagem: {num(e[&quot;proximo&quot;])}&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">ETAPAS = [(&#x27;unicast&#x27;, &#x27;Exp. 1 unicast&#x27;), (&#x27;difusao&#x27;, &#x27;Exp. 2 difusão&#x27;),</span>
+<span class="heredoc">          (&#x27;falha&#x27;, &#x27;Exp. 3 difusão com falha&#x27;), (&#x27;reenvio&#x27;, &#x27;Exp. 3 reenvio&#x27;),</span>
+<span class="heredoc">          (&#x27;ordem&#x27;, &#x27;Exp. 4 ordem&#x27;), (&#x27;custo&#x27;, &#x27;Etapa 5 custo&#x27;)]</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_evidencias(e, args):</span>
+<span class="heredoc">    opcoes(args)</span>
+<span class="heredoc">    print(&#x27;EVIDÊNCIAS P05 - copie para a entrega&#x27;)</span>
+<span class="heredoc">    print(f&#x27;p05.py {VERSAO} - {datetime.now().strftime(&quot;%d/%m/%Y %H:%M&quot;)}&#x27;)</span>
+<span class="heredoc">    for i, linha in enumerate(e[&#x27;historico&#x27;], 1):</span>
+<span class="heredoc">        print(f&#x27;{i:&gt;2}. {linha}&#x27;)</span>
+<span class="heredoc">    if not e[&#x27;historico&#x27;]:</span>
+<span class="heredoc">        print(&#x27;(nenhum experimento registrado ainda)&#x27;)</span>
+<span class="heredoc">    falta = [rotulo for chave, rotulo in ETAPAS if chave not in e[&#x27;feitos&#x27;]]</span>
+<span class="heredoc">    print(&#x27;Situação: completa&#x27; if not falta else &#x27;Falta: &#x27; + &#x27;; &#x27;.join(falta))</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def cmd_reiniciar(e, args):</span>
+<span class="heredoc">    opcoes(args)</span>
+<span class="heredoc">    e.clear()</span>
+<span class="heredoc">    e.update(estado_novo())</span>
+<span class="heredoc">    print(&#x27;Atividade reiniciada nesta conta.&#x27;)</span>
+<span class="heredoc">    print(&#x27;Todos disponíveis; próxima mensagem: 001&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">AJUDA = &quot;&quot;&quot;P05 - difusão e comunicação em grupo</span>
+<span class="heredoc">Uso: python3 p05.py COMANDO [opções]</span>
+<span class="heredoc"></span>
+<span class="heredoc">Preparação:</span>
+<span class="heredoc">  reiniciar   começa a atividade do zero</span>
+<span class="heredoc">  estado      mostra o grupo e a última</span>
+<span class="heredoc">              mensagem</span>
+<span class="heredoc">Experimentos:</span>
+<span class="heredoc">  unicast --de A --para B --mensagem &quot;oi&quot;</span>
+<span class="heredoc">  difundir --de A --mensagem &quot;oi&quot;</span>
+<span class="heredoc">  falha --no C       C fica indisponível</span>
+<span class="heredoc">  recuperar --no C   C volta</span>
+<span class="heredoc">  reenviar --ultima  reenvia a última</span>
+<span class="heredoc">    --dedup          destinos descartam</span>
+<span class="heredoc">                     as repetidas</span>
+<span class="heredoc">    --pendentes      só para quem não</span>
+<span class="heredoc">                     confirmou</span>
+<span class="heredoc">  ordem              2 emissores e</span>
+<span class="heredoc">                     2 receptores</span>
+<span class="heredoc">  custo              grupos de 3 e 6</span>
+<span class="heredoc">    --tamanhos 3,6,8</span>
+<span class="heredoc">Entrega:</span>
+<span class="heredoc">  evidencias  resumo para copiar</span>
+<span class="heredoc"></span>
+<span class="heredoc">Grupo: A, B, C, D. Cada um é um processo.</span>
+<span class="heredoc">Mensagens por socket Unix (mesma máquina):</span>
+<span class="heredoc">não é rede nem multicast IP.&quot;&quot;&quot;</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">COMANDOS = {&#x27;unicast&#x27;: cmd_unicast, &#x27;difundir&#x27;: cmd_difundir, &#x27;falha&#x27;: cmd_falha,</span>
+<span class="heredoc">            &#x27;recuperar&#x27;: cmd_recuperar, &#x27;reenviar&#x27;: cmd_reenviar, &#x27;ordem&#x27;: cmd_ordem,</span>
+<span class="heredoc">            &#x27;custo&#x27;: cmd_custo, &#x27;estado&#x27;: cmd_estado, &#x27;evidencias&#x27;: cmd_evidencias,</span>
+<span class="heredoc">            &#x27;reiniciar&#x27;: cmd_reiniciar}</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def tempo_esgotado(*_):</span>
+<span class="heredoc">    raise Erro(&#x27;Tempo limite do comando esgotado. Nada ficou em execução.&#x27;)</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">def main(argv):</span>
+<span class="heredoc">    if not argv or argv[0] in (&#x27;ajuda&#x27;, &#x27;help&#x27;, &#x27;-h&#x27;, &#x27;--help&#x27;):</span>
+<span class="heredoc">        print(AJUDA)</span>
+<span class="heredoc">        return 0</span>
+<span class="heredoc">    comando = argv[0].lower()</span>
+<span class="heredoc">    if comando not in COMANDOS:</span>
+<span class="heredoc">        raise Erro(f&#x27;Comando desconhecido: {argv[0]}\nVeja: python3 p05.py ajuda&#x27;)</span>
+<span class="heredoc">    preparar_pasta()</span>
+<span class="heredoc">    trava = travar()</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        limpar_rodadas_antigas()</span>
+<span class="heredoc">        e = carregar()</span>
+<span class="heredoc">        signal.signal(signal.SIGALRM, tempo_esgotado)</span>
+<span class="heredoc">        signal.alarm(LIMITE_CMD)</span>
+<span class="heredoc">        try:</span>
+<span class="heredoc">            COMANDOS[comando](e, argv[1:])</span>
+<span class="heredoc">        finally:</span>
+<span class="heredoc">            signal.alarm(0)</span>
+<span class="heredoc">        salvar(e)</span>
+<span class="heredoc">    finally:</span>
+<span class="heredoc">        os.close(trava)</span>
+<span class="heredoc">    return 0</span>
+<span class="heredoc"></span>
+<span class="heredoc"></span>
+<span class="heredoc">if __name__ == &#x27;__main__&#x27;:</span>
+<span class="heredoc">    try:</span>
+<span class="heredoc">        sys.exit(main(sys.argv[1:]))</span>
+<span class="heredoc">    except Erro as erro:</span>
+<span class="heredoc">        print(f&#x27;Erro: {erro}&#x27;, file=sys.stderr)</span>
+<span class="heredoc">        sys.exit(2)</span>
+<span class="heredoc">    except KeyboardInterrupt:</span>
+<span class="heredoc">        print(&#x27;\nInterrompido. Nenhum processo da P05 ficou ativo.&#x27;, file=sys.stderr)</span>
+<span class="heredoc">        sys.exit(130)</span>
+<span class="heredoc">FIM</span></code></pre></div></details>
+<p><b>O que fazer:</b> veja a ajuda do programa e comece do zero.</p>
+<div class="command"><div class="command-head"><span>Veja a ajuda e reinicie a atividade</span><button class="copy" type="button" aria-label="Copiar: Veja a ajuda e reinicie a atividade">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py ajuda</span>
+<span class="cmd">python3 p05.py reiniciar</span></code></pre></div>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">P05 - difusão e comunicação em grupo
+Uso: python3 p05.py COMANDO [opções]
+
+Preparação:
+  reiniciar   começa a atividade do zero
+  estado      mostra o grupo e a última
+              mensagem
+Experimentos:
+  unicast --de A --para B --mensagem &quot;oi&quot;
+  difundir --de A --mensagem &quot;oi&quot;
+  falha --no C       C fica indisponível
+  recuperar --no C   C volta
+  reenviar --ultima  reenvia a última
+    --dedup          destinos descartam
+                     as repetidas
+    --pendentes      só para quem não
+                     confirmou
+  ordem              2 emissores e
+                     2 receptores
+  custo              grupos de 3 e 6
+    --tamanhos 3,6,8
+Entrega:
+  evidencias  resumo para copiar
+
+Grupo: A, B, C, D. Cada um é um processo.
+Mensagens por socket Unix (mesma máquina):
+não é rede nem multicast IP.
+Atividade reiniciada nesta conta.
+Todos disponíveis; próxima mensagem: 001</pre></div>
+<p><b>O que observar:</b> <code>reiniciar</code> zera a numeração das mensagens. Assim seus números (001, 002…) coincidem com os desta página. Se você repetir um comando, os números avançam; isso não é erro.</p>
+<label class="done"><input type="checkbox" id="feito-0" data-step="0">Preparei a pasta e vi a ajuda</label>
+</section>
+
+<section class="etapa" id="exp1" aria-labelledby="t1"><p class="label">Experimento 1 · 10 min</p><h2 id="t1">Uma mensagem para um destinatário</h2>
+<p><b>Conceito.</b> No <b>unicast</b>, um emissor envia uma mensagem para <b>um único</b> destinatário, como uma mensagem privada. Os outros membros do grupo não recebem nada. Aqui, cada mensagem recebida é <b>confirmada</b>: o destinatário devolve um aviso de recebimento ao emissor.</p>
+<p><b>O que fazer:</b> envie “Bom dia!” de A para B.</p>
+<div class="command"><div class="command-head"><span>Envie de A para B</span><button class="copy" type="button" aria-label="Copiar: Envie de A para B">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py unicast --de A --para B --mensagem &quot;Bom dia!&quot;</span></code></pre></div>
+<p><b>O que o comando faz:</b> cria os processos B, C e D; o processo A envia uma cópia da mensagem 001 só para B; B registra o recebimento e devolve a confirmação; no fim, todos os processos são encerrados.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">UNICAST: A -&gt; B
+[A] enviou 001 para [B]
+[B] recebeu 001: Bom dia!
+[C] nada recebeu
+[D] nada recebeu
+[A] confirmações: B
+Destinatários: 1
+Mensagens de dados: 1
+Entregas: 1 | Confirmações: 1</pre></div>
+<p><b>O que observar:</b> C e D estavam em execução, mas não receberam nada. Uma mensagem de dados gerou uma entrega e uma confirmação.</p>
+<p class="pensar"><span class="tag-pensar">Para pensar · não entra na entrega</span> Por que a mensagem não apareceu para C e D, se eles estavam ativos?</p>
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Concluí o Experimento 1</label>
+</section>
+
+<section class="etapa" id="exp2" aria-labelledby="t2"><p class="label">Experimento 2 · 10 min</p><h2 id="t2">Uma mensagem para todos</h2>
+<p><b>Conceito.</b> Na <b>difusão</b> (comunicação em grupo), uma mensagem deve chegar a <b>todos os membros</b>, como um aviso enviado à turma. Aqui o emissor A faz isso enviando <b>uma cópia separada a cada membro</b>. Isso é replicação de mensagens na aplicação: não é o broadcast ou o multicast nativos do IP, em que a própria rede faria as cópias.</p>
+<p><b>O que fazer:</b> difunda “A aula começou!” de A para o grupo.</p>
+<div class="command"><div class="command-head"><span>Difunda para B, C e D</span><button class="copy" type="button" aria-label="Copiar: Difunda para B, C e D">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py difundir --de A --mensagem &quot;A aula começou!&quot;</span></code></pre></div>
+<p><b>O que o comando faz:</b> A envia três cópias da mensagem 002, uma para cada membro, e espera as três confirmações.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">DIFUSÃO: de A para B, C, D
+[A] iniciou difusão da mensagem 002
+[A] enviou 002 para [B]
+[A] enviou 002 para [C]
+[A] enviou 002 para [D]
+[B] recebeu 002: A aula começou!
+[C] recebeu 002: A aula começou!
+[D] recebeu 002: A aula começou!
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 3 | Confirmações: 3</pre></div>
+<p><b>O que observar:</b> compare com o Experimento 1. Para alcançar 3 destinatários, A enviou 3 mensagens de dados e recebeu 3 confirmações.</p>
+<p class="pensar"><span class="tag-pensar">Para pensar · não entra na entrega</span> Neste modelo, quantas mensagens de dados A precisaria enviar para um grupo de 30 membros?</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Pergunta 1</span><label for="p1">Pergunta 1. Qual a diferença que você observou entre unicast e difusão? Compare quem recebeu e quantas mensagens de dados e confirmações houve nos Experimentos 1 e 2.</label><textarea id="p1" data-entrega="Pergunta 1. Qual a diferença que você observou entre unicast e difusão? Compare quem recebeu e quantas mensagens de dados e confirmações houve nos Experimentos 1 e 2." required placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Concluí o Experimento 2</label>
+</section>
+
+<section class="etapa" id="exp3" aria-labelledby="t3"><p class="label">Experimento 3 · 15 min</p><h2 id="t3">Participante indisponível</h2>
+<p><b>Conceito.</b> Em um sistema distribuído, um membro pode estar fora do ar. O emissor só sabe que algo deu errado porque <b>não recebe a confirmação</b>. Uma reação comum é <b>reenviar</b>. Mas, se o destino não lembrar o que já recebeu, o reenvio pode gerar <b>duplicatas</b>: a mesma mensagem processada duas vezes.</p>
+<p><b>Passo 1.</b> Deixe C indisponível.</p>
+<div class="command"><div class="command-head"><span>Deixe C indisponível</span><button class="copy" type="button" aria-label="Copiar: Deixe C indisponível">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py falha --no C</span></code></pre></div>
+<p><b>O que o comando faz:</b> anota, na sua pasta privada, que o processo de C não deve ser iniciado nos próximos comandos.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">[C] agora está INDISPONÍVEL.
+O processo dele não será iniciado nas
+próximas mensagens, até você usar:
+python3 p05.py recuperar --no C</pre></div>
+<p><b>Passo 2.</b> Difunda um aviso com C fora do ar.</p>
+<div class="command"><div class="command-head"><span>Difunda com C indisponível</span><button class="copy" type="button" aria-label="Copiar: Difunda com C indisponível">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py difundir --de A --mensagem &quot;Aviso importante&quot;</span></code></pre></div>
+<p><b>O que o comando faz:</b> A tenta enviar a mensagem 003 aos três membros. Como o processo de C não existe, o envio para C falha.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">DIFUSÃO: de A para B, C, D
+[A] iniciou difusão da mensagem 003
+[A] enviou 003 para [B]
+[A] falhou ao enviar 003 para [C]
+    (C não está em execução)
+[A] enviou 003 para [D]
+[B] recebeu 003: Aviso importante
+[C] indisponível, nada recebeu
+[D] recebeu 003: Aviso importante
+[A] confirmações: B, D
+Sem confirmação: C
+Destinatários: 3
+Mensagens de dados: 2
+Falhas de envio: 1
+Entregas: 2 | Confirmações: 2</pre></div>
+<p><b>O que observar:</b> B e D receberam e confirmaram; C ficou sem a mensagem. Aqui A percebe a falha na hora, porque está na mesma máquina. Em uma rede real, A só notaria pela <b>falta da confirmação</b> depois de esperar um tempo.</p>
+<p><b>Passo 3.</b> Recupere C e reenvie a última mensagem ao grupo.</p>
+<div class="command"><div class="command-head"><span>Recupere C</span><button class="copy" type="button" aria-label="Copiar: Recupere C">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py recuperar --no C</span></code></pre></div>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">[C] voltou a ficar disponível.</pre></div>
+<div class="command"><div class="command-head"><span>Reenvie a última mensagem</span><button class="copy" type="button" aria-label="Copiar: Reenvie a última mensagem">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py reenviar --ultima</span></code></pre></div>
+<p><b>O que o comando faz:</b> A envia de novo a mensagem 003, com o mesmo número, para todo o grupo. Os destinos <b>não</b> descartam repetidas.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">REENVIO de 003 para B, C, D
+(sem deduplicação nos destinos)
+[A] enviou 003 para [B]
+[A] enviou 003 para [C]
+[A] enviou 003 para [D]
+[B] recebeu 003 de novo: DUPLICATA
+[C] recebeu 003: Aviso importante
+[D] recebeu 003 de novo: DUPLICATA
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 3 | Confirmações: 3
+Duplicatas processadas: 2</pre></div>
+<p><b>O que observar:</b> C finalmente recebeu, mas B e D processaram 003 <b>pela segunda vez</b>. Reenviar resolveu a falta de C e criou duas duplicatas. Confirmar o recebimento também não garante que a mensagem foi processada ou guardada: só diz que ela chegou.</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Pergunta 2</span><label for="p2">Pergunta 2. O que aconteceu com a entrega quando C estava indisponível? Quem recebeu, quem não recebeu e como A percebeu?</label><textarea id="p2" data-entrega="Pergunta 2. O que aconteceu com a entrega quando C estava indisponível? Quem recebeu, quem não recebeu e como A percebeu?" required placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Pergunta 3</span><label for="p3">Pergunta 3. Por que o reenvio gerou mensagens duplicadas? Reenviar garante que não haverá duplicatas?</label><textarea id="p3" data-entrega="Pergunta 3. Por que o reenvio gerou mensagens duplicadas? Reenviar garante que não haverá duplicatas?" required placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>
+<details class="extensao-p05"><summary>Para ir além (opcional): destinos que descartam repetidas</summary>
+<p>Repita o reenvio, agora com <b>deduplicação</b>: cada destino lembra os números já recebidos e descarta o que já viu, mas ainda confirma, para o emissor parar de reenviar.</p>
+<div class="command"><div class="command-head"><span>Reenvie com deduplicação</span><button class="copy" type="button" aria-label="Copiar: Reenvie com deduplicação">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py reenviar --ultima --dedup</span></code></pre></div>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">REENVIO de 003 para B, C, D
+(com deduplicação nos destinos)
+[A] enviou 003 para [B]
+[A] enviou 003 para [C]
+[A] enviou 003 para [D]
+[B] descartou 003 (já recebida)
+[C] descartou 003 (já recebida)
+[D] descartou 003 (já recebida)
+[A] confirmações: B, C, D
+Destinatários: 3
+Mensagens de dados: 3
+Entregas: 0 | Confirmações: 3
+Duplicatas descartadas: 3</pre></div>
+<p>Isso evita processar duas vezes enquanto o destino lembrar o número. Não é garantia de entrega “exatamente uma vez”: se o destino perder essa memória, a duplicata volta.</p>
+</details>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Concluí o Experimento 3</label>
+</section>
+
+<section class="etapa" id="exp4" aria-labelledby="t4"><p class="label">Experimento 4 · 10 min</p><h2 id="t4">Ordem das mensagens</h2>
+<p><b>Conceito.</b> Mensagens percorrem caminhos com atrasos diferentes. Por isso, dois participantes podem receber as mesmas mensagens em <b>ordens diferentes</b>, mesmo que todas tenham sido enviadas numa ordem bem definida. Na Unidade 3, vimos que a ordem de chegada não é, por si só, a ordem em que as coisas aconteceram.</p>
+<p><b>O que fazer:</b> execute o cenário de ordem. Dois emissores (A e D) enviam uma mensagem cada a dois receptores (B e C).</p>
+<div class="command"><div class="command-head"><span>Execute o cenário de ordem</span><button class="copy" type="button" aria-label="Copiar: Execute o cenário de ordem">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py ordem</span></code></pre></div>
+<p><b>O que o comando faz:</b> cria 8 processos: os emissores A e D, os receptores B e C e <b>um processo para cada canal</b> (A→B, A→C, D→B, D→C). Cada canal segura a mensagem pelo atraso fixo indicado e só então a entrega. A envia primeiro; D, 0,1 s depois. Os tempos de chegada são medidos de verdade.</p>
+<div class="expected saida-aprox"><div class="expected-label">Saída esperada · os tempos podem variar um pouco</div><pre tabindex="0">ORDEM: 2 emissores, 2 receptores
+Atraso fixo de cada canal:
+  A-&gt;B 0,2 s   A-&gt;C 0,8 s
+  D-&gt;B 0,8 s   D-&gt;C 0,2 s
+Envio:
+  1º [A] envia 004 (t=0,0 s)
+  2º [D] envia 005 (t=0,1 s)
+Chegada (t medido):
+  [B] 004 (0,2 s)  005 (0,9 s)
+  [C] 005 (0,3 s)  004 (0,8 s)
+Ordem em [B]: 004, 005
+Ordem em [C]: 005, 004
+Resultado: B e C viram ordens
+diferentes para as mesmas mensagens.</pre></div>
+<p><b>O que observar:</b> a mensagem 004 foi enviada antes de 005, mas C recebeu 005 primeiro, porque o canal A→C é o mais lento. A inversão vem dos <b>atrasos diferentes de canais separados</b>. Ela não vem de uma conexão TCP: dentro de uma única conexão TCP, os bytes chegam na ordem em que foram enviados.</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Pergunta 4</span><label for="p4">Pergunta 4. Por que B e C viram ordens diferentes? Use os atrasos e os tempos medidos da sua saída.</label><textarea id="p4" data-entrega="Pergunta 4. Por que B e C viram ordens diferentes? Use os atrasos e os tempos medidos da sua saída." required placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Concluí o Experimento 4</label>
+</section>
+
+<section class="etapa" id="etapa5" aria-labelledby="t5"><p class="label">Etapa 5 · 10 min</p><h2 id="t5">Custo da difusão e entrega</h2>
+<p><b>Conceito.</b> Quando a difusão é feita com cópias individuais, cada novo membro custa mais mensagens. Um <b>distribuidor</b> (S) pode receber uma única mensagem de A e fazer as cópias, mas as cópias continuam existindo: só mudam de lugar.</p>
+<p><b>O que fazer:</b> meça o custo com grupos de 3 e de 6 destinatários.</p>
+<div class="command"><div class="command-head"><span>Meça o custo da difusão</span><button class="copy" type="button" aria-label="Copiar: Meça o custo da difusão">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py custo</span></code></pre></div>
+<p><b>O que o comando faz:</b> executa difusões de verdade, com 3 e com 6 processos destinatários, primeiro com cópias enviadas por A e depois passando por um processo distribuidor S. As mensagens são contadas pelos próprios processos.</p>
+<div class="expected saida-exata"><div class="expected-label">Saída esperada</div><pre tabindex="0">CUSTO DA DIFUSÃO (medido)
+Grupo de teste: todos disponíveis.
+1) Cópias individuais (A -&gt; cada um)
+ Dest  Dados  Conf  Total
+    3      3     3      6
+    6      6     6     12
+2) Com distribuidor S (A -&gt; S -&gt; cada)
+ Dest  A-&gt;S  S-&gt;dest  Conf  Total
+    3     1        3     4      8
+    6     1        6     7     14
+Dados = mensagens com o conteúdo;
+Conf = confirmações de recebimento.</pre></div>
+<p><b>O que observar:</b> com cópias individuais, dobrar o grupo dobrou as mensagens. Com o distribuidor, A envia só 1, mas S envia uma cópia por destino, e o total ainda cresce com o grupo.</p>
+<div class="question entrega" id="tabela"><span class="tag-entrega">ENTREGA · Tabela</span><p class="tabela-titulo">Preencha com os números da <b>sua</b> saída: o unicast do Experimento 1 e a parte “1) Cópias individuais” do custo.</p>
+<div class="tbl"><table class="tabela-entrega"><thead><tr><th scope="col">Situação</th><th scope="col">Destinatários</th><th scope="col">Dados</th><th scope="col">Confirmações</th><th scope="col">Total</th></tr></thead><tbody>
+<tr><th scope="row">Unicast</th><td>1</td><td><input id="t1-dados" inputmode="numeric" aria-label="Unicast: mensagens de dados" data-tabela></td><td><input id="t1-conf" inputmode="numeric" aria-label="Unicast: confirmações" data-tabela></td><td><input id="t1-total" inputmode="numeric" aria-label="Unicast: total" data-tabela></td></tr>
+<tr><th scope="row">Difusão</th><td>3</td><td><input id="t3-dados" inputmode="numeric" aria-label="Grupo de 3: mensagens de dados" data-tabela></td><td><input id="t3-conf" inputmode="numeric" aria-label="Grupo de 3: confirmações" data-tabela></td><td><input id="t3-total" inputmode="numeric" aria-label="Grupo de 3: total" data-tabela></td></tr>
+<tr><th scope="row">Difusão</th><td>6</td><td><input id="t6-dados" inputmode="numeric" aria-label="Grupo de 6: mensagens de dados" data-tabela></td><td><input id="t6-conf" inputmode="numeric" aria-label="Grupo de 6: confirmações" data-tabela></td><td><input id="t6-total" inputmode="numeric" aria-label="Grupo de 6: total" data-tabela></td></tr>
+</tbody></table></div></div>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Pergunta 5</span><label for="p5">Pergunta 5. Como o número de mensagens cresce com o tamanho do grupo? Use a sua tabela e compare com o caso do distribuidor S.</label><textarea id="p5" data-entrega="Pergunta 5. Como o número de mensagens cresce com o tamanho do grupo? Use a sua tabela e compare com o caso do distribuidor S." required placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>
+<p><b>O que fazer agora:</b> gere o resumo das evidências.</p>
+<div class="command"><div class="command-head"><span>Gere o resumo das evidências</span><button class="copy" type="button" aria-label="Copiar: Gere o resumo das evidências">Copiar</button></div><pre tabindex="0"><code><span class="cmd">python3 p05.py evidencias</span></code></pre></div>
+<p><b>O que o comando faz:</b> lista o que você executou nesta conta e avisa se falta algum experimento. A data e a hora serão as suas.</p>
+<div class="expected saida-aprox"><div class="expected-label">Saída esperada · data, hora e itens opcionais variam</div><pre tabindex="0">EVIDÊNCIAS P05 - copie para a entrega
+p05.py 1.0 - 05/11/2026 14:30
+ 1. unicast 001 A-&gt;B: 1 entrega
+ 2. difusão 002: 3/3 entregas
+ 3. falha: C indisponível
+ 4. difusão 003: 2/3 entregas, sem conf. C
+ 5. recuperar: C disponível
+ 6. reenvio 003 sem dedup: 3 entregas, duplicatas 2
+ 7. reenvio 003 com dedup: 0 entregas, descartadas 3
+ 8. ordem: B=004,005 C=005,004
+ 9. custo (dest-&gt;total): 3-&gt;6 6-&gt;12
+Situação: completa</pre></div>
+<p>Se aparecer <code>Falta:</code>, volte e execute o experimento indicado. O item 7 só aparece se você fez a parte opcional.</p>
+<label class="done"><input type="checkbox" id="feito-5" data-step="5">Concluí a Etapa 5</label>
+</section>
+
+<section class="etapa" id="gerar" aria-labelledby="t6"><p class="label">Entrega</p><h2 id="t6">Monte e gere o seu arquivo</h2>
+<p>Preencha os campos abaixo e clique em <b>Gerar arquivo de entrega</b>. As perguntas e a tabela que você já respondeu entram automaticamente.</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Identificação</span><label for="nome">Nome completo</label><input id="nome" autocomplete="name" required><label for="matricula">Matrícula</label><input id="matricula" inputmode="numeric" required></div>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Evidências</span><label for="evidencias">Cole aqui a saída de <code>python3 p05.py evidencias</code></label><textarea id="evidencias" class="mono" placeholder="EVIDÊNCIAS P05 - copie para a entrega ..."></textarea>
+<label class="opcao"><input type="checkbox" id="evid-captura"> Não consegui copiar do terminal: vou enviar uma captura de tela dessa saída junto com o arquivo.</label></div>
+<ul class="checklist" aria-label="Situação da entrega" id="situacao"></ul>
+<button type="button" class="gerar" id="gerar-entrega">Gerar arquivo de entrega (.txt)</button>
+<p class="status" id="gerar-status" aria-live="polite"></p>
+<div class="dica"><strong>Depois de gerar</strong><p>O arquivo é baixado no aparelho em que esta página está aberta (pasta Downloads), não no servidor. Envie esse arquivo, mais a captura de tela se você marcou a opção, <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>, dentro do prazo da Tarefa. Por fim, digite <code>exit</code> no terminal.</p></div>
+<details><summary>Se algo der errado</summary><div>
+<p><b>Erro: Outro comando da P05 está em execução:</b> você tem outra aba do terminal rodando a atividade. Espere terminar ou feche a outra aba.</p>
+<p><b>Números diferentes dos da página:</b> você executou comandos a mais. Use <code>python3 p05.py reiniciar</code> e refaça a partir do Experimento 1, ou apenas use os seus números nas respostas.</p>
+<p><b>O comando parou ou você apertou Ctrl+C:</b> o programa encerra todos os processos que criou. Basta executar de novo.</p>
+<p><b>Sem JavaScript:</b> os textos e comandos continuam visíveis, mas o botão de gerar não funciona. Escreva as quatro partes da entrega em um arquivo de texto próprio.</p>
+</div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Distribuídos · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

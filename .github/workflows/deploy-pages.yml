@@ -17,6 +17,7 @@ on:
       - "aoc/praticas-game/**"
       - "sd/materiais/**"
       - "sd/praticas/**"
+      - "sd/atividades/**"
       - "sd/PLANEJAMENTO_PRATICAS.md"
       - "so/index.html"
       - "aoc/index.html"
@@ -94,6 +95,8 @@ jobs:
           cp -r aoc/praticas-game _site/aoc/praticas-game
           cp -r sd/materiais _site/sd/materiais
           cp -r sd/praticas _site/sd/praticas
+          cp -r sd/atividades _site/sd/atividades
+          rm -f _site/sd/atividades/*.py _site/sd/atividades/README.md _site/sd/atividades/.gitignore _site/sd/atividades/*/pagina.modelo.html _site/sd/atividades/*/PROFESSOR.md
 
       - uses: actions/upload-pages-artifact@v3
         with:

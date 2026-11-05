@@ -3,6 +3,7 @@ Ferramenta docente: alunos usam C11/Bash. Execute na raiz: python3 sd/praticas/g
 """
 from pathlib import Path
 from html import escape as h
+import re
 import zipfile
 
 ROOT = Path(__file__).resolve().parent
@@ -157,8 +158,22 @@ def par(s): return '<p>'+h(s)+'</p>'
 def section(title, content): return '<section class="etapa"><h2>'+h(title)+'</h2>'+content+'</section>'
 def campo(id, label):
     return f'<div class="question"><label for="{id}">{h(label)}</label><textarea id="{id}" placeholder="Escreva sua previsão, evidência, explicação e limites."></textarea></div>'
+def linhas(text):
+    """Marca cada linha: comandos ganham o prompt visual "$ " (CSS), o corpo de
+    um here-document nao. O texto copiado continua identico ao original."""
+    out, fim = [], None
+    for ln in text.split('\n'):
+        if fim is not None:
+            cls = 'heredoc'
+            if ln == fim: fim = None
+        else:
+            cls = 'cmd' if ln.strip() else 'vazia'
+            m = re.search(r"<<\s*'?(\w+)'?\s*$", ln)
+            if m: fim = m.group(1)
+        out.append(f'<span class="{cls}">{h(ln)}</span>')
+    return '\n'.join(out)
 def comando(text, label='Execute no terminal', run='main', status=0):
-    return f'<div class="command" data-run="{run}" data-status="{status}"><div class="command-head"><span>{h(label)}</span><button class="copy" type="button" aria-label="Copiar: {h(label)}">Copiar</button></div><pre tabindex="0"><code>{h(text)}</code></pre></div>'
+    return f'<div class="command" data-run="{run}" data-status="{status}"><div class="command-head"><span>{h(label)}</span><button class="copy" type="button" aria-label="Copiar: {h(label)}">Copiar</button></div><pre tabindex="0"><code>{linhas(text)}</code></pre></div>'
 def esperado(s):
     return '<details class="expected"><summary>Referência para comparação · abra depois de prever</summary><pre tabindex="0">'+h(s)+'</pre></details>'
 def feito(n):

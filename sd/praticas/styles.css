@@ -159,3 +159,17 @@ details.expected summary{color:var(--muted);font-size:.9rem;border-bottom:1px so
 progress{width:100%;accent-color:var(--accent)}
 .dica{overflow-wrap:anywhere}a,td{overflow-wrap:anywhere}
 @media print{details.source:not([open])>*,details.expected:not([open])>*{display:block}summary{display:none}}
+/* Comandos em azul (05/11/2026). O "$ " e so visual: fica fora do texto
+   copiado. Saidas esperadas usam bloco neutro, diferente dos comandos. */
+:root{--cmd-bg:#EEF4FD;--cmd-line:#BCD0F0;--cmd-edge:#1F5FBF;--cmd-ink:#0B4A9E;--cmd-prompt:#3D6CB3;--cmd-head:#DCE7F9;--cmd-head-ink:#1B3F73;--cmd-btn:#1F5FBF;--cmd-btn-ink:#FFFFFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--cmd-bg:#0F1C2E;--cmd-line:#26446E;--cmd-edge:#5B9BEA;--cmd-ink:#A7CDFF;--cmd-prompt:#6FA3E8;--cmd-head:#15263D;--cmd-head-ink:#C3D8F5;--cmd-btn:#2F6FD0;--cmd-btn-ink:#FFFFFF}}
+:root[data-theme="dark"]{--cmd-bg:#0F1C2E;--cmd-line:#26446E;--cmd-edge:#5B9BEA;--cmd-ink:#A7CDFF;--cmd-prompt:#6FA3E8;--cmd-head:#15263D;--cmd-head-ink:#C3D8F5;--cmd-btn:#2F6FD0;--cmd-btn-ink:#FFFFFF}
+.command{background:var(--cmd-bg);color:var(--cmd-ink);border:1px solid var(--cmd-line);border-left:4px solid var(--cmd-edge)}
+.command-head{background:var(--cmd-head);color:var(--cmd-head-ink);border-bottom:1px solid var(--cmd-line);font-weight:600}
+.command pre{padding:.9rem 1rem .9rem 1.4rem}
+.command code{color:var(--cmd-ink);font-weight:500}
+.command .cmd::before{content:"$ ";color:var(--cmd-prompt);font-weight:700;-webkit-user-select:none;user-select:none}
+.copy{background:var(--cmd-btn);color:var(--cmd-btn-ink);border:1px solid var(--cmd-btn);font-weight:700}
+.expected pre{color:var(--ink);background:var(--paper)}
+/* Linhas de comando quebram no celular; codigo de programa mantem a rolagem. */
+.command .cmd{white-space:pre-wrap;overflow-wrap:anywhere}
