@@ -1,0 +1,6 @@
+__pycache__/
+# Material exclusivo do professor: manter fora do Git e da pasta publica.
+docente-local/
+# Evidencias locais de homologacao; nao incluir em commit/publicacao automaticamente.
+RELATORIO_TESTES.md
+revisao/
