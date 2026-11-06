@@ -1,404 +1,99 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prof. Juvenal Silva Neto</title>
-    <style>
-      :root {
-        color-scheme: light dark;
-        --bg: #f7f7f2;
-        --surface: #ffffff;
-        --text: #1c1c1a;
-        --text-muted: #5a5a54;
-        --border: #e2e1d8;
-        --green-dark: #1e4d38;
-        --green: #2f7d54;
-        --green-soft: #e8f2ec;
-        --gold: #d99e17;
-        --gold-soft: #fbf0d9;
-        font: 16px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #14231b;
-          --surface: #1b2e23;
-          --text: #f2f1ea;
-          --text-muted: #a9b3ac;
-          --border: #2d4335;
-          --green-dark: #16301f;
-          --green: #4fbf85;
-          --green-soft: #1f3a2b;
-          --gold: #f0c04a;
-          --gold-soft: #33290f;
-        }
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        min-height: 100svh;
-        background: var(--bg);
-        color: var(--text);
-      }
-
-      /* barra de navegação */
-      header.site-header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.85rem 1.5rem;
-        background: var(--green-dark);
-        border-bottom: 3px solid var(--gold);
-      }
-      .brand {
-        color: #fdfdfa;
-        font-weight: 700;
-        font-size: 0.95rem;
-        white-space: nowrap;
-      }
-      nav.quick-nav {
-        display: flex;
-        gap: 0.4rem;
-        overflow-x: auto;
-        scrollbar-width: none;
-      }
-      nav.quick-nav::-webkit-scrollbar {
-        display: none;
-      }
-      nav.quick-nav a {
-        flex: 0 0 auto;
-        color: #fdfdfa;
-        text-decoration: none;
-        font-size: 0.78rem;
-        font-weight: 600;
-        letter-spacing: 0.03em;
-        padding: 0.3rem 0.65rem;
-        border: 1px solid color-mix(in srgb, #fdfdfa 30%, transparent);
-        border-radius: 999px;
-        opacity: 0.9;
-      }
-      nav.quick-nav a:hover {
-        opacity: 1;
-        border-color: var(--gold);
-      }
-
-      main {
-        display: flex;
-        justify-content: center;
-        padding: 0 1.5rem 3rem;
-      }
-      .content {
-        max-width: 34rem;
-        width: 100%;
-      }
-
-      /* perfil */
-      section.profile {
-        margin: 0 -1.5rem 2.5rem;
-        padding: 2.5rem 1.5rem;
-        background: var(--green-dark);
-        color: #fdfdfa;
-        text-align: center;
-      }
-      .avatar {
-        width: 4.5rem;
-        height: 4.5rem;
-        margin: 0 auto 1rem;
-        border-radius: 50%;
-        background: var(--gold-soft);
-        color: var(--green-dark);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.4rem;
-        border: 2px solid var(--gold);
-      }
-      section.profile h1 {
-        font-size: 1.6rem;
-        margin: 0 0 0.25rem;
-      }
-      section.profile p.role {
-        margin: 0 0 1.5rem;
-        opacity: 0.85;
-        font-size: 0.95rem;
-      }
-      .contact-links {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.6rem;
-      }
-      .contact-links a {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.45rem 0.9rem;
-        border: 1px solid color-mix(in srgb, #fdfdfa 35%, transparent);
-        border-radius: 999px;
-        color: #fdfdfa;
-        text-decoration: none;
-        font-size: 0.85rem;
-        transition: background 0.15s ease, border-color 0.15s ease;
-      }
-      .contact-links a:hover {
-        background: color-mix(in srgb, #fdfdfa 12%, transparent);
-        border-color: var(--gold);
-      }
-      .contact-links svg {
-        width: 1rem;
-        height: 1rem;
-        flex: 0 0 auto;
-      }
-
-      /* seções de conteúdo */
-      h2.discipline {
-        display: inline-block;
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--green-dark);
-        margin: 0 0 0.9rem;
-        padding-bottom: 0.3rem;
-        border-bottom: 3px solid var(--gold);
-        scroll-margin-top: 4.5rem;
-      }
-      section.discipline-section {
-        margin-bottom: 2.25rem;
-      }
-      ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-      }
-      .card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 1rem 1.25rem;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-left: 4px solid var(--green);
-        border-radius: 0.5rem;
-        text-decoration: none;
-        color: inherit;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-      }
-      a.card:hover {
-        border-left-color: var(--gold);
-        box-shadow: 0 2px 10px color-mix(in srgb, var(--green-dark) 12%, transparent);
-      }
-      .card-body strong {
-        display: block;
-        font-size: 1.02rem;
-      }
-      .card-body span {
-        display: block;
-        color: var(--text-muted);
-        font-size: 0.88rem;
-        margin-top: 0.15rem;
-      }
-      .badge {
-        flex: 0 0 auto;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-        padding: 0.3rem 0.6rem;
-        border-radius: 999px;
-        white-space: nowrap;
-      }
-      .badge.available {
-        background: var(--green-soft);
-        color: var(--green-dark);
-      }
-      .badge.soon {
-        background: var(--gold-soft);
-        color: var(--gold);
-      }
-      div.card.soon {
-        border-left-style: dashed;
-        border-left-color: var(--border);
-        opacity: 0.85;
-      }
-
-      footer.site-footer {
-        text-align: center;
-        padding: 1.5rem;
-        color: var(--text-muted);
-        font-size: 0.8rem;
-        border-top: 1px solid var(--border);
-      }
-      footer.site-footer a {
-        color: var(--green-dark);
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Barra de navegação rápida: ao criar uma nova disciplina, adicione
-         aqui um link para a âncora da seção correspondente. -->
-    <header class="site-header">
-      <span class="brand">Prof. Juvenal Silva Neto</span>
-      <nav class="quick-nav" aria-label="Disciplinas">
-        <a href="#aoc">AOC</a>
-        <a href="#so">SO</a>
-        <a href="#sd">SD</a>
-        <a href="#ihc">IHC</a>
-        <a href="#gti">GTI</a>
-        <a href="#ic">IC</a>
-      </nav>
-    </header>
-
-    <main>
-      <div class="content">
-        <section class="profile">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Disciplinas do Prof. Me. Juvenal Silva Neto, da Universidade do Estado de Mato Grosso.">
+  <meta name="theme-color" content="#1e4d38">
+  <title>Prof. Juvenal Silva Neto · Disciplinas</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f7f7f2;--surface:#fff;--text:#1c1c1a;--muted:#5a5a54;--border:#e2e1d8;--brand:#1e4d38;--icon:#286345;--soft:#e8f2ec;--gold:#d99e17;font:16px/1.5 system-ui,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;min-height:100svh;background:var(--bg);color:var(--text)}
+    .skip{position:absolute;top:-100px;left:16px;padding:12px;background:var(--surface);color:var(--text);z-index:20}.skip:focus{top:8px}
+    a:focus-visible{outline:3px solid var(--gold);outline-offset:5px}
+    .site-header{background:var(--brand);border-bottom:3px solid var(--gold);padding:16px 24px;color:#fdfdfa}.brand{display:block;max-width:1040px;margin:auto;font-weight:700;font-size:.95rem}
+    main{max-width:1088px;margin:auto;padding:0 24px 64px}
+    .profile{margin:0 -24px 48px;padding:40px 24px;background:var(--brand);color:#fdfdfa;text-align:center;border-radius:0 0 24px 24px}
+    .avatar{display:grid;place-items:center;width:72px;height:72px;margin:0 auto 16px;border:2px solid var(--gold);border-radius:50%;background:#fbf0d9;color:#1e4d38;font-size:1.4rem;font-weight:700}
+    .profile h1{font-size:clamp(1.5rem,3vw,1.85rem);line-height:1.25;margin:0 0 8px}.role{font-size:.95rem;opacity:.9;margin:0 0 24px}
+    .contact-links{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}.contact-links a{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;min-height:44px;border:1px solid #ffffff60;border-radius:999px;color:#fdfdfa;text-decoration:none;font-size:.85rem}.contact-links a:hover{border-color:var(--gold);background:#ffffff10}.contact-links svg{width:16px;height:16px;flex-shrink:0}
+    h2{font-size:1.3rem;margin:0 0 24px;font-weight:650}.disciplines{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;margin:0;padding:0}.disciplines li{min-width:0;scroll-margin-top:24px}
+    .discipline-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:22px;height:100%;min-height:234px;padding:32px 22px;background:var(--surface);border:1px solid var(--border);border-radius:16px;text-align:center;text-decoration:none;color:var(--text)}
+    .discipline-icon{display:grid;place-items:center;width:80px;height:80px;border-radius:24px;background:var(--soft);color:var(--icon);flex-shrink:0}.discipline-icon svg{width:48px;height:48px}.discipline-name{display:block;max-width:260px;font-size:1.05rem;font-weight:650;line-height:1.4;text-wrap:balance}
+    a.discipline-card:hover{border-color:var(--icon);box-shadow:0 4px 20px #173f3210}
+    .site-footer{text-align:center;border-top:1px solid var(--border);padding:24px;color:var(--muted);font-size:.8rem}.site-footer p{margin:0}.site-footer a{color:inherit;text-underline-offset:3px}
+    @media(prefers-color-scheme:dark){:root{--bg:#14231b;--surface:#1b2e23;--text:#f2f1ea;--muted:#b2bcb5;--border:#36513f;--brand:#16301f;--icon:#83d4a8;--soft:#244834;--gold:#f0c04a}}
+    @media(max-width:760px){.disciplines{grid-template-columns:repeat(2,minmax(0,1fr))}.discipline-card{min-height:220px;padding:28px 18px}}
+    @media(max-width:440px){main{padding:0 16px 40px}.site-header{padding:14px 16px}.profile{margin:0 -16px 32px;padding:32px 16px}.disciplines{gap:12px}.discipline-card{min-height:218px;padding:24px 12px;gap:18px}.discipline-icon{width:68px;height:68px;border-radius:20px}.discipline-icon svg{width:40px;height:40px}.discipline-name{font-size:.92rem}.contact-links{gap:8px}.contact-links a{font-size:.8rem}}
+    @media(max-width:340px){.disciplines{grid-template-columns:1fr}.discipline-card{min-height:190px}}
+    @media print{.site-header,.contact-links,.skip{display:none}.profile{background:white;color:black;padding:24px}.avatar{background:white;color:black}.disciplines{grid-template-columns:repeat(3,1fr)}.discipline-card{break-inside:avoid;color:black;background:white}.discipline-icon{color:#1e4d38}.site-footer{margin-top:20px}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#disciplinas">Pular para as disciplinas</a>
+  <header class="site-header"><span class="brand">Prof. Juvenal Silva Neto</span></header>
+  <main>
+<section class="profile">
           <div class="avatar" aria-hidden="true">JS</div>
           <h1>Prof. Me. Juvenal Silva Neto</h1>
           <p class="role">Universidade do Estado de Mato Grosso (UNEMAT)</p>
           <div class="contact-links">
             <a href="mailto:juvenalneto@unemat.br">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg>
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 6 10 7L22 6"/></svg>
               E-mail
             </a>
             <a href="https://www.instagram.com/prof.juvenalneto/" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" stroke="none"/></svg>
               Instagram
             </a>
             <a href="http://lattes.cnpq.br/2246300004626713" target="_blank" rel="noopener noreferrer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5"/></svg>
               Currículo Lattes
             </a>
           </div>
         </section>
-
-        <!-- Para adicionar uma nova aula: publique o build em <disciplina>/<pasta>/
-             via o workflow do GitHub Actions e acrescente um <li class="card">
-             dentro da seção correspondente. Para uma nova disciplina, replique
-             uma seção abaixo e adicione o link em nav.quick-nav. -->
-        <section id="aoc" class="discipline-section">
-          <h2 class="discipline"><a href="aoc/">Arquitetura e Organização de Computadores</a></h2>
-          <ul>
-            <li><a class="card" href="aoc/praticas-game/"><span class="card-body"><strong>Por dentro do console (Jogos 2D)</strong><span>Laboratório AOC no terminal: sete investigações com nível de dificuldade calibrado</span></span><span class="badge available">Disponível</span></a></li>
-            <li><a class="card" href="aoc/praticas/"><span class="card-body"><strong>Estação de monitoramento</strong><span>Laboratório AOC no terminal: sete investigações com dados científicos</span></span><span class="badge available">Disponível</span></a></li>
-            <li><a class="card" href="aoc/materiais/"><span class="card-body"><strong>Materiais teóricos</strong><span>Slides em PDF por unidade e playlist de videoaulas da disciplina</span></span><span class="badge available">Disponível</span></a></li>
-            <li>
-              <a class="card" href="aoc/arqxorg/">
-                <span class="card-body">
-                  <strong>Arquitetura ou Organização?</strong>
-                  <span>Investigando decisões a partir de placas-mãe reais</span>
-                </span>
-                <span class="badge available">Disponível</span>
-              </a>
-            </li>
-            <li>
-              <a class="card" href="aoc/aoc_mips-mars/">
-                <span class="card-body">
-                  <strong>Do código C ao hardware</strong>
-                  <span>Assembly e ISA com IA-32/x86 e MIPS</span>
-                </span>
-                <span class="badge available">Disponível</span>
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <section id="so" class="discipline-section">
-          <h2 class="discipline"><a href="so/">Sistemas Operacionais</a></h2>
-          <ul>
-            <li><a class="card" href="so/praticas-servidor/"><span class="card-body"><strong>Por dentro do servidor (Servidor Web)</strong><span>Laboratório SO no terminal: catorze investigações práticas no servidor web e nuvem</span></span><span class="badge available">Disponível</span></a></li>
-            <li><a class="card" href="so/praticas/"><span class="card-body"><strong>Estação de serviço (Científica)</strong><span>Laboratório SO no terminal: 14 práticas em C e diagnóstico integrado</span></span><span class="badge available">Disponível</span></a></li>
-            <li>
-              <a class="card" href="so/materiais/">
-                <span class="card-body">
-                  <strong>Materiais teóricos</strong>
-                  <span>Slides em PDF por unidade e playlist de videoaulas da disciplina</span>
-                </span>
-                <span class="badge available">Disponível</span>
-              </a>
-            </li>
-            <li>
-              <a class="card" href="so/terminal-de-bolso/">
-                <span class="card-body">
-                  <strong>Terminal de Bolso</strong>
-                  <span>Primeiros passos no terminal Linux do servidor do LIAC, pelo celular</span>
-                </span>
-                <span class="badge available">Disponível</span>
-              </a>
-            </li>
-          </ul>
-        </section>
-
-        <section id="sd" class="discipline-section">
-          <h2 class="discipline"><a href="sd/">Sistemas Distribuídos</a></h2>
-          <ul>
-            <li><a class="card" href="sd/praticas/"><span class="card-body"><strong>Uma estação, vários nós — práticas de SD</strong><span>12 investigações em C, mensagens, coordenação, falhas e dossiê de arquitetura</span></span><span class="badge available">Disponível</span></a></li>
-            <li><a class="card" href="sd/materiais/"><span class="card-body"><strong>Materiais teóricos</strong><span>Slides em PDF por unidade e playlist de videoaulas da disciplina</span></span><span class="badge available">Disponível</span></a></li>
-          </ul>
-        </section>
-
-        <section id="ihc" class="discipline-section">
-          <h2 class="discipline">Interação Humano-Computador</h2>
-          <ul>
-            <li>
-              <div class="card soon">
-                <span class="card-body">
-                  <strong>Materiais em desenvolvimento</strong>
-                  <span>Publicação prevista em breve</span>
-                </span>
-                <span class="badge soon">Em breve</span>
-              </div>
-            </li>
-          </ul>
-        </section>
-
-        <section id="gti" class="discipline-section">
-          <h2 class="discipline">Governança de TI</h2>
-          <ul>
-            <li>
-              <div class="card soon">
-                <span class="card-body">
-                  <strong>Materiais em desenvolvimento</strong>
-                  <span>Publicação prevista em breve</span>
-                </span>
-                <span class="badge soon">Em breve</span>
-              </div>
-            </li>
-          </ul>
-        </section>
-
-        <section id="ic" class="discipline-section">
-          <h2 class="discipline">Introdução à Computação</h2>
-          <ul>
-            <li>
-              <div class="card soon">
-                <span class="card-body">
-                  <strong>Materiais em desenvolvimento</strong>
-                  <span>Publicação prevista em breve</span>
-                </span>
-                <span class="badge soon">Em breve</span>
-              </div>
-            </li>
-          </ul>
-        </section>
-      </div>
-    </main>
-
-    <footer class="site-footer">
-      <p>
-        Prof. Me. Juvenal Silva Neto ·
-        <a href="mailto:juvenalneto@unemat.br">juvenalneto@unemat.br</a>
-      </p>
-    </footer>
-  </body>
+    <section id="disciplinas" aria-labelledby="titulo-disciplinas">
+      <h2 id="titulo-disciplinas">Disciplinas</h2>
+      <ul class="disciplines">
+          <li id="aoc">
+            <a class="discipline-card" href="aoc/">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="8" y="8" width="16" height="16" rx="3"/><rect x="12" y="12" width="8" height="8" rx="1"/><path d="M12 3v5m8-5v5M12 24v5m8-5v5M3 12h5m-5 8h5m16-8h5m-5 8h5"/></svg></span>
+              <span class="discipline-name">Arquitetura e Organização de Computadores</span>
+            </a>
+          </li>
+          <li id="so">
+            <a class="discipline-card" href="so/">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 10H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2v-2M10 6H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2v-2"/><rect x="10" y="2" width="20" height="18" rx="2"/><path d="M10 8h20m-15 4h5m-5 4h10"/></svg></span>
+              <span class="discipline-name">Sistemas Operacionais</span>
+            </a>
+          </li>
+          <li id="sd">
+            <a class="discipline-card" href="sd/">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="12" y="12" width="8" height="8" rx="2"/><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="23" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="23" width="7" height="7" rx="1.5"/><rect x="23" y="23" width="7" height="7" rx="1.5"/><path d="m9 9 3 3m8 8 3 3M23 9l-3 3M9 23l3-3"/></svg></span>
+              <span class="discipline-name">Sistemas Distribuídos</span>
+            </a>
+          </li>
+          <li id="ihc">
+            <div class="discipline-card">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="7" cy="9" r="3"/><path d="M2 27v-6a5 5 0 0 1 10 0v6"/><rect x="15" y="4" width="15" height="17" rx="2"/><path d="M19 9h7m-7 4h4m-4 9 3 7 2-4 4-2-9-4v3Z"/></svg></span>
+              <span class="discipline-name">Interação Humano-Computador</span>
+            </div>
+          </li>
+          <li id="gti">
+            <div class="discipline-card">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m16 3 11 4v8c0 7-7 12-11 14C12 27 5 22 5 15V7L16 3Z"/><path d="m10 16 4 4 8-9"/></svg></span>
+              <span class="discipline-name">Governança de TI</span>
+            </div>
+          </li>
+          <li id="ic">
+            <div class="discipline-card">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="6" y="4" width="20" height="17" rx="2"/><path d="M6 21 2 27h28l-4-6m-14 6h8M13 10l-3 3 3 3m6-6 3 3-3 3"/></svg></span>
+              <span class="discipline-name">Introdução à Computação</span>
+            </div>
+          </li>
+      </ul>
+    </section>
+  </main>
+  <footer class="site-footer"><p>Prof. Me. Juvenal Silva Neto · <a href="mailto:juvenalneto@unemat.br">juvenalneto@unemat.br</a></p></footer>
+</body>
 </html>
