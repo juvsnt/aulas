@@ -22,7 +22,7 @@ const activities = {
     resources: 'Recursos: terminal LIAC, programa em C pronto, esta página e uma calculadora, se desejar.',
     keys: ['previsao','ambiente','saida_inicial','mediana_linhas','mediana_colunas','comparacao','saida_mudanca','explicacao','limites'],
     required: {prever:['previsao'], executar:['ambiente','saida_inicial'], interpretar:['mediana_linhas','mediana_colunas','comparacao'], modificar:['saida_mudanca','explicacao','limites']},
-    rubric: [['4 pontos','Registra as duas execuções com conferência OK, extrai corretamente as medianas e compara os tempos.'],['4 pontos','Relaciona a leitura de dados vizinhos à localidade espacial e usa evidências para discutir o efeito do tamanho da matriz.'],['2 pontos','Aponta uma limitação e evita afirmar que tempo é contagem de faltas ou prova isolada da cache.']],
+    rubric: [['4 pontos','Registra as duas execuções com conferência OK, extrai corretamente as medianas e compara os tempos.'],['4 pontos','Relaciona a leitura de dados vizinhos à localidade espacial (spatial locality) e usa evidências para discutir o efeito do tamanho da matriz.'],['2 pontos','Aponta uma limitação e evita afirmar que tempo é contagem de faltas na cache (cache misses) ou prova isolada da cache.']],
   },
   cadeia: {
     title: 'Perto ou longe?', number: 2,
@@ -108,7 +108,7 @@ function setup(parent) {
   details.append(text('summary', 'Preparar os arquivos no LIAC — abra se ainda não preparou'));
   paragraph(details, 'Copie este bloco inteiro. No terminal LIAC, cole e pressione Enter. Ele cria uma pasta só para estas atividades, coloca nela os arquivos prontos e prepara o programa para rodar. Se os arquivos já existem nessa pasta, este bloco repõe os fontes fornecidos; seus relatórios .txt continuam guardados.');
   command(details, window.AOC_SETUP);
-  paragraph(details, 'O comando gcc é o compilador: transforma o texto em C em um programa executável. -O2 escolhe a otimização usada igualmente nos testes; os avisos -Wall e -Wextra ajudam a detectar problemas. Não é necessário decorar essas opções.');
+  paragraph(details, 'O comando gcc é o compilador (compiler): transforma o texto em C em um programa executável. -O2 escolhe a otimização (optimization) usada igualmente nos testes; os avisos -Wall e -Wextra ajudam a detectar problemas. Não é necessário decorar essas opções.');
   paragraph(details, 'Ao terminar, devem aparecer informações do ambiente. Se aparecer “gcc: command not found”, “Permission denied”, falta de memória ou erro de compilação, pare e chame o professor. Não tente instalar nada.');
   parent.append(details);
 }
@@ -127,7 +127,7 @@ function render() {
   const headings = {prever:'1. Antes de rodar: faça uma previsão',executar:'2. Execute no terminal e guarde o resultado',interpretar:'3. Compare os números com calma',modificar:'4. Mude uma condição e confira sua explicação',revisar:'5. Confira o que você vai entregar'};
   const heading=text('h3',headings[s.step],'step-heading'); heading.tabIndex=-1; parent.append(heading);
   if (s.step==='prever') {
-    paragraph(parent, active==='matriz' ? 'Uma matriz é uma tabela de números. Em C, os números de uma linha ficam lado a lado na memória. Ler por linhas usa os vizinhos antes de passar à linha seguinte. Ler por colunas pula de uma linha para outra. Os dois caminhos vão ler os mesmos números e fazer a mesma soma.' : 'Imagine uma caça ao tesouro: cada pista diz onde está a próxima. Nosso programa faz isso com posições da memória, em uma ordem embaralhada. Para descobrir a próxima posição, ele precisa ler a atual. A mesma cadeia é percorrida muitas vezes.');
+    paragraph(parent, active==='matriz' ? 'Uma matriz (two-dimensional array) é uma tabela de números. Neste programa em C, a organização é por linhas (row-major order): os números de uma linha ficam lado a lado na memória. Ler por linhas (row-wise traversal) usa os vizinhos antes de passar à linha seguinte. Ler por colunas (column-wise traversal) pula de uma linha para outra. Os dois caminhos vão ler os mesmos números e fazer a mesma soma.' : 'Imagine uma caça ao tesouro: cada pista diz onde está a próxima. Nosso programa segue uma cadeia de referências (pointer chasing): cada posição da memória indica a próxima, em uma ordem embaralhada. Para descobrir a próxima posição, ele precisa ler a atual. A mesma cadeia é percorrida muitas vezes.');
     paragraph(parent, active==='matriz' ? 'Qual caminho você acha que terminará primeiro? Por quê? Não execute ainda.' : 'Se a quantidade de dados crescer de 8 KiB para 16 MiB, o tempo de cada busca será sempre igual? Registre sua ideia antes de executar.');
     field('previsao',parent); paragraph(parent,'Avance depois de registrar sua previsão. Ela é um ponto de partida, não uma resposta que precisa estar certa.');
   }
@@ -137,13 +137,13 @@ function render() {
     const link=text('a','Baixar os fontes em ZIP'); link.href='arquivos/cache-fisica-fontes.zip'; parent.append(link);
     command(parent, 'cd ~/atividades/aoc-cache-fisica\nbash observar.sh | tee ambiente.txt\n' + (active==='matriz' ? './cache_lab matriz 1024 | tee matriz-1024.txt' : './cache_lab cadeia | tee cadeia-a.txt'));
     paragraph(parent,'O trecho “| tee nome.txt” mostra a resposta na tela e guarda uma cópia no arquivo. Para reler depois, digite cat seguido do nome: por exemplo, cat ambiente.txt. Não cole sua senha nesta página.');
-    paragraph(parent,active==='matriz' ? '1024 é a quantidade de linhas e também de colunas. O programa faz cinco rodadas, alterna qual caminho vem primeiro e confere se as somas estão corretas. Antes de cronometrar, faz uma leitura de aquecimento, como uma volta de reconhecimento.' : 'São cinco tamanhos de dados: 8, 32, 256, 2048 e 16384 KiB. Cada um é medido cinco vezes. O número de buscas por rodada é igual em todos. Cada posição da cadeia ocupa 64 bytes. O número lido indica a próxima posição, que pode estar longe. Esse tamanho escolhido no programa não descobre o tamanho real da linha da cache.');
+    paragraph(parent,active==='matriz' ? '1024 é a quantidade de linhas e também de colunas. O programa faz cinco rodadas, alterna qual caminho vem primeiro e confere se as somas estão corretas. Antes de cronometrar, faz uma leitura de aquecimento (warm-up), como uma volta de reconhecimento.' : 'São cinco tamanhos de dados: 8, 32, 256, 2048 e 16384 KiB. Cada um é medido cinco vezes. O número de buscas por rodada é igual em todos. Cada posição da cadeia ocupa 64 bytes. O número lido indica a próxima posição, que pode estar longe. Esse tamanho escolhido no programa não descobre o tamanho real da linha da cache (cache line).');
     paragraph(parent,'Espere o terminal voltar a mostrar a linha em que você pode digitar. Procure CONFERENCIA e OK. Se o teste for interrompido ou der erro, guarde a mensagem e peça ajuda; não interprete uma execução incompleta como resultado normal.','note');
     field('ambiente',parent); field(active==='matriz'?'saida_inicial':'saida',parent);
     paragraph(parent,'Avance quando tiver uma execução completa e tiver registrado o ambiente e a saída. Esses arquivos são resultados de trabalho. Na última etapa, você vai preparar um arquivo final para a entrega no LIAC.');
   }
   if(s.step==='interpretar') {
-    paragraph(parent,'RESUMO reúne os resultados. mediana_parede_ms é o valor do meio entre as cinco medidas do tempo total. mediana_cpu_ms considera o tempo usado no processador. maior_dividido_menor compara a rodada mais demorada com a mais rápida: perto de 1 significa pouca variação; valores maiores pedem mais cuidado.');
+    paragraph(parent,'RESUMO reúne os resultados. mediana_parede_ms é o valor do meio entre as cinco medidas do tempo total decorrido (wall-clock time; elapsed time). mediana_cpu_ms considera o tempo de CPU (CPU time), contabilizado para o programa; inclui esperas por dados da memória durante a execução. maior_dividido_menor compara a rodada mais demorada com a mais rápida: perto de 1 significa pouca variação; valores maiores pedem mais cuidado.');
     if(active==='matriz') {
       field('mediana_linhas',parent); field('mediana_colunas',parent);
       const p=text('p','','note'); p.id='ratio'; parent.append(p);
@@ -159,14 +159,14 @@ function render() {
     if(active==='matriz') {
       paragraph(parent,'Agora mude somente o tamanho da matriz: de 1024 para 512. O programa continua lendo por linhas e por colunas. Compare os caminhos dentro de cada tamanho; uma matriz menor também tem menos elementos, então terminar antes, por si só, não prova um efeito da cache.');
       command(parent,'cd ~/atividades/aoc-cache-fisica\n./cache_lab matriz 512 | tee matriz-512.txt'); field('saida_mudanca',parent);
-      paragraph(parent,'Explique como usar dados vizinhos pode ajudar a aproveitar os blocos trazidos à cache. A diferença entre linhas e colunas mudou com a matriz menor? Use números e diga se sua hipótese ficou mais forte ou se o teste não foi suficiente.');
+      paragraph(parent,'Explique como usar dados vizinhos pode ajudar a aproveitar os blocos (blocks) trazidos à cache. A diferença entre linhas e colunas mudou com a matriz menor? Use números e diga se sua hipótese ficou mais forte ou se o teste não foi suficiente.');
     } else {
       paragraph(parent,'Repita os mesmos tamanhos, agora do maior para o menor. Mudar a ordem ajuda a perceber se a tendência se mantém em outra execução; não elimina todas as interferências.');
       command(parent,'cd ~/atividades/aoc-cache-fisica\n./cache_lab cadeia inversa | tee cadeia-b.txt'); field('saida_repeticao',parent);
-      paragraph(parent,'Compare novamente pelo menos dois tamanhos usando os valores das duas execuções. A tendência se repetiu? Consulte os tamanhos L1, L2 e L3 do ambiente: L1 fica mais perto do núcleo, e os outros níveis costumam oferecer mais espaço. Seus tempos são compatíveis com a ideia de que dados maiores deixam de caber nas memórias mais rápidas?');
+      paragraph(parent,'Compare novamente pelo menos dois tamanhos usando os valores das duas execuções. A tendência se repetiu? Consulte os tamanhos L1, L2 e L3 do ambiente, os níveis de cache (cache levels): L1 fica mais perto do núcleo, e os outros níveis costumam oferecer mais espaço. Seus tempos são compatíveis com a ideia de que dados maiores deixam de caber nas memórias mais rápidas?');
     }
     field('explicacao',parent);
-    paragraph(parent,'Outras influências possíveis: colegas usando o servidor, mudança de núcleo durante a execução, velocidade variável da CPU, busca antecipada de dados pelo processador e tradução dos endereços usada pelo Linux. Não dá para atribuir toda diferença somente à cache. Você não precisa decorar esses termos: escolha uma influência e explique seu efeito com palavras simples.');
+    paragraph(parent,'Outras influências possíveis: colegas usando o servidor, mudança de núcleo (core migration) durante a execução, frequência variável do processador (CPU frequency scaling), busca antecipada de dados (data prefetching) pelo processador e tradução de endereços (address translation), que converte os endereços usados pelo programa em endereços da memória física. Não dá para atribuir toda diferença somente à cache. Você não precisa decorar esses termos: escolha uma influência e explique seu efeito com palavras simples.');
     field('limites',parent); paragraph(parent,'Avance depois de guardar a segunda execução e escrever sua explicação e sua limitação.');
   }
   if(s.step==='revisar') {
