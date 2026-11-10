@@ -1,7 +1,7 @@
 """Valida a pagina da atividade executando os blocos como um aluno faria.
 Ferramenta de manutencao docente; nao acessa o LIAC. Requer Linux, GCC,
 pthreads, ps e (opcional) taskset.
-Uso: python3 -I verificar.py un02
+Uso: python3 -I verificar.py un02|un03
 """
 from html.parser import HTMLParser
 from pathlib import Path
@@ -63,11 +63,16 @@ def verificar(unidade):
     print(f'{unidade}: {len(p.campos)} campos, {len(p.blocos)} blocos, fontes sincronizadas')
 
     with tempfile.TemporaryDirectory(prefix='so-atividade-') as tmp:
-        roteiro = '\n'.join(p.blocos).replace('~/atividades/so-un02', tmp)
-        r = subprocess.run(['bash', '-e', '-c', roteiro], cwd=tmp, text=True,
+        roteiro = '\n'.join(p.blocos).replace(f'~/atividades/so-{unidade}', tmp)
+        # un03 tem um programa que termina por SIGSEGV de proposito; sem -e.
+        opcoes = ['-e'] if unidade == 'un02' else []
+        r = subprocess.run(['bash', *opcoes, '-c', roteiro], cwd=tmp, text=True,
                            capture_output=True, timeout=240)
         out = r.stdout
         assert r.returncode == 0, f'roteiro falhou ({r.returncode})\n{out}\n{r.stderr}'
+        if unidade != 'un02':
+            CHECAGENS[unidade](out, r.stderr, tmp)
+            return
         verificacoes = [
             ('compilacao', all(f'OK {x}\n' in out for x in
                                'carga espera ciclo_exec ciclo_zumbi ciclo_orfao threads '
@@ -125,6 +130,55 @@ def verificar(unidade):
         assert all(r.startswith('Resultado:') for r in resultados)
         print(f'Mudancas orientadas: exit 42 OK; impasse sem pausa em '
               f'{sum("IMPASSE" in r for r in resultados)}/10 execucoes (varia; pode ser 0)')
+
+
+def checar_un03(out, err, tmp):
+    import os
+    faltas = dict(re.findall(r'^(usou a metade|usou tudo|usou tudo de novo)\s+\| RAM usada:\s+[\d.]+ MiB \| faltas novas: (\d+)', out, re.M))
+    paginas = int(re.search(r'32 MiB = (\d+) paginas', out).group(1))
+    metade = paginas // 2
+    perto = lambda v, alvo: abs(int(v) - alvo) <= alvo * 0.10
+    verificacoes = [
+        ('compilacao sem avisos', 'warning' not in err),
+        ('pagesize', re.search(r'^\d+$', out, re.M)),
+        ('A1 metade ~ paginas/2', perto(faltas['usou a metade'], metade)),
+        ('A1 tudo ~ paginas/2', perto(faltas['usou tudo'], metade)),
+        ('A1 releitura ~ 0', int(faltas['usou tudo de novo']) <= 20),
+        ('A2 mesmo endereco', len(set(re.findall(r'endereco de x = (0x[0-9a-f]+)', out))) == 1),
+        ('A2 valores', 'x = 99' in out and '| x = 10' in out),
+        ('A2 protecao', 'leitura ok: 1' in out and 'codigo de saida: 139' in out
+                        and 'nao deveria aparecer' not in out),
+        ('A3 FIFO 7', 'Total: 7 faltas em 10 acessos' in out),
+        ('A3 LRU 6', 'Total: 6 faltas em 10 acessos' in out),
+    ]
+    falhas = [nome for nome, ok in verificacoes if not ok]
+    assert not falhas, f'falhas: {falhas}\n{out}\n{err}'
+    print(f'Roteiro executado: {len(verificacoes)} verificacoes OK '
+          f'(faltas metade/tudo/releitura: {faltas["usou a metade"]}/'
+          f'{faltas["usou tudo"]}/{faltas["usou tudo de novo"]})')
+    assert not list(Path(tmp).glob('core*')), 'arquivo core gravado'
+    restantes = subprocess.run(['pgrep', '-u', str(os.getuid()), '-x',
+                                'demanda|isolado|so_leitura|substituicao'],
+                               capture_output=True, text=True).stdout.split()
+    assert not restantes, f'processos remanescentes: {restantes}'
+    print('Nenhum processo da atividade ficou ativo; nenhum arquivo core.')
+
+    # Conferencias do simulador usadas no gabarito (Belady e B7).
+    sim = Path(tmp) / 'substituicao'
+    def total(*args):
+        saida = subprocess.run([str(sim), *args], text=True, capture_output=True, check=True).stdout
+        return int(re.search(r'Total: (\d+) faltas', saida).group(1))
+    belady = '1 2 3 4 1 2 5 1 2 3 4 5'.split()
+    b7 = '2 3 2 1 5 2 4 5 3 2 5 2'.split()
+    assert total('fifo', '3', *belady) == 9 and total('fifo', '4', *belady) == 10
+    assert total('lru', '3', *belady) == 10
+    assert total('fifo', '3', *b7) == 9 and total('lru', '3', *b7) == 7
+    r = subprocess.run([str(sim), 'opt', '3', '1'], capture_output=True)
+    assert r.returncode == 1, 'algoritmo invalido deveria falhar'
+    print('Simulador: Belady FIFO 9 -> 10, LRU 10; B7 FIFO 9, LRU 7; entrada invalida rejeitada.')
+
+
+CHECAGENS = {'un03': checar_un03}
 
 
 if __name__ == '__main__':

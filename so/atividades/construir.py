@@ -6,7 +6,7 @@ Diretivas do modelo (cada uma no inicio de uma linha):
   @@CMD titulo        ... @@END   bloco de terminal com botao Copiar
   @@OUT [rotulo]      ... @@END   referencia para comparacao
   @@SRC arquivo                   fonte de arquivos/ em bloco recolhivel (cat > ... <<'FIM')
-  @@Q id | rotulo                 pergunta com campo de resposta
+  @@Q id | rotulo [| dica]        pergunta com campo de resposta (dica opcional)
   @@DONE n | texto                caixa de etapa concluida
 O texto fora das diretivas e copiado sem alteracao. Os comandos e fontes
 sao escapados aqui, para nunca divergirem dos arquivos em arquivos/.
@@ -59,11 +59,12 @@ def construir(unidade):
         elif linha.startswith('@@SRC '):
             saida_html.append(fonte(pasta, linha.split()[1]))
         elif linha.startswith('@@Q '):
-            ident, _, rotulo = linha[4:].partition('|')
+            ident, _, resto = linha[4:].partition('|')
+            rotulo, _, dica = resto.partition('|')
             ident, rotulo = ident.strip(), rotulo.strip()
+            dica = escape(dica.strip() or 'Hipótese, evidência, interpretação e limites.')
             saida_html.append(f'<div class="question"><label for="{ident}">{rotulo}</label>'
-                              f'<textarea id="{ident}" placeholder="Hipótese, evidência, '
-                              f'interpretação e limites."></textarea></div>')
+                              f'<textarea id="{ident}" placeholder="{dica}"></textarea></div>')
         elif linha.startswith('@@DONE '):
             num, _, texto = linha[7:].partition('|')
             saida_html.append(f'<label class="done"><input type="checkbox" id="feito-{num.strip()}" '

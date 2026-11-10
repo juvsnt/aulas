@@ -159,3 +159,4 @@ body{margin:0}.wrap{max-width:44rem}.topnav{display:flex;gap:1rem;flex-wrap:wrap
 .extensao > .label{color:var(--accent)}
 .problema{display:flex;flex-direction:column;gap:.8rem}
 .problema pre{margin:0;overflow:auto;padding:1rem;border-radius:8px;background:var(--term-bg);color:var(--term-fg);font:.84rem/1.6 var(--f-mono)}
+.command code{background:none;padding:0;border-radius:0;overflow-wrap:normal}

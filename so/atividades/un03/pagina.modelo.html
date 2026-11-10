@@ -1,0 +1,177 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade da Unidade III de Sistemas Operacionais: três atividades curtas no terminal do LIAC sobre paginação, isolamento de processos e substituição de páginas, e lista de problemas."><meta name="theme-color" content="#13202a"><title>Onde mora cada programa? · Atividade da Unidade III | SO</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un03"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../../materiais/#unidade-3">Materiais da unidade III</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade da Unidade III · Sistemas Operacionais · UNEMAT</p><h1>Onde mora cada programa?</h1><p class="lede">Três atividades curtas no terminal para ver como o sistema operacional organiza a memória.</p><div class="meta"><span><b>Parte A</b> 3 atividades de até 30 min · 50%</span><span><b>Parte B</b> 8 problemas em casa · 50%</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Antes de começar</h2>
+<ol>
+<li>Escreva seu nome e matrícula abaixo.</li>
+<li>Abra o terminal, entre com sua conta e cole o bloco abaixo (sem o <code>$</code>).</li>
+</ol>
+@@Q identificacao | Nome completo e matrícula | Ex.: Maria Silva — 202312345
+@@CMD Cole no terminal
+mkdir -p ~/atividades/so-un03
+cd ~/atividades/so-un03
+@@END
+<p class="small">Os números mudam um pouco de um computador para outro. Registre sempre os <b>seus</b> valores. Para entregar, use o botão <b>Baixar respostas (.txt)</b> no topo.</p>
+</section>
+
+<nav class="steps-nav" aria-label="Atividades"><a href="#a1">Atividade 1</a> <a href="#a2">Atividade 2</a> <a href="#a3">Atividade 3</a> <a href="#parte-b">Parte B</a></nav>
+
+<section class="etapa" id="a1"><p class="label">Atividade 1 · até 30 min · Medição real</p><h2>A página só chega quando é usada</h2>
+<p><b>Objetivo:</b> ver que o Linux só coloca uma parte do programa na memória RAM quando o programa a usa.</p>
+<p><b>Conceitos:</b> página (page) — pedaço de tamanho fixo da memória do programa · quadro (frame) — espaço do mesmo tamanho na RAM · falta de página (page fault) — aviso de que a página ainda não está na RAM · paginação sob demanda (demand paging). <span class="small">Slides <a href="../../materiais/pdfs/un03t03.pdf" target="_blank" rel="noopener">t03</a> e <a href="../../materiais/pdfs/un03t05.pdf" target="_blank" rel="noopener">t05</a>.</span></p>
+<h3>O que fazer</h3>
+<ol>
+<li>Veja o tamanho da página, em bytes:
+@@CMD Cole no terminal
+getconf PAGESIZE
+@@END
+</li>
+<li>O programa vai reservar 32 MiB, usar a metade (16 MiB) e depois usar tudo. Antes de rodar, responda a previsão.
+@@Q a1-previsao | Previsão: quantas páginas cabem em 16 MiB? Quantas faltas de página você espera ao usar a metade? | Lembre: 1 MiB = 1.048.576 bytes.
+</li>
+<li>Abra o item abaixo, copie e cole no terminal para criar o programa:
+@@SRC demanda.c
+</li>
+<li>Compile e rode:
+@@CMD Cole no terminal
+gcc -std=c11 -Wall -Wextra -O0 demanda.c -o demanda
+./demanda
+@@END
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Exemplo · os seus números podem variar um pouco
+Pagina: 4096 bytes. 32 MiB = 8192 paginas.
+
+inicio             | RAM usada:   1.8 MiB | faltas novas: 90
+reservou 32 MiB    | RAM usada:   2.0 MiB | faltas novas: 2
+usou a metade      | RAM usada:  18.0 MiB | faltas novas: 4096
+usou tudo          | RAM usada:  34.0 MiB | faltas novas: 4096
+usou tudo de novo  | RAM usada:  34.0 MiB | faltas novas: 0
+@@END
+<p>Observe: reservar quase não muda a RAM usada; cada página usada pela primeira vez gera uma falta.</p>
+@@Q a1-saida | Cole aqui a saída do seu programa. | Cole as linhas que apareceram no terminal.
+@@Q a1-p1 | Sua previsão bateu? Compare com as faltas novas da linha “usou a metade”. | Responda com suas palavras.
+@@Q a1-p2 | Por que “usou tudo de novo” quase não gera faltas novas? | Responda com suas palavras.
+@@DONE 1 | Atividade 1 concluída
+</section>
+
+<section class="etapa" id="a2"><p class="label">Atividade 2 · até 30 min · Medição real</p><h2>Cada processo no seu espaço</h2>
+<p><b>Objetivo:</b> ver que cada processo tem seus próprios endereços e que o sistema bloqueia acessos proibidos.</p>
+<p><b>Conceitos:</b> endereço lógico (logical address) — o que o programa enxerga · endereço físico (physical address) — o lugar real na RAM · MMU (memory management unit) — peça do processador que traduz um no outro · proteção de memória. <span class="small">Slides <a href="../../materiais/pdfs/un03t01.pdf" target="_blank" rel="noopener">t01</a>, <a href="../../materiais/pdfs/un03t02.pdf" target="_blank" rel="noopener">t02</a> e <a href="../../materiais/pdfs/un03t04.pdf" target="_blank" rel="noopener">t04</a>.</span></p>
+<h3>O que fazer</h3>
+<ol>
+<li>Crie os dois programas:
+@@SRC isolado.c
+@@SRC so_leitura.c
+</li>
+<li>O programa <code>isolado</code> se divide em dois processos (pai e filho) com <code>fork</code>. O filho muda <code>x</code> para 99. Antes de rodar, responda:
+@@Q a2-previsao | Previsão: o pai verá x = 10 ou x = 99? O endereço de x será igual nos dois? | Responda com suas palavras.
+</li>
+<li>Compile e rode o <code>isolado</code>:
+@@CMD Cole no terminal
+gcc -std=c11 -Wall -Wextra -O0 isolado.c -o isolado
+./isolado
+@@END
+</li>
+<li>Agora o <code>so_leitura</code>: ele lê uma página permitida só para leitura e depois tenta escrever nela. <code>echo $?</code> mostra o código com que o programa terminou; <code>ulimit -c 0</code> evita criar um arquivo grande quando o programa cai.
+@@CMD Cole no terminal
+gcc -std=c11 -Wall -Wextra -O0 so_leitura.c -o so_leitura
+ulimit -c 0
+./so_leitura
+echo "codigo de saida: $?"
+@@END
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Exemplo · o endereço muda a cada execução
+filho: endereco de x = 0x6026b9d21010 | x = 99
+pai:   endereco de x = 0x6026b9d21010 | x = 10
+
+leitura ok: 1
+tentando escrever...
+Falha de segmentação
+codigo de saida: 139
+@@END
+<p>Observe: o mesmo endereço guarda valores diferentes em cada processo. A mensagem pode aparecer em inglês (<i>Segmentation fault</i>). 139 = 128 + 11, e 11 é o número do sinal de falha de segmentação.</p>
+@@Q a2-saida | Cole aqui as saídas dos dois programas. | Cole as linhas que apareceram no terminal.
+@@Q a2-p1 | Como o mesmo endereço pode guardar 99 no filho e 10 no pai? Use os termos endereço lógico e endereço físico. | Responda com suas palavras.
+@@Q a2-p2 | Quem impediu a escrita: o próprio programa ou o SO junto com a MMU? Por que isso é importante? | Responda com suas palavras.
+@@DONE 2 | Atividade 2 concluída
+</section>
+
+<section class="etapa" id="a3"><p class="label">Atividade 3 · até 30 min · Simulação</p><h2>A memória acabou: quem sai?</h2>
+<p><b>Objetivo:</b> comparar duas regras para escolher qual página sai da RAM quando não há quadro livre.</p>
+<p><b>Conceitos:</b> substituição de páginas (page replacement) · FIFO (first in, first out) — sai a página que entrou primeiro · LRU (least recently used) — sai a página usada há mais tempo. <span class="small">Slides <a href="../../materiais/pdfs/un03t05.pdf" target="_blank" rel="noopener">t05</a> e <a href="../../materiais/pdfs/un03t06.pdf" target="_blank" rel="noopener">t06</a>.</span></p>
+<p class="small">Aqui o programa não mexe na memória real: ele <b>simula</b> as regras com uma lista de páginas.</p>
+<h3>O que fazer</h3>
+<ol>
+<li>Faça à mão o FIFO com <b>3 quadros</b> para a sequência de páginas <code>1 2 1 3 4 1 2 5 1 2</code>. Para cada acesso, escreva F (falta) ou A (acerto) e, quando houver, a página que saiu.
+@@Q a3-mao | Sua tabela FIFO feita à mão e o total de faltas. | Ex.: 1:F  2:F  1:A  3:F  4:F (saiu 1) ...
+</li>
+<li>Crie o simulador:
+@@SRC substituicao.c
+</li>
+<li>Compile e confira seu FIFO; depois rode o LRU com a mesma sequência:
+@@CMD Cole no terminal
+gcc -std=c11 -Wall -Wextra -O0 substituicao.c -o substituicao
+./substituicao fifo 3 1 2 1 3 4 1 2 5 1 2
+./substituicao lru 3 1 2 1 3 4 1 2 5 1 2
+@@END
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Início da saída do FIFO e totais
+FIFO com 3 quadros
+
+acesso | quadros | resultado
+     1 |  1 - - | falta
+     2 |  1 2 - | falta
+     1 |  1 2 - | acerto
+     3 |  1 2 3 | falta
+     4 |  4 2 3 | falta (saiu 1)
+...
+Total: 7 faltas em 10 acessos   (FIFO)
+Total: 6 faltas em 10 acessos   (LRU)
+@@END
+@@Q a3-p1 | Sua tabela feita à mão bateu com o simulador? Se não, em que acesso foi a diferença? | Responda com suas palavras.
+@@Q a3-p2 | Em que acesso o FIFO tirou uma página que logo seria usada de novo? Por que o LRU teve menos faltas aqui? | Responda com suas palavras.
+@@DONE 3 | Atividade 3 concluída
+</section>
+
+<section class="etapa" id="parte-b"><p class="label">Parte B · em casa · 50%</p><h2>Problemas</h2>
+<p>Mostre as contas. Regras dos slides: página <code>p = endereço ÷ tamanho</code> (divisão inteira) e deslocamento <code>d = resto</code>; endereço físico = quadro × tamanho + d. Na segmentação, <code>&lt;s, d&gt;</code> é válido se <code>d &lt; limite</code>; físico = base + d.</p>
+
+<div class="problema"><h3>B1 · Base e limite</h3><p>Processo A: base 3000, limite 1200. Processo B: base 9000, limite 500. Traduza ou indique erro: A 250 · A 1199 · B 480 · B 640.</p></div>
+@@Q b1 | B1 · Base e limite | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B2 · Alocação contígua</h3><p>Buracos livres, nesta ordem: 25 KB, 12 KB, 30 KB, 18 KB. a) Onde um pedido de 17 KB entra com first-fit, best-fit e worst-fit? Quanto sobra em cada caso? b) Uma partição fixa de 32 KB recebe um processo de 21 KB: qual tipo de fragmentação aparece e de quanto? c) Depois do best-fit do item a, chega um pedido de 35 KB. Há memória livre suficiente no total? Ele é atendido? Que fragmentação explica isso?</p></div>
+@@Q b2 | B2 · Alocação contígua | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B3 · Segmentação</h3><p>Segmento 0: base 2000, limite 500 · Segmento 1: base 5000, limite 300 · Segmento 2: base 800, limite 1000. Traduza ou indique trap: <code>&lt;0, 430&gt;</code> · <code>&lt;1, 350&gt;</code> · <code>&lt;2, 999&gt;</code>.</p></div>
+@@Q b3 | B3 · Segmentação | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B4 · Paginação</h3><p>Páginas de 2.048 bytes. Tabela: página 0 → quadro 6 (V) · página 1 → quadro 2 (V) · página 2 → inválida (I) · página 3 → quadro 9 (V). Para os endereços lógicos 2.500, 5.000 e 7.000, calcule p, d e o endereço físico, ou diga o que acontece.</p></div>
+@@Q b4 | B4 · Paginação | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B5 · TLB</h3><p>A TLB (translation lookaside buffer) guarda 2 traduções e começa vazia; quando está cheia, sai a tradução usada há mais tempo. O processo acessa as páginas 3, 5, 3, 7, 5, 3, todas já na RAM. a) Marque hit ou miss em cada acesso. b) Quantas faltas de página aconteceram? Explique a diferença entre TLB miss e falta de página.</p></div>
+@@Q b5 | B5 · TLB | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B6 · Tamanho da página</h3><p>Um processo precisa de 20.000 bytes. Com páginas de 4 KiB (4.096 bytes) e de 8 KiB (8.192 bytes): quantas páginas ele ocupa e quantos bytes sobram sem uso (fragmentação interna)? Qual tamanho precisa de menos entradas na tabela de páginas?</p></div>
+@@Q b6 | B6 · Tamanho da página | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B7 · Substituição</h3><p>Com 3 quadros, inicialmente vazios, e a sequência <code>2 3 2 1 5 2 4 5 3 2 5 2</code>, monte a tabela e conte as faltas para FIFO, OPT (ótimo), LRU e Clock (segunda chance, como no slide do t06). Qual teve menos faltas? Por que o OPT não é usado na prática?</p></div>
+@@Q b7 | B7 · Substituição | Mostre as contas e a resposta final.
+
+<div class="problema"><h3>B8 · Thrashing</h3><p>Três processos têm conjuntos de trabalho (working set) de 40, 35 e 30 quadros, e a RAM tem 90 quadros livres. a) O que tende a acontecer? b) O que o SO deve fazer? c) Por que admitir mais processos quando a CPU parece ociosa piora a situação?</p></div>
+@@Q b8 | B8 · Thrashing | Responda com suas palavras.
+@@DONE 4 | Parte B concluída
+</section>
+
+<section class="etapa"><h2>Entregar</h2>
+<p>Clique em <b>Baixar respostas (.txt)</b> no topo e envie o arquivo pelo canal indicado pelo professor. O arquivo fica no aparelho em que a página está aberta.</p>
+<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco do programa não foi colado até a linha <code>FIM</code>. Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>Erro de permissão ou de memória:</b> registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Operacionais · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

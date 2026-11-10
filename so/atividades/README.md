@@ -9,6 +9,7 @@ apenas ferramenta de manutenção docente.
 | Pasta | Unidade | Situação |
 | --- | --- | --- |
 | `un02/` | II — Processos, gerência da CPU e concorrência (un02t01–t08) | Publicada; falta homologar no LIAC |
+| `un03/` | III — Gerência de memória (un03t01–t06): 3 atividades de até 30 min + 8 problemas | Pronta localmente; não publicada; falta homologar no LIAC |
 
 ## Estrutura de uma unidade
 
@@ -25,10 +26,12 @@ apenas ferramenta de manutenção docente.
 ```bash
 python3 -I construir.py un02   # gera un02/index.html injetando os fontes de arquivos/
 python3 -I verificar.py un02   # confere e executa o roteiro inteiro (~1 min)
+python3 -I construir.py un03
+python3 -I verificar.py un03   # ~5 s
 ```
 
 O modelo usa diretivas no início da linha: `@@CMD`/`@@OUT` … `@@END`, `@@SRC
-arquivo`, `@@Q id | rótulo` e `@@DONE n | texto` (detalhes em `construir.py`).
+arquivo`, `@@Q id | rótulo [| dica]` e `@@DONE n | texto` (detalhes em `construir.py`).
 Os fontes não podem conter uma linha `FIM`, que é o delimitador do heredoc.
 
 O verificador exige que todos os arquivos de `arquivos/` apareçam na página,
