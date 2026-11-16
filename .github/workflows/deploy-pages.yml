@@ -17,6 +17,8 @@ on:
       - "aoc/praticas-game/**"
       - "aoc/cache-fisica/index.html"
       - "aoc/cache-fisica/public/**"
+      - "aoc/entrada-saida/index.html"
+      - "aoc/entrada-saida/public/**"
       - "sd/materiais/**"
       - "sd/praticas/**"
       - "sd/atividades/**"
@@ -101,6 +103,11 @@ jobs:
           cp -r aoc/cache-fisica/public _site/aoc/cache-fisica/public
           test ! -e _site/aoc/cache-fisica/public/professor.html
           test ! -d _site/aoc/cache-fisica/docente-local
+          mkdir -p _site/aoc/entrada-saida
+          cp aoc/entrada-saida/index.html _site/aoc/entrada-saida/index.html
+          cp -r aoc/entrada-saida/public _site/aoc/entrada-saida/public
+          test ! -d _site/aoc/entrada-saida/docente-local
+          test ! -e _site/aoc/entrada-saida/public/professor.html
           cp -r sd/materiais _site/sd/materiais
           cp -r sd/praticas _site/sd/praticas
           cp -r sd/atividades _site/sd/atividades

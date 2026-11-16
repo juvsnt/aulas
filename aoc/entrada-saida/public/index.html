@@ -1,0 +1,432 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade da Unidade 5 de AOC: três atividades curtas no terminal do LIAC sobre interrupções, polling e transferência em blocos, com síntese."><meta name="theme-color" content="#13202a"><title>Quem chama a CPU? · Atividade da Unidade 5 | AOC</title><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script></head><body data-unit="aoc-un05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina AOC</a><a href="../../materiais/#unidade-5">Materiais da Unidade 5</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade da Unidade 5 · Arquitetura e Organização de Computadores · UNEMAT</p><h1>Quem chama a CPU?</h1><p class="lede">Três atividades curtas no terminal para ver como a CPU conversa com teclado, disco e rede.</p><div class="meta"><span><b>Individual</b></span><span><b>3 atividades</b> de até 30 min</span><span><b>Síntese</b> de 5 min</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Antes de começar</h2>
+<p>Todas as atividades usam os slides da unidade: <a href="../../materiais/pdfs/un05t01.pdf" target="_blank" rel="noopener">Entrada/saída, interfaces e barramentos (PDF) ↗</a>. Cada termo técnico abaixo traz o número do slide em que aparece.</p>
+<ol>
+<li>Escreva seu nome e matrícula.</li>
+<li>Abra o terminal (a tela onde se digitam comandos), entre com sua conta e cole o bloco abaixo. Ele cria e abre sua pasta da atividade.</li>
+</ol>
+<div class="question"><label for="identificacao">Nome completo e matrícula</label><textarea id="identificacao" placeholder="Ex.: Maria Silva — 202312345"></textarea></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/aoc-entrada-saida
+cd ~/atividades/aoc-entrada-saida</code></pre></div>
+<p class="small">Os números mudam de um computador para outro e de um momento para outro. Registre sempre os <b>seus</b> valores. Cada atividade tem quatro etapas: prever (5 min), executar (10 min), interpretar (10 min) e registrar (5 min).</p>
+</section>
+
+<nav class="steps-nav" aria-label="Atividades"><a href="#a1">Atividade 1</a> <a href="#a2">Atividade 2</a> <a href="#a3">Atividade 3</a> <a href="#sintese">Síntese</a> <a href="#entregar">Entregar</a></nav>
+
+<section class="etapa" id="a1"><p class="label">Atividade 1 · até 30 min <span class="tipo">Medição real</span></p><h2>Quem está chamando a CPU?</h2>
+<p><b>Objetivo:</b> descobrir quais dispositivos do computador do LIAC interrompem a CPU e com que frequência.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Periférico (peripheral)</dt><dd>O aparelho em si: teclado, disco, placa de rede. <a href="../../materiais/pdfs/un05t01.pdf#page=4" target="_blank" rel="noopener">slide 4</a></dd></div>
+<div><dt>Interface (interface)</dt><dd>O padrão de ligação física e elétrica do periférico com a placa-mãe, como SATA, USB ou PCIe. <a href="../../materiais/pdfs/un05t01.pdf#page=4" target="_blank" rel="noopener">slide 4</a></dd></div>
+<div><dt>Controlador (controller)</dt><dd>Chip que comanda o periférico e conversa com a CPU. A CPU diz “leia o bloco X”; o controlador faz o resto. <a href="../../materiais/pdfs/un05t01.pdf#page=4" target="_blank" rel="noopener">slide 4</a></dd></div>
+<div><dt>Interrupção (interrupt) e IRQ (interrupt request)</dt><dd>Interrupção é o aviso que o controlador manda à CPU: “preciso de atenção”. Cada fonte de aviso tem uma linha numerada, a IRQ. <a href="../../materiais/pdfs/un05t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a> e <a href="../../materiais/pdfs/un05t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a></dd></div>
+</dl>
+<h3>O que fazer</h3>
+<ol>
+<li>Veja os discos do computador. <code>lsblk</code> lista os discos; a coluna <b>TRAN</b> mostra a interface. Se o título das colunas aparecer quebrado em duas linhas, tudo bem.
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
+lsblk -d -o NAME,TRAN,SIZE</code></pre></div>
+<div class="question"><label for="a1-discos">Quantos discos há e qual é a interface deles? Que linha de interrupção você espera para o controlador desses discos? (Use a tabela “Quem é quem” abaixo.)</label><textarea id="a1-discos" placeholder="Responda com suas palavras."></textarea></div>
+</li>
+<li><b>Pergunta extra.</b> O <code>lsblk</code> mostra o tamanho em GiB (1 GiB = 1.073.741.824 bytes), mas o fabricante vende o disco em TB (1 TB = 1.000.000.000.000 bytes), como kB e KiB na Unidade 4.
+<div class="question"><label for="a1-extra">Calcule 1.000.000.000.000 ÷ 1.073.741.824. O resultado fica perto do tamanho mostrado? Por que um disco de “1 TB” aparece como cerca de 931 G?</label><textarea id="a1-extra" placeholder="Mostre a conta."></textarea></div>
+</li>
+<li>Crie o programa <code>interrupcoes</code>. Ele lê o arquivo <code>/proc/interrupts</code>, em que o Linux conta os avisos de cada dispositivo, espera alguns segundos, lê de novo e mostra quem mais cresceu.
+<details><summary>Criar <code>interrupcoes.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar interrupcoes.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar interrupcoes.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; interrupcoes.c &lt;&lt;&#x27;FIM&#x27;
+/* interrupcoes.c - AOC, Unidade 5, Atividade 1.
+   Conta quantas interrupcoes cada dispositivo gerou durante alguns segundos.
+   O Linux mantem esses contadores em /proc/interrupts: uma linha por IRQ,
+   uma coluna por CPU. O programa le o arquivo duas vezes, calcula a
+   diferenca e mostra as linhas que mais cresceram. So faz leitura. */
+#define _POSIX_C_SOURCE 200809L
+#include &lt;ctype.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+#ifndef ARQUIVO
+#define ARQUIVO &quot;/proc/interrupts&quot;
+#endif
+#define MAX_LINHAS 512
+
+typedef struct {
+    char nome[24];             /* numero da IRQ (1, 132...) ou sigla (LOC) */
+    char dispositivo[64];      /* quem gera a interrupcao */
+    unsigned long long total;  /* soma de todas as CPUs */
+} Linha;
+
+static char *pula_espacos(char *p) {
+    while (isspace((unsigned char)*p)) p++;
+    return p;
+}
+
+static char *pula_palavra(char *p) {
+    p = pula_espacos(p);
+    while (*p != &#x27;\0&#x27; &amp;&amp; !isspace((unsigned char)*p)) p++;
+    return p;
+}
+
+static int ler_contadores(Linha *v) {
+    FILE *f = fopen(ARQUIVO, &quot;r&quot;);
+    if (f == NULL) { perror(ARQUIVO); exit(1); }
+    char buf[8192];
+    int n = 0, ncpu = 0;
+    /* 1a linha: CPU0 CPU1 ... -&gt; conta quantas CPUs existem */
+    if (fgets(buf, sizeof buf, f) != NULL)
+        for (char *t = strtok(buf, &quot; \t\n&quot;); t != NULL; t = strtok(NULL, &quot; \t\n&quot;))
+            ncpu++;
+    while (n &lt; MAX_LINHAS &amp;&amp; fgets(buf, sizeof buf, f) != NULL) {
+        char *p = pula_espacos(buf);
+        char *dois_pontos = strchr(p, &#x27;:&#x27;);
+        if (dois_pontos == NULL) continue;
+        *dois_pontos = &#x27;\0&#x27;;
+        snprintf(v[n].nome, sizeof v[n].nome, &quot;%.23s&quot;, p);
+        p = dois_pontos + 1;
+        v[n].total = 0;
+        for (int c = 0; c &lt; ncpu; c++) {          /* soma as colunas */
+            char *fim;
+            unsigned long long x = strtoull(p, &amp;fim, 10);
+            if (fim == p) break;
+            v[n].total += x;
+            p = fim;
+        }
+        p[strcspn(p, &quot;\n&quot;)] = &#x27;\0&#x27;;
+        /* &quot;IR-IO-APIC 1-edge i8042&quot;: pula controlador e tipo de sinal e
+           fica com o dispositivo. Linhas com sigla (LOC) ja trazem a descricao. */
+        if (isdigit((unsigned char)v[n].nome[0]))
+            p = pula_palavra(pula_palavra(p));
+        snprintf(v[n].dispositivo, sizeof v[n].dispositivo, &quot;%.30s&quot;, pula_espacos(p));
+        n++;
+    }
+    fclose(f);
+    return n;
+}
+
+int main(int argc, char **argv) {
+    int segundos = argc &gt; 1 ? atoi(argv[1]) : 10;
+    if (segundos &lt; 1 || segundos &gt; 60) {
+        fprintf(stderr, &quot;uso: %s [segundos de 1 a 60]\n&quot;, argv[0]);
+        return 1;
+    }
+    static Linha antes[MAX_LINHAS], depois[MAX_LINHAS];
+    unsigned long long cresceu[MAX_LINHAS] = {0}, soma = 0;
+
+    int na = ler_contadores(antes);
+    printf(&quot;Contando interrupcoes por %d s...\n&quot;, segundos);
+    fflush(stdout);
+    sleep((unsigned)segundos);
+    int nd = ler_contadores(depois);
+
+    for (int i = 0; i &lt; nd; i++)
+        for (int j = 0; j &lt; na; j++)
+            if (strcmp(antes[j].nome, depois[i].nome) == 0) {
+                if (depois[i].total &gt; antes[j].total)
+                    cresceu[i] = depois[i].total - antes[j].total;
+                soma += cresceu[i];
+                break;
+            }
+
+    printf(&quot;\n%-6s %-30s %12s %10s\n&quot;, &quot;linha&quot;, &quot;dispositivo/evento&quot;, &quot;no periodo&quot;, &quot;por seg&quot;);
+    for (int k = 0; k &lt; 8; k++) {                 /* as 8 que mais cresceram */
+        int m = -1;
+        for (int i = 0; i &lt; nd; i++)
+            if (cresceu[i] &gt; 0 &amp;&amp; (m &lt; 0 || cresceu[i] &gt; cresceu[m])) m = i;
+        if (m &lt; 0) break;
+        printf(&quot;%-6s %-30s %12llu %10.1f\n&quot;, depois[m].nome, depois[m].dispositivo,
+               cresceu[m], (double)cresceu[m] / segundos);
+        cresceu[m] = 0;
+    }
+    printf(&quot;\nTotal em %d s: %llu interrupcoes (%.0f por segundo)\n&quot;,
+           segundos, soma, (double)soma / segundos);
+    return 0;
+}
+FIM</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -Wall -Wextra -O0 interrupcoes.c -o interrupcoes</code></pre></div>
+</li>
+<li>Antes de rodar, responda:
+<div class="question"><label for="a1-previsao">Previsão: qual dispositivo vai interromper mais a CPU em 10 segundos, se você não tocar em nada?</label><textarea id="a1-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
+</li>
+<li>Rode <b>sem tocar no teclado</b> por 10 segundos:
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10</code></pre></div>
+<div class="question"><label for="a1-parado">Cole aqui a saída (parado).</label><textarea id="a1-parado" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+<li>Rode de novo e, durante os 10 segundos, <b>digite letras sem parar, sem apertar Enter</b>. No fim, aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> para apagar as letras da linha.
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10</code></pre></div>
+<div class="question"><label for="a1-digitando">Cole aqui a saída (digitando).</label><textarea id="a1-digitando" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Quem é quem no computador do LIAC</h3>
+<div class="tbl"><table><thead><tr><th>Linha</th><th>Dispositivo</th><th>O que é</th></tr></thead><tbody>
+<tr><td>LOC</td><td>Local timer interrupts</td><td>Temporizador interno de cada CPU: avisa várias vezes por segundo para o sistema trocar de tarefa.</td></tr>
+<tr><td>1 e 12</td><td><code>i8042</code></td><td>Controlador de teclado e mouse do tipo PS/2. A IRQ 1 do teclado é a do <a href="../../materiais/pdfs/un05t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>.</td></tr>
+<tr><td>123</td><td><code>xhci_hcd</code></td><td>Controlador USB: teclado e mouse ligados por USB (<a href="../../materiais/pdfs/un05t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>).</td></tr>
+<tr><td>131</td><td><code>ahci</code></td><td>Controlador dos discos SATA.</td></tr>
+<tr><td>132</td><td><code>enp0s31f6</code></td><td>Placa de rede. O terminal web envia cada tecla pela rede até este computador.</td></tr>
+<tr><td>134</td><td><code>nvkm</code></td><td>Placa de vídeo.</td></tr>
+<tr><td>122</td><td><code>PCIe PME, aerdrv</code></td><td>Porta PCI Express (PCIe): avisos de energia e de erros da ligação.</td></tr>
+</tbody></table></div>
+<p class="small">No arquivo, <code>IR-IO-APIC</code> é o controlador de interrupções atual, sucessor do 8259A do <a href="../../materiais/pdfs/un05t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>. <code>PCI-MSI</code> indica avisos enviados como mensagens pelo próprio barramento PCIe, o caminho de dados, endereços e controle do <a href="../../materiais/pdfs/un05t01.pdf#page=5" target="_blank" rel="noopener">slide 5</a>.</p>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Exemplo ilustrativo · nomes do LIAC, números inventados</div><pre tabindex="0">Contando interrupcoes por 10 s...
+
+linha  dispositivo/evento               no periodo    por seg
+LOC    Local timer interrupts                12000     1200.0
+132    enp0s31f6                              1500      150.0
+131    ahci[0000:00:17.0]                       40        4.0
+
+Total em 10 s: 13600 interrupcoes (1360 por segundo)</pre></div>
+<p>Observe: mesmo parado, o temporizador interrompe centenas de vezes por segundo. Ao digitar, procure a linha que cresceu. Os contadores são do computador inteiro e incluem os colegas conectados.</p>
+<div class="question"><label for="a1-p1">Qual linha mais cresceu quando você digitou? Que dispositivo é e por que ele foi avisado?</label><textarea id="a1-p1" placeholder="Compare as duas saídas."></textarea></div>
+<div class="question"><label for="a1-p2">Por que há interrupções mesmo quando ninguém usa o teclado?</label><textarea id="a1-p2" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Atividade 1 concluída</label>
+</section>
+
+<section class="etapa" id="a2"><p class="label">Atividade 2 · até 30 min <span class="tipo">Medição real · analogia</span></p><h2>Perguntar ou ser avisado?</h2>
+<p><b>Objetivo:</b> medir quanto tempo de CPU se gasta esperando um dado de duas formas diferentes.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>E/S programada (programmed I/O)</dt><dd>A CPU comanda a operação e acompanha cada passo sozinha. <a href="../../materiais/pdfs/un05t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a></dd></div>
+<div><dt>Espera ocupada (busy-waiting) ou polling</dt><dd>A CPU pergunta sem parar “já terminou?” e não faz mais nada enquanto isso. <a href="../../materiais/pdfs/un05t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a></dd></div>
+<div><dt>E/S por interrupção (interrupt-driven I/O)</dt><dd>A CPU pede e vai fazer outra coisa; o dispositivo avisa quando terminar. <a href="../../materiais/pdfs/un05t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a></dd></div>
+<div><dt>Tempo de CPU (CPU time)</dt><dd>Quanto tempo o processador trabalhou para o programa. Diferente do tempo de espera, que conta o relógio do início ao fim.</dd></div>
+</dl>
+<p class="small"><b>Analogia:</b> aqui o “dispositivo” é outro programa (um processo filho, criado pelo próprio programa), que manda 1 byte depois de 3 s por um <i>pipe</i>, um canal entre programas. A medição é real, mas não há periférico de verdade. No modo avisado, quem acorda o programa é o sistema operacional.</p>
+<h3>O que fazer</h3>
+<ol>
+<li>Crie e compile o programa:
+<details><summary>Criar <code>espera.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar espera.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar espera.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; espera.c &lt;&lt;&#x27;FIM&#x27;
+/* espera.c - AOC, Unidade 5, Atividade 2.
+   Duas formas de esperar um dado que so fica pronto depois de 3 segundos.
+     perguntando: consulta sem parar se o dado chegou (como o polling).
+     avisado:     dorme; o sistema operacional acorda o programa quando o
+                  dado chega (como a interrupcao).
+   O &quot;dispositivo&quot; e um processo filho que envia 1 byte por um pipe.
+   E uma analogia em software: nenhum periferico real e usado. */
+#define _POSIX_C_SOURCE 200809L
+#include &lt;errno.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/resource.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;time.h&gt;
+#include &lt;unistd.h&gt;
+
+static double relogio(void) {          /* tempo total decorrido, em s */
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &amp;t);
+    return (double)t.tv_sec + (double)t.tv_nsec / 1e9;
+}
+
+static double tempo_cpu(void) {        /* tempo de CPU deste programa, em s */
+    struct rusage r;
+    getrusage(RUSAGE_SELF, &amp;r);
+    return (double)(r.ru_utime.tv_sec + r.ru_stime.tv_sec)
+         + (double)(r.ru_utime.tv_usec + r.ru_stime.tv_usec) / 1e6;
+}
+
+int main(int argc, char **argv) {
+    int perguntando = argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;perguntando&quot;) == 0;
+    int avisado = argc &gt; 1 &amp;&amp; strcmp(argv[1], &quot;avisado&quot;) == 0;
+    if (!perguntando &amp;&amp; !avisado) {
+        fprintf(stderr, &quot;uso: %s perguntando | avisado\n&quot;, argv[0]);
+        return 1;
+    }
+    int canal[2];
+    if (pipe(canal) != 0) { perror(&quot;pipe&quot;); return 1; }
+    pid_t filho = fork();
+    if (filho &lt; 0) { perror(&quot;fork&quot;); return 1; }
+    if (filho == 0) {                  /* o &quot;dispositivo&quot; demora 3 s */
+        close(canal[0]);
+        sleep(3);
+        if (write(canal[1], &quot;D&quot;, 1) != 1) _exit(1);
+        _exit(0);
+    }
+    close(canal[1]);
+
+    double t0 = relogio(), c0 = tempo_cpu();
+    unsigned long long consultas = 0;
+    char dado = &#x27;?&#x27;;
+    if (perguntando) {
+        fcntl(canal[0], F_SETFL, O_NONBLOCK);   /* read responde na hora */
+        for (;;) {                               /* &quot;Ja terminou?&quot; */
+            consultas++;
+            ssize_t r = read(canal[0], &amp;dado, 1);
+            if (r == 1) break;
+            if (r &lt; 0 &amp;&amp; errno != EAGAIN) { perror(&quot;read&quot;); return 1; }
+        }
+    } else {
+        consultas = 1;                           /* pede uma vez e dorme */
+        if (read(canal[0], &amp;dado, 1) != 1) { perror(&quot;read&quot;); return 1; }
+    }
+    double espera = relogio() - t0, cpu = tempo_cpu() - c0;
+    waitpid(filho, NULL, 0);
+
+    printf(&quot;modo:                 %s\n&quot;, argv[1]);
+    printf(&quot;dado recebido:        %c\n&quot;, dado);
+    printf(&quot;tempo de espera:      %.2f s\n&quot;, espera);
+    printf(&quot;tempo de CPU gasto:   %.3f s (%.0f%% da espera)\n&quot;, cpu, 100.0 * cpu / espera);
+    printf(&quot;consultas feitas:     %llu\n&quot;, consultas);
+    return 0;
+}
+FIM</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
+gcc -std=c11 -Wall -Wextra -O0 espera.c -o espera</code></pre></div>
+</li>
+<li>Antes de rodar, responda:
+<div class="question"><label for="a2-previsao">Previsão: nos 3 s de espera, quanto tempo de CPU cada modo vai gastar?</label><textarea id="a2-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
+</li>
+<li>Rode os dois modos:
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./espera perguntando
+./espera avisado</code></pre></div>
+<div class="question"><label for="a2-saida">Cole aqui as duas saídas.</label><textarea id="a2-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Exemplo medido em outro computador</div><pre tabindex="0">modo:                 perguntando
+dado recebido:        D
+tempo de espera:      3.00 s
+tempo de CPU gasto:   3.001 s (100% da espera)
+consultas feitas:     19757538
+modo:                 avisado
+dado recebido:        D
+tempo de espera:      3.00 s
+tempo de CPU gasto:   0.000 s (0% da espera)
+consultas feitas:     1</pre></div>
+<p>Observe: a espera é a mesma; o gasto de CPU, não. Se muitos colegas rodarem ao mesmo tempo, o modo perguntando pode ficar abaixo de 100%, porque eles disputam as CPUs.</p>
+<div class="question"><label for="a2-p1">Quantas consultas o modo perguntando fez? O que a CPU poderia ter feito nesses 3 s? (<a href="../../materiais/pdfs/un05t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a>)</label><textarea id="a2-p1" placeholder="Use os seus números."></textarea></div>
+<div class="question"><label for="a2-p2">Em que tipo de sistema perguntar sem parar ainda é aceitável? (<a href="../../materiais/pdfs/un05t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a>)</label><textarea id="a2-p2" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Atividade 2 concluída</label>
+</section>
+
+<section class="etapa" id="a3"><p class="label">Atividade 3 · até 30 min <span class="tipo">Medição real · analogia</span></p><h2>Um byte por vez ou em blocos?</h2>
+<p><b>Objetivo:</b> medir quanto custa ler os mesmos 4 MiB com pedidos pequenos e com pedidos grandes.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Sobrecarga (overhead)</dt><dd>Custo fixo de cada pedido, quer ele traga 1 byte ou milhares. No slide, “1 byte = 1 interrupção”. <a href="../../materiais/pdfs/un05t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a></dd></div>
+<div><dt>Transferência em bloco (block transfer)</dt><dd>Mover muitos bytes de uma só vez, com um único pedido.</dd></div>
+<div><dt>DMA (direct memory access, acesso direto à memória)</dt><dd>Controlador que copia blocos inteiros entre o periférico e a RAM sem a CPU. Ela só configura a cópia e recebe uma interrupção no fim. <a href="../../materiais/pdfs/un05t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a></dd></div>
+<div><dt>MiB e ms</dt><dd>1 MiB = 1.048.576 bytes. 1 ms é um milésimo de segundo; 1 ns, um bilionésimo.</dd></div>
+</dl>
+<p class="small"><b>Analogia:</b> cada pedido aqui é uma chamada ao sistema operacional (<code>read</code>), e os dados vêm da memória, não do disco. O programa mede o custo de cada pedido, não o DMA. O DMA entra no raciocínio: é o hardware que evita esse custo byte a byte nos dispositivos rápidos.</p>
+<h3>O que fazer</h3>
+<ol>
+<li>Crie e compile o programa. Ele cria um arquivo de 4 MiB na sua pasta, lê esse arquivo cinco vezes e apaga o arquivo no fim.
+<details><summary>Criar <code>blocos.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar blocos.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar blocos.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; blocos.c &lt;&lt;&#x27;FIM&#x27;
+/* blocos.c - AOC, Unidade 5, Atividade 3.
+   Le o mesmo arquivo de 4 MiB cinco vezes, com pedidos (blocos) de
+   tamanhos diferentes. Cada read() e um pedido ao sistema operacional.
+   Mostra quantos pedidos foram feitos e quanto tempo levou.
+   Limite: os dados vem da memoria (cache de arquivos do Linux), nao do
+   disco. Mede-se o custo de cada pedido, nao o DMA. */
+#define _POSIX_C_SOURCE 200809L
+#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+#include &lt;unistd.h&gt;
+
+#define TAMANHO (4u * 1024u * 1024u)   /* 4 MiB = 4.194.304 bytes */
+#define NOME &quot;dados_4MiB.bin&quot;
+
+static double relogio(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &amp;t);
+    return (double)t.tv_sec + (double)t.tv_nsec / 1e9;
+}
+
+int main(void) {
+    static unsigned char buf[65536];
+
+    /* 1. cria o arquivo de 4 MiB na pasta atual */
+    int fd = open(NOME, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    if (fd &lt; 0) { perror(NOME); return 1; }
+    for (unsigned i = 0; i &lt; sizeof buf; i++) buf[i] = (unsigned char)(i * 7u);
+    for (unsigned feito = 0; feito &lt; TAMANHO; feito += (unsigned)sizeof buf)
+        if (write(fd, buf, sizeof buf) != (ssize_t)sizeof buf) { perror(&quot;write&quot;); return 1; }
+    close(fd);
+
+    /* 2. le o arquivo inteiro com cada tamanho de bloco */
+    const size_t blocos[] = {1, 16, 512, 4096, 65536};
+    printf(&quot;Arquivo de 4 MiB = %u bytes\n\n&quot;, TAMANHO);
+    printf(&quot;%12s %12s %12s %16s\n&quot;, &quot;bloco(bytes)&quot;, &quot;pedidos&quot;, &quot;tempo(ms)&quot;, &quot;ns por pedido&quot;);
+    for (size_t k = 0; k &lt; sizeof blocos / sizeof blocos[0]; k++) {
+        fd = open(NOME, O_RDONLY);
+        if (fd &lt; 0) { perror(NOME); return 1; }
+        unsigned long long pedidos = 0, lidos = 0;
+        ssize_t r;
+        double t0 = relogio();
+        while ((r = read(fd, buf, blocos[k])) &gt; 0) {
+            pedidos++;
+            lidos += (unsigned long long)r;
+        }
+        double ms = (relogio() - t0) * 1e3;
+        close(fd);
+        if (r &lt; 0 || lidos != TAMANHO) { fprintf(stderr, &quot;erro de leitura\n&quot;); return 1; }
+        printf(&quot;%12zu %12llu %12.1f %16.1f\n&quot;, blocos[k], pedidos, ms,
+               ms * 1e6 / (double)pedidos);
+    }
+
+    /* 3. apaga o arquivo para nao ocupar a sua cota */
+    unlink(NOME);
+    return 0;
+}
+FIM</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
+gcc -std=c11 -Wall -Wextra -O0 blocos.c -o blocos</code></pre></div>
+</li>
+<li>Antes de rodar, responda:
+<div class="question"><label for="a3-previsao">Previsão: lendo 4 MiB com blocos de 1 byte, quantos pedidos serão feitos? E com blocos de 65.536 bytes?</label><textarea id="a3-previsao" placeholder="Não vale nota. Use 1 MiB = 1.048.576 bytes."></textarea></div>
+</li>
+<li>Rode:
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./blocos</code></pre></div>
+<div class="question"><label for="a3-saida">Cole aqui a tabela.</label><textarea id="a3-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Exemplo medido em outro computador</div><pre tabindex="0">Arquivo de 4 MiB = 4194304 bytes
+
+bloco(bytes)      pedidos    tempo(ms)    ns por pedido
+           1      4194304        885.8            211.2
+          16       262144         76.3            290.9
+         512         8192          2.1            257.4
+        4096         1024          0.8            799.6
+       65536           64          0.5           7866.2</pre></div>
+<p>Observe: os bytes lidos são sempre os mesmos 4 MiB. O tempo cai junto com o número de pedidos.</p>
+<div class="question"><label for="a3-p1">Quantas vezes mais lento foi o bloco de 1 byte que o de 65.536 bytes? Mostre a divisão com os seus tempos.</label><textarea id="a3-p1" placeholder="Mostre a conta."></textarea></div>
+<div class="question"><label for="a3-p2">Ligue o resultado à frase “1 byte = 1 interrupção” (<a href="../../materiais/pdfs/un05t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a>). Por que o DMA (<a href="../../materiais/pdfs/un05t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a>) resolve esse problema?</label><textarea id="a3-p2" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Atividade 3 concluída</label>
+</section>
+
+<section class="etapa" id="sintese"><p class="label">Síntese · 5 min</p><h2>Qual usar e quando?</h2>
+<p>Retome a “Matriz de Batalha” do <a href="../../materiais/pdfs/un05t01.pdf#page=13" target="_blank" rel="noopener">slide 13</a>. Para cada dispositivo, escolha <b>E/S programada</b>, <b>interrupção</b> ou <b>DMA</b> e justifique em uma frase, citando um número que você mediu na Atividade 2 ou 3.</p>
+<div class="question"><label for="s-teclado">Teclado: poucos bytes, chegam de vez em quando.</label><textarea id="s-teclado" placeholder="Técnica + justificativa com um número medido."></textarea></div>
+<div class="question"><label for="s-ssd">SSD NVMe: muitos megabytes por segundo (<a href="../../materiais/pdfs/un05t01.pdf#page=14" target="_blank" rel="noopener">slide 14</a>).</label><textarea id="s-ssd" placeholder="Técnica + justificativa com um número medido."></textarea></div>
+<div class="question"><label for="s-sensor">Sensor de temperatura num sistema embarcado muito simples, que só faz essa tarefa.</label><textarea id="s-sensor" placeholder="Técnica + justificativa com um número medido."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Síntese concluída</label>
+</section>
+
+<section class="etapa" id="entregar"><h2>Entregar</h2>
+<ol>
+<li>Confira as respostas. Clique em <b>Preparar arquivo final</b>.
+<p><button type="button" id="preparar">Preparar arquivo final</button></p>
+<div id="entrega-comando" hidden><div class="command"><div class="command-head"><span>Cole no terminal para salvar entrega-es.txt</span><button class="copy" type="button" aria-label="Copiar o comando do arquivo final">Copiar</button></div><pre tabindex="0"><code id="entrega-codigo"></code></pre></div></div>
+</li>
+<li>Cole o bloco no terminal. Ele grava <code>entrega-es.txt</code> na sua pasta <code>~/atividades/aoc-entrada-saida</code> e mostra o caminho.</li>
+<li>Entregue esse arquivo pelo procedimento já usado no LIAC. Só o arquivo final é avaliado. Se mudar alguma resposta, prepare e cole de novo: o arquivo é substituído.</li>
+</ol>
+<p class="small">O botão <b>Baixar respostas (.txt)</b>, no topo, guarda uma cópia neste aparelho.</p>
+<details><summary>Como será avaliado</summary><div><ul>
+<li><b>Atividade 1:</b> identifica a interface dos discos, faz a conta da pergunta extra e relaciona a linha que cresceu ao dispositivo correspondente.</li>
+<li><b>Atividade 2:</b> compara o tempo de CPU dos dois modos com os seus números e explica a espera ocupada.</li>
+<li><b>Atividade 3:</b> calcula a razão entre os tempos, explica o custo por pedido e liga ao DMA sem dizer que mediu o DMA.</li>
+<li><b>Síntese:</b> escolhas coerentes com o volume e a velocidade de cada dispositivo, justificadas com números medidos.</li>
+</ul><p>As previsões não valem nota. Pesos e prazo serão informados pelo professor.</p></div></details>
+<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco não foi colado até a última linha (<code>FIM</code>). Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>“Permissão negada” ou “arquivo não encontrado”:</b> rode <code>cd ~/atividades/aoc-entrada-saida</code> e tente outra vez. Se continuar, registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Arquitetura e Organização de Computadores · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>
