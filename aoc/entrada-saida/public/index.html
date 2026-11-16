@@ -175,20 +175,25 @@ FIM
 <tr><td>131</td><td><code>ahci</code></td><td>Controlador dos discos SATA.</td></tr>
 <tr><td>132</td><td><code>enp0s31f6</code></td><td>Placa de rede. O terminal web envia cada tecla pela rede até este computador.</td></tr>
 <tr><td>134</td><td><code>nvkm</code></td><td>Placa de vídeo.</td></tr>
-<tr><td>122</td><td><code>PCIe PME, aerdrv</code></td><td>Porta PCI Express (PCIe): avisos de energia e de erros da ligação.</td></tr>
+<tr><td>122</td><td><code>PCIe PME, aerdrv, PCIe bwctrl</code></td><td>Porta PCI Express (PCIe). Neste computador ela avisa a CPU cerca de 90 mil vezes por segundo, o tempo todo, sem relação com o teclado. É um exemplo real do problema do <a href="../../materiais/pdfs/un05t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a>: interrupções demais ocupam a CPU à toa. <b>Não use esta linha na comparação.</b></td></tr>
 </tbody></table></div>
 <p class="small">No arquivo, <code>IR-IO-APIC</code> é o controlador de interrupções atual, sucessor do 8259A do <a href="../../materiais/pdfs/un05t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>. <code>PCI-MSI</code> indica avisos enviados como mensagens pelo próprio barramento PCIe, o caminho de dados, endereços e controle do <a href="../../materiais/pdfs/un05t01.pdf#page=5" target="_blank" rel="noopener">slide 5</a>.</p>
 <h3>Saída esperada</h3>
-<div class="expected"><div class="expected-label">Exemplo ilustrativo · nomes do LIAC, números inventados</div><pre tabindex="0">Contando interrupcoes por 10 s...
-
-linha  dispositivo/evento               no periodo    por seg
-LOC    Local timer interrupts                12000     1200.0
-132    enp0s31f6                              1500      150.0
-131    ahci[0000:00:17.0]                       40        4.0
-
-Total em 10 s: 13600 interrupcoes (1360 por segundo)</pre></div>
-<p>Observe: mesmo parado, o temporizador interrompe centenas de vezes por segundo. Ao digitar, procure a linha que cresceu. Os contadores são do computador inteiro e incluem os colegas conectados.</p>
-<div class="question"><label for="a1-p1">Qual linha mais cresceu quando você digitou? Que dispositivo é e por que ele foi avisado?</label><textarea id="a1-p1" placeholder="Compare as duas saídas."></textarea></div>
+<div class="expected"><div class="expected-label">Medido no LIAC · 1º teste, parado</div><pre tabindex="0">linha  dispositivo/evento               no periodo    por seg
+122    PCIe PME, aerdrv, PCIe bwctrl        905271    90527.1
+LOC    Local timer interrupts                13262     1326.2
+134    nvkm                                   4563      456.3
+132    enp0s31f6                               102       10.2
+...</pre></div>
+<div class="expected"><div class="expected-label">Medido no LIAC · 2º teste, digitando</div><pre tabindex="0">linha  dispositivo/evento               no periodo    por seg
+122    PCIe PME, aerdrv, PCIe bwctrl        868407    86840.7
+LOC    Local timer interrupts                15341     1534.1
+134    nvkm                                   4870      487.0
+132    enp0s31f6                               293       29.3
+...</pre></div>
+<p>Observe: a ordem quase não muda, então compare <b>cada linha</b> entre os dois testes. Neste exemplo, LOC subiu 16% (13.262 → 15.341), mas <code>enp0s31f6</code> quase triplicou (102 → 293, ×2,9). Os contadores são do computador inteiro e incluem os colegas conectados.</p>
+<p class="small">Por que a rede, e não o teclado? Você digita no seu aparelho; cada tecla viaja pela internet até o LIAC, e quem avisa a CPU de lá é a placa de rede (<a href="../../materiais/pdfs/un05t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a> mostra o mesmo caminho com um mouse USB).</p>
+<div class="question"><label for="a1-p1">Compare as duas saídas linha a linha (ignore a 122). Qual linha aumentou proporcionalmente mais quando você digitou? Mostre a conta (digitando ÷ parado), diga que dispositivo é e por que ele foi avisado.</label><textarea id="a1-p1" placeholder="Ex.: 293 ÷ 102 ≈ 2,9."></textarea></div>
 <div class="question"><label for="a1-p2">Por que há interrupções mesmo quando ninguém usa o teclado?</label><textarea id="a1-p2" placeholder="Responda com suas palavras."></textarea></div>
 <label class="done"><input type="checkbox" id="feito-1" data-step="1">Atividade 1 concluída</label>
 </section>
