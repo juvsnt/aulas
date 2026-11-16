@@ -10,7 +10,9 @@
 </ol>
 <div class="question"><label for="identificacao">Nome completo e matrícula</label><textarea id="identificacao" placeholder="Ex.: Maria Silva — 202312345"></textarea></div>
 <div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/aoc-entrada-saida
-cd ~/atividades/aoc-entrada-saida</code></pre></div>
+cd ~/atividades/aoc-entrada-saida
+# fim do bloco</code></pre></div>
+<p class="small">Todo bloco termina com a linha <code># fim do bloco</code>, que não faz nada. Ela existe porque o terminal às vezes acrescenta um <code>~</code> no fim do que foi colado; o <code>~</code> fica nessa linha e não atrapalha. Se aparecer <code>~</code> no fim de um comando que você digitou, apague antes de apertar Enter.</p>
 <p class="small">Os números mudam de um computador para outro e de um momento para outro. Registre sempre os <b>seus</b> valores. Cada atividade tem quatro etapas: prever (5 min), executar (10 min), interpretar (10 min) e registrar (5 min).</p>
 </section>
 
@@ -29,7 +31,8 @@ cd ~/atividades/aoc-entrada-saida</code></pre></div>
 <ol>
 <li>Veja os discos do computador. <code>lsblk</code> lista os discos; a coluna <b>TRAN</b> mostra a interface. Se o título das colunas aparecer quebrado em duas linhas, tudo bem.
 <div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
-lsblk -d -o NAME,TRAN,SIZE</code></pre></div>
+lsblk -d -o NAME,TRAN,SIZE
+# fim do bloco</code></pre></div>
 <div class="question"><label for="a1-discos">Quantos discos há e qual é a interface deles? Que linha de interrupção você espera para o controlador desses discos? (Use a tabela “Quem é quem” abaixo.)</label><textarea id="a1-discos" placeholder="Responda com suas palavras."></textarea></div>
 </li>
 <li><b>Pergunta extra.</b> O <code>lsblk</code> mostra o tamanho em GiB (1 GiB = 1.073.741.824 bytes), mas o fabricante vende o disco em TB (1 TB = 1.000.000.000.000 bytes), como kB e KiB na Unidade 4.
@@ -145,18 +148,22 @@ int main(int argc, char **argv) {
            segundos, soma, (double)soma / segundos);
     return 0;
 }
-FIM</code></pre></div></div></details>
-<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -Wall -Wextra -O0 interrupcoes.c -o interrupcoes</code></pre></div>
+FIM
+# fim do bloco</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -Wall -Wextra -O0 interrupcoes.c -o interrupcoes
+# fim do bloco</code></pre></div>
 </li>
 <li>Antes de rodar, responda:
 <div class="question"><label for="a1-previsao">Previsão: qual dispositivo vai interromper mais a CPU em 10 segundos, se você não tocar em nada?</label><textarea id="a1-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
 </li>
 <li>Rode <b>sem tocar no teclado</b> por 10 segundos:
-<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10</code></pre></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10
+# fim do bloco</code></pre></div>
 <div class="question"><label for="a1-parado">Cole aqui a saída (parado).</label><textarea id="a1-parado" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
 </li>
 <li>Rode de novo e, durante os 10 segundos, <b>digite letras sem parar, sem apertar Enter</b>. No fim, aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> para apagar as letras da linha.
-<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10</code></pre></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./interrupcoes 10
+# fim do bloco</code></pre></div>
 <div class="question"><label for="a1-digitando">Cole aqui a saída (digitando).</label><textarea id="a1-digitando" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
 </li>
 </ol>
@@ -274,16 +281,19 @@ int main(int argc, char **argv) {
     printf(&quot;consultas feitas:     %llu\n&quot;, consultas);
     return 0;
 }
-FIM</code></pre></div></div></details>
+FIM
+# fim do bloco</code></pre></div></div></details>
 <div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
-gcc -std=c11 -Wall -Wextra -O0 espera.c -o espera</code></pre></div>
+gcc -std=c11 -Wall -Wextra -O0 espera.c -o espera
+# fim do bloco</code></pre></div>
 </li>
 <li>Antes de rodar, responda:
 <div class="question"><label for="a2-previsao">Previsão: nos 3 s de espera, quanto tempo de CPU cada modo vai gastar?</label><textarea id="a2-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
 </li>
 <li>Rode os dois modos:
 <div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./espera perguntando
-./espera avisado</code></pre></div>
+./espera avisado
+# fim do bloco</code></pre></div>
 <div class="question"><label for="a2-saida">Cole aqui as duas saídas.</label><textarea id="a2-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
 </li>
 </ol>
@@ -375,15 +385,18 @@ int main(void) {
     unlink(NOME);
     return 0;
 }
-FIM</code></pre></div></div></details>
+FIM
+# fim do bloco</code></pre></div></div></details>
 <div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-entrada-saida
-gcc -std=c11 -Wall -Wextra -O0 blocos.c -o blocos</code></pre></div>
+gcc -std=c11 -Wall -Wextra -O0 blocos.c -o blocos
+# fim do bloco</code></pre></div>
 </li>
 <li>Antes de rodar, responda:
 <div class="question"><label for="a3-previsao">Previsão: lendo 4 MiB com blocos de 1 byte, quantos pedidos serão feitos? E com blocos de 65.536 bytes?</label><textarea id="a3-previsao" placeholder="Não vale nota. Use 1 MiB = 1.048.576 bytes."></textarea></div>
 </li>
 <li>Rode:
-<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./blocos</code></pre></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./blocos
+# fim do bloco</code></pre></div>
 <div class="question"><label for="a3-saida">Cole aqui a tabela.</label><textarea id="a3-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
 </li>
 </ol>
@@ -426,7 +439,7 @@ bloco(bytes)      pedidos    tempo(ms)    ns por pedido
 <li><b>Atividade 3:</b> calcula a razão entre os tempos, explica o custo por pedido e liga ao DMA sem dizer que mediu o DMA.</li>
 <li><b>Síntese:</b> escolhas coerentes com o volume e a velocidade de cada dispositivo, justificadas com números medidos.</li>
 </ul><p>As previsões não valem nota. Pesos e prazo serão informados pelo professor.</p></div></details>
-<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco não foi colado até a última linha (<code>FIM</code>). Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>“Permissão negada” ou “arquivo não encontrado”:</b> rode <code>cd ~/atividades/aoc-entrada-saida</code> e tente outra vez. Se continuar, registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
+<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco não foi colado até a última linha (<code>FIM</code>). Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>“coluna desconhecida: SIZE~” ou outro erro com <code>~</code> no fim:</b> apague o <code>~</code> e aperte Enter de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>“Permissão negada” ou “arquivo não encontrado”:</b> rode <code>cd ~/atividades/aoc-entrada-saida</code> e tente outra vez. Se continuar, registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
 </section>
 </main>
 <footer>Prof. Me. Juvenal Silva Neto · Arquitetura e Organização de Computadores · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

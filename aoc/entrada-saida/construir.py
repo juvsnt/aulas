@@ -21,7 +21,13 @@ PUBLIC = ROOT / 'public'
 PDF = '../../materiais/pdfs/un05t01.pdf'
 
 
+FIM_BLOCO = '# fim do bloco'
+
+
 def comando(titulo, texto):
+    # O terminal web do LIAC pode grudar um "~" na ultima linha colada.
+    # O comentario final absorve esse "~" sem efeito nos comandos.
+    texto = texto + '\n' + FIM_BLOCO
     rotulo = escape(titulo or 'Cole no terminal')
     return ('<div class="command"><div class="command-head"><span>' + rotulo +
             '</span><button class="copy" type="button" aria-label="Copiar: ' + rotulo +

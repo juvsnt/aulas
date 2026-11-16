@@ -35,19 +35,25 @@ ok(len(blocos) == 12, f'{len(blocos)} blocos de comando na página (esperado 12)
 # 1. Fontes da pagina identicas aos arquivos publicados
 for nome in ['interrupcoes.c', 'espera.c', 'blocos.c']:
     fonte = (ROOT / 'public' / 'arquivos' / nome).read_text()
-    ok(any(b == f"cat > {nome} <<'FIM'\n{fonte}FIM" for b in blocos), f'{nome}: bloco da página igual ao arquivo')
+    ok(any(b == f"cat > {nome} <<'FIM'\n{fonte}FIM\n# fim do bloco" for b in blocos), f'{nome}: bloco da página igual ao arquivo')
+ok(all(b.endswith('\n# fim do bloco') for b in blocos), 'todo bloco termina com "# fim do bloco"')
 
 with tempfile.TemporaryDirectory() as tmp:
     home = Path(tmp)
     pasta = home / 'atividades' / 'aoc-entrada-saida'
-    # 2. Executa todos os blocos, na ordem, menos os que rodam programas demorados
-    roteiro = []
-    for b in blocos:
+    # 2. Cola cada bloco, na ordem, como o terminal web do LIAC: com "~"
+    #    grudado no fim da ultima linha. Nenhum bloco pode falhar por isso.
+    erros_til, stderr_total = [], ''
+    for n, b in enumerate(blocos, 1):
         b = b.replace('./interrupcoes 10', './interrupcoes 2')
-        if b.startswith('mkdir') or b.startswith('cat >') or 'gcc ' in b:
-            roteiro.append(b if b.startswith('mkdir') else 'cd ~/atividades/aoc-entrada-saida\n' + b)
-    r = bash('set -e\n' + '\n'.join(roteiro), home)
-    ok(r.returncode == 0, 'criação e compilação pelos blocos da página' + (': ' + r.stderr[-300:] if r.returncode else ''))
+        if not b.startswith('mkdir'):
+            b = 'cd ~/atividades/aoc-entrada-saida\n' + b
+        r = bash('set -e\n' + b + '~', home)
+        stderr_total += r.stderr
+        if r.returncode != 0 or '~' in r.stderr:
+            erros_til.append(f'bloco {n}: {r.stderr.strip()[-200:]}')
+    ok(not erros_til, 'todos os 12 blocos funcionam com "~" colado no fim' + ('; ' + ' | '.join(erros_til) if erros_til else ''))
+    r = subprocess.CompletedProcess([], 0, '', stderr_total)
     ok('warning' not in r.stderr, 'compilação sem avisos')
 
     r = bash('cd ~/atividades/aoc-entrada-saida && ./interrupcoes 2', home)
@@ -76,12 +82,12 @@ with tempfile.TemporaryDirectory() as tmp:
           "process.stdout.write(comandoEntrega(JSON.parse(process.argv[2])));")
     cmd = subprocess.run(['node', '-e', js, str(ROOT / 'public' / 'app.js'), json.dumps(dificil)],
                          text=True, capture_output=True, check=True).stdout
-    r = bash('cd /\n' + cmd, home)
+    r = bash('cd /\n' + cmd + '~', home)
     salvo = pasta / 'entrega-es.txt'
     ok(r.returncode == 0 and 'Arquivo final salvo' in r.stdout, 'arquivo final: comando executa')
     ok(salvo.exists() and salvo.read_text() == dificil + '\n', 'arquivo final: conteúdo idêntico')
     ok(not list(home.rglob('INVADIU*')), 'arquivo final: respostas não são executadas')
-    r = bash('cd /\n' + cmd, home)
+    r = bash('cd /\n' + cmd + '~', home)
     ok(salvo.read_text() == dificil + '\n', 'arquivo final: segunda colagem substitui o arquivo')
 
     sobras = subprocess.run(['pgrep', '-f', 'espera (perguntando|avisado)'], capture_output=True)

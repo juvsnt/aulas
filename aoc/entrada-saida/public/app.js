@@ -23,7 +23,8 @@
       'else\n' +
       "  printf 'Nao foi possivel salvar. Baixe suas respostas e avise o professor.\\n' >&2\n" +
       '  false\n' +
-      'fi';
+      'fi\n' +
+      '# fim do bloco';   /* o terminal pode grudar "~" aqui; e so comentario */
   }
 
   if (typeof module !== 'undefined' && module.exports) {
