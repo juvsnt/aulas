@@ -160,3 +160,19 @@ body{margin:0}.wrap{max-width:44rem}.topnav{display:flex;gap:1rem;flex-wrap:wrap
 .problema{display:flex;flex-direction:column;gap:.8rem}
 .problema pre{margin:0;overflow:auto;padding:1rem;border-radius:8px;background:var(--term-bg);color:var(--term-fg);font:.84rem/1.6 var(--f-mono)}
 .command code{background:none;padding:0;border-radius:0;overflow-wrap:normal}
+
+/* Unidade IV: quadro de conceitos com referência aos slides */
+.termos{margin:.6rem 0 1rem;padding:0;display:grid;gap:.45rem}
+.termos div{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.55rem .75rem}
+.termos dt{font-weight:700}
+.termos dd{margin:.15rem 0 0;color:var(--ink)}
+.termos dd a{white-space:nowrap}
+.tipo{display:inline-block;margin-left:.4rem;padding:.05rem .5rem;border-radius:99px;background:var(--accent-soft);color:var(--ink);font-size:.8rem}
+
+/* Prática da Unidade IV em passos: um comando por passo, explicação logo abaixo */
+.passos{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;padding-left:1.4rem}
+.passos > li{padding-left:.2rem;min-width:0}
+.explica{margin:.45rem 0 0;font-size:.95rem;color:var(--ink)}
+.command.codigo .command-head{background:#ffffff10}
+.passos{list-style:none;padding-left:0}
+.passo-rotulo{display:inline-block;margin-right:.4rem;padding:.05rem .5rem;border-radius:99px;background:var(--accent-soft);font-size:.8rem;font-weight:700}

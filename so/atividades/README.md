@@ -9,7 +9,10 @@ apenas ferramenta de manutenção docente.
 | Pasta | Unidade | Situação |
 | --- | --- | --- |
 | `un02/` | II — Processos, gerência da CPU e concorrência (un02t01–t08) | Publicada; falta homologar no LIAC |
-| `un03/` | III — Gerência de memória (un03t01–t06): 3 atividades de até 30 min + 8 problemas | Pronta localmente; não publicada; falta homologar no LIAC |
+| `un03/` | III — Gerência de memória (un03t01–t06): 3 atividades de até 30 min + 8 problemas | Publicada (9ac25ab); falta homologar no LIAC |
+| `un04/` | IV — Arquivos e sistemas de arquivos (un04t01–t04): 3 atividades de até 30 min + 8 problemas | Pronta localmente; não publicada; falta homologar no LIAC |
+| `un04-passos/` | IV — Versão simples (só t01 e t02): árvore, atributos, permissões e FD; um comando por passo; código C no nano, separado de compilar e rodar | Publicada em 17/11/2026; falta homologar no LIAC |
+| `un04-codigo/` | IV — Investigar código C pronto: syscalls, FD, E/S com e sem buffer, argc/argv, diretórios (atividade separada) | Pronta localmente; não publicada; falta homologar no LIAC |
 
 ## Estrutura de uma unidade
 
@@ -28,6 +31,12 @@ python3 -I construir.py un02   # gera un02/index.html injetando os fontes de arq
 python3 -I verificar.py un02   # confere e executa o roteiro inteiro (~1 min)
 python3 -I construir.py un03
 python3 -I verificar.py un03   # ~5 s
+python3 -I construir.py un04   # acrescenta '# fim do bloco' e links @@SLIDE
+python3 -I verificar.py un04   # cola cada bloco com '~' no fim; ~3 s
+python3 -I construir.py un04-codigo
+python3 -I verificar.py un04-codigo   # 17 verificacoes
+python3 -I construir.py un04-passos
+python3 -I verificar.py un04-passos   # 16 verificacoes; exige 1 linha com comentario por passo
 ```
 
 O modelo usa diretivas no início da linha: `@@CMD`/`@@OUT` … `@@END`, `@@SRC

@@ -1,0 +1,242 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Prática da Unidade IV de Sistemas Operacionais: primeiros passos com diretórios, atributos, permissões e descritores de arquivo, um comando por vez."><meta name="theme-color" content="#13202a"><title>Primeiros passos com arquivos · Unidade IV | SO</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un04-passos"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../../materiais/#unidade-4">Materiais da unidade IV</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Prática da Unidade IV · Sistemas Operacionais · UNEMAT</p><h1>Primeiros passos com arquivos</h1><p class="lede">Quatro partes curtas no terminal, um comando por vez, sobre os slides t01 e t02 da unidade.</p><div class="meta"><span><b>4 partes</b> de cerca de 15 min</span><span><b>Medição real</b> no LIAC</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Como fazer</h2>
+<ul>
+<li>Abra o terminal e entre com sua conta.</li>
+<li>Faça <b>um passo por vez</b>: copie a linha, cole no terminal, aperte <kbd>Enter</kbd> e confira o que aparece.</li>
+<li>Tudo o que vem depois de <code>#</code> é um <b>comentário</b>: o terminal ignora. Ele está lá para lembrar o que o comando faz.</li>
+<li>Os seus nomes e números serão diferentes dos exemplos. Registre sempre os <b>seus</b>.</li>
+</ul>
+<div class="question"><label for="identificacao">Nome completo e matrícula</label><textarea id="identificacao" placeholder="Ex.: Maria Silva — 202312345"></textarea></div>
+</section>
+
+<nav class="steps-nav" aria-label="Partes"><a href="#p1">1 · Árvore</a> <a href="#p2">2 · Atributos</a> <a href="#p3">3 · Permissões</a> <a href="#p4">4 · Programa em C</a></nav>
+
+<section class="etapa" id="p1"><p class="label">Parte 1 · cerca de 15 min</p><h2>Andar pela árvore de diretórios</h2>
+<p><b>Objetivo:</b> criar pastas e se mover entre elas usando caminhos absolutos e relativos.</p>
+<dl class="termos">
+<div><dt>Diretório (directory)</dt><dd>Pasta: uma tabela que liga nomes a arquivos. <a href="../../materiais/pdfs/un04t02.pdf#page=3" target="_blank" rel="noopener">t02, slide 3</a></dd></div>
+<div><dt>Diretório de trabalho</dt><dd>A pasta onde você está agora. <a href="../../materiais/pdfs/un04t02.pdf#page=4" target="_blank" rel="noopener">t02, slide 4</a></dd></div>
+<div><dt>Caminho absoluto × relativo</dt><dd>O absoluto começa na raiz <code>/</code>; o relativo parte da pasta atual e usa <code>..</code> para subir um nível. <a href="../../materiais/pdfs/un04t02.pdf#page=5" target="_blank" rel="noopener">t02, slide 5</a></dd></div>
+</dl>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 1</span><button class="copy" type="button" aria-label="Copiar: Passo 1">Copiar</button></div><pre tabindex="0"><code>pwd   # mostra em que pasta estou</code></pre></div>
+<p class="explica"><b>O que faz:</b> mostra o caminho absoluto da pasta atual. <b>Observe:</b> começa com <code>/</code>, como <code>/home/seu_usuario</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 2</span><button class="copy" type="button" aria-label="Copiar: Passo 2">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/so-arquivos   # cria a pasta da prática</code></pre></div>
+<p class="explica"><b>O que faz:</b> cria a pasta <code>so-arquivos</code>. O <code>~</code> é a sua pasta pessoal; o <code>-p</code> cria as pastas que faltarem no caminho. <b>Observe:</b> nada aparece; sem mensagem quer dizer que deu certo.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 3</span><button class="copy" type="button" aria-label="Copiar: Passo 3">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/so-arquivos   # entra na pasta da prática</code></pre></div>
+<p class="explica"><b>O que faz:</b> muda o diretório de trabalho. <b>Observe:</b> o texto antes do cursor (o prompt) passa a mostrar <code>so-arquivos</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 4</span><button class="copy" type="button" aria-label="Copiar: Passo 4">Copiar</button></div><pre tabindex="0"><code>mkdir projetos docs   # cria duas pastas aqui dentro</code></pre></div>
+<p class="explica"><b>O que faz:</b> cria as pastas <code>projetos</code> e <code>docs</code> dentro da pasta atual (caminho relativo).</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 5</span><button class="copy" type="button" aria-label="Copiar: Passo 5">Copiar</button></div><pre tabindex="0"><code>ls   # lista o que existe na pasta atual</code></pre></div>
+<p class="explica"><b>Observe:</b> aparecem <code>docs</code> e <code>projetos</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 6</span><button class="copy" type="button" aria-label="Copiar: Passo 6">Copiar</button></div><pre tabindex="0"><code>cd projetos   # caminho relativo: entra em projetos</code></pre></div>
+<p class="explica"><b>O que faz:</b> entra em <code>projetos</code>, que está dentro da pasta atual.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 7</span><button class="copy" type="button" aria-label="Copiar: Passo 7">Copiar</button></div><pre tabindex="0"><code>cd ../docs   # sobe um nível (..) e entra em docs</code></pre></div>
+<p class="explica"><b>O que faz:</b> <code>..</code> é a pasta de cima. O caminho diz: “suba para <code>so-arquivos</code> e entre em <code>docs</code>”, como no slide 5 do t02.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 8</span><button class="copy" type="button" aria-label="Copiar: Passo 8">Copiar</button></div><pre tabindex="0"><code>pwd   # onde estou agora?</code></pre></div>
+<p class="explica"><b>Observe:</b> o caminho termina em <code>/atividades/so-arquivos/docs</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 9</span><button class="copy" type="button" aria-label="Copiar: Passo 9">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/so-arquivos   # caminho absoluto: volta para a pasta da prática</code></pre></div>
+<p class="explica"><b>O que faz:</b> volta para <code>so-arquivos</code> de qualquer lugar, porque o caminho é completo. As próximas partes acontecem nesta pasta.</p></li>
+</ol>
+<div class="question"><label for="p1-absoluto">Copie a saída do passo 8: é o caminho absoluto da pasta docs. Por que ele começa com /?</label><textarea id="p1-absoluto" placeholder="Cole a linha e responda."></textarea></div>
+<div class="question"><label for="p1-relativo">No passo 7 você estava em projetos. Explique, parte por parte, o que significa ../docs.</label><textarea id="p1-relativo" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Parte 1 concluída</label>
+</section>
+
+<section class="etapa" id="p2"><p class="label">Parte 2 · cerca de 15 min</p><h2>O arquivo e seus atributos</h2>
+<p><b>Objetivo:</b> criar um arquivo, ver seus atributos e perceber que renomear não mexe no arquivo, só no nome.</p>
+<dl class="termos">
+<div><dt>Atributos ou metadados</dt><dd>Dados sobre o arquivo: dono, tamanho, permissões, datas. <a href="../../materiais/pdfs/un04t01.pdf#page=4" target="_blank" rel="noopener">t01, slide 4</a></dd></div>
+<div><dt>Inode</dt><dd>O número que identifica o arquivo para o kernel: o “nome verdadeiro”. <a href="../../materiais/pdfs/un04t01.pdf#page=4" target="_blank" rel="noopener">t01, slide 4</a></dd></div>
+<div><dt>Operações</dt><dd>Criar, ler, renomear, excluir… Renomear só muda o nome no diretório. <a href="../../materiais/pdfs/un04t01.pdf#page=8" target="_blank" rel="noopener">t01, slide 8</a></dd></div>
+</dl>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 1</span><button class="copy" type="button" aria-label="Copiar: Passo 1">Copiar</button></div><pre tabindex="0"><code>echo &quot;segredo da turma&quot; &gt; nota.txt   # cria nota.txt com uma frase</code></pre></div>
+<p class="explica"><b>O que faz:</b> <code>echo</code> escreve a frase; o <code>&gt;</code> manda a frase para o arquivo <code>nota.txt</code>, criando-o.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 2</span><button class="copy" type="button" aria-label="Copiar: Passo 2">Copiar</button></div><pre tabindex="0"><code>cat nota.txt   # mostra o conteúdo do arquivo</code></pre></div>
+<p class="explica"><b>Observe:</b> aparece <code>segredo da turma</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 3</span><button class="copy" type="button" aria-label="Copiar: Passo 3">Copiar</button></div><pre tabindex="0"><code>ls -l nota.txt   # mostra os atributos do arquivo</code></pre></div>
+<p class="explica"><b>Observe</b> cada parte da linha, como no <a href="../../materiais/pdfs/un04t01.pdf#page=5" target="_blank" rel="noopener">t01, slide 5</a>:</p>
+<div class="expected"><div class="expected-label">Exemplo</div><pre tabindex="0">-rw-r--r-- 1 aluno aluno 17 nov 18 10:00 nota.txt</pre></div>
+<div class="tbl"><table><thead><tr><th>Parte</th><th>No exemplo</th><th>Significado</th></tr></thead><tbody>
+<tr><td>1ª letra</td><td><code>-</code></td><td>tipo: <code>-</code> arquivo comum, <code>d</code> diretório</td></tr>
+<tr><td>9 letras seguintes</td><td><code>rw-r--r--</code></td><td>permissões (Parte 3)</td></tr>
+<tr><td>número</td><td><code>1</code></td><td>quantos nomes (links) o arquivo tem</td></tr>
+<tr><td>dono e grupo</td><td><code>aluno aluno</code></td><td>usuário dono e grupo dono</td></tr>
+<tr><td>número</td><td><code>17</code></td><td>tamanho em bytes</td></tr>
+<tr><td>data</td><td><code>nov 18 10:00</code></td><td>última modificação</td></tr>
+<tr><td>fim</td><td><code>nota.txt</code></td><td>nome</td></tr>
+</tbody></table></div>
+</li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 4</span><button class="copy" type="button" aria-label="Copiar: Passo 4">Copiar</button></div><pre tabindex="0"><code>stat nota.txt   # mostra todos os metadados</code></pre></div>
+<p class="explica"><b>Observe:</b> a linha com <b>Inode</b> (ou <i>Index Node</i>) e as datas de acesso e modificação.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 5</span><button class="copy" type="button" aria-label="Copiar: Passo 5">Copiar</button></div><pre tabindex="0"><code>cp nota.txt copia.txt   # copia: cria um arquivo novo</code></pre></div>
+<p class="explica"><b>O que faz:</b> cria <code>copia.txt</code> com o mesmo conteúdo.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 6</span><button class="copy" type="button" aria-label="Copiar: Passo 6">Copiar</button></div><pre tabindex="0"><code>ls -i nota.txt copia.txt   # -i mostra o número do inode</code></pre></div>
+<p class="explica"><b>Observe:</b> os dois números são <b>diferentes</b>: a cópia é outro arquivo.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 7</span><button class="copy" type="button" aria-label="Copiar: Passo 7">Copiar</button></div><pre tabindex="0"><code>mv copia.txt renomeada.txt   # renomeia copia.txt</code></pre></div>
+<p class="explica"><b>O que faz:</b> troca o nome no diretório. O conteúdo não é tocado.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 8</span><button class="copy" type="button" aria-label="Copiar: Passo 8">Copiar</button></div><pre tabindex="0"><code>ls -i renomeada.txt   # o inode mudou?</code></pre></div>
+<p class="explica"><b>Observe:</b> o número é o <b>mesmo</b> de <code>copia.txt</code> no passo 6.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 9</span><button class="copy" type="button" aria-label="Copiar: Passo 9">Copiar</button></div><pre tabindex="0"><code>rm renomeada.txt   # exclui o arquivo</code></pre></div>
+<p class="explica"><b>O que faz:</b> apaga a entrada do diretório e libera o espaço. Não pede confirmação: use com cuidado.</p></li>
+</ol>
+<div class="question"><label for="p2-atributos">Pelo passo 3: quem é o dono de nota.txt, qual o tamanho e por que ele tem esse número de bytes?</label><textarea id="p2-atributos" placeholder="Conte os caracteres da frase."></textarea></div>
+<div class="question"><label for="p2-renomear">Pelos passos 6 e 8: o cp mudou o inode? E o mv? Explique a diferença entre copiar e renomear.</label><textarea id="p2-renomear" placeholder="Use os seus números de inode."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Parte 2 concluída</label>
+</section>
+
+<section class="etapa" id="p3"><p class="label">Parte 3 · cerca de 15 min</p><h2>Quem pode acessar</h2>
+<p><b>Objetivo:</b> ler e mudar as permissões de um arquivo.</p>
+<dl class="termos">
+<div><dt>Permissões r, w, x</dt><dd>Ler (read), escrever (write) e executar (execute), para dono, grupo e outros. <a href="../../materiais/pdfs/un04t02.pdf#page=8" target="_blank" rel="noopener">t02, slide 8</a></dd></div>
+<div><dt>Notação octal</dt><dd>r = 4, w = 2, x = 1, somados para cada um: 6 = rw-, 4 = r--, 0 = ---. <a href="../../materiais/pdfs/un04t02.pdf#page=10" target="_blank" rel="noopener">t02, slide 10</a></dd></div>
+<div><dt>Menor privilégio</dt><dd>Dar só a permissão necessária. <a href="../../materiais/pdfs/un04t02.pdf#page=7" target="_blank" rel="noopener">t02, slide 7</a></dd></div>
+</dl>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 1</span><button class="copy" type="button" aria-label="Copiar: Passo 1">Copiar</button></div><pre tabindex="0"><code>ls -l nota.txt   # olhe as 10 primeiras letras</code></pre></div>
+<p class="explica"><b>Observe:</b> <code>-rw-r--r--</code> = tipo (<code>-</code>), dono <code>rw-</code>, grupo <code>r--</code>, outros <code>r--</code>. Em octal: 644.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 2</span><button class="copy" type="button" aria-label="Copiar: Passo 2">Copiar</button></div><pre tabindex="0"><code>chmod 600 nota.txt   # só o dono lê e escreve</code></pre></div>
+<p class="explica"><b>O que faz:</b> <code>chmod</code> muda as permissões. 6 = rw- para o dono; 0 = --- para grupo e outros.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 3</span><button class="copy" type="button" aria-label="Copiar: Passo 3">Copiar</button></div><pre tabindex="0"><code>ls -l nota.txt   # confira a mudança</code></pre></div>
+<p class="explica"><b>Observe:</b> agora aparece <code>-rw-------</code>.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 4</span><button class="copy" type="button" aria-label="Copiar: Passo 4">Copiar</button></div><pre tabindex="0"><code>chmod 000 nota.txt   # ninguém pode nada</code></pre></div>
+<p class="explica"><b>O que faz:</b> tira todas as permissões, até as suas.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 5</span><button class="copy" type="button" aria-label="Copiar: Passo 5">Copiar</button></div><pre tabindex="0"><code>cat nota.txt   # tente ler</code></pre></div>
+<p class="explica"><b>Observe:</b> aparece <code>Permissão negada</code> (ou <i>Permission denied</i>): o sistema bloqueou até o dono.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 6</span><button class="copy" type="button" aria-label="Copiar: Passo 6">Copiar</button></div><pre tabindex="0"><code>chmod 644 nota.txt   # volta ao normal</code></pre></div>
+<p class="explica"><b>O que faz:</b> dono lê e escreve; grupo e outros só leem.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 7</span><button class="copy" type="button" aria-label="Copiar: Passo 7">Copiar</button></div><pre tabindex="0"><code>cat nota.txt   # leia de novo</code></pre></div>
+<p class="explica"><b>Observe:</b> a frase aparece outra vez.</p></li>
+</ol>
+<div class="question"><label for="p3-octal">Escreva em letras as permissões 600 e 644, e em números as permissões rwxr-x---.</label><textarea id="p3-octal" placeholder="Use r = 4, w = 2, x = 1."></textarea></div>
+<div class="question"><label for="p3-privilegio">No passo 5, você é o dono e mesmo assim não leu. Por quê? Que número você usaria para um arquivo que só você pode ler e alterar?</label><textarea id="p3-privilegio" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Parte 3 concluída</label>
+</section>
+
+<section class="etapa" id="p4"><p class="label">Parte 4 · cerca de 20 min</p><h2>O número que o kernel devolve</h2>
+<p><b>Objetivo:</b> ver, num programa em C, que abrir um arquivo devolve um número: o descritor de arquivo. O trabalho tem três etapas separadas: <b>código</b>, <b>compilação</b> e <b>execução</b>.</p>
+<dl class="termos">
+<div><dt>Descritor de arquivo (file descriptor, FD)</dt><dd>Número inteiro que o kernel entrega ao abrir um arquivo; depois o programa usa só esse número. <a href="../../materiais/pdfs/un04t01.pdf#page=9" target="_blank" rel="noopener">t01, slide 9</a></dd></div>
+<div><dt>FDs 0, 1 e 2</dt><dd>Já vêm abertos: 0 = teclado (entrada), 1 = tela (saída), 2 = tela (erros). <a href="../../materiais/pdfs/un04t01.pdf#page=9" target="_blank" rel="noopener">t01, slide 9</a></dd></div>
+<div><dt>open, read, write, close</dt><dd>Abrir, ler, escrever e fechar: o fluxo do slide 11 do t01. <a href="../../materiais/pdfs/un04t01.pdf#page=11" target="_blank" rel="noopener">t01, slide 11</a></dd></div>
+</dl>
+
+<h3>Etapa A · Código</h3>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 1</span><button class="copy" type="button" aria-label="Copiar: Passo 1">Copiar</button></div><pre tabindex="0"><code>nano -l ler.c   # abre o editor nano, com números de linha</code></pre></div>
+<p class="explica"><b>O que faz:</b> abre o editor de texto <code>nano</code> num arquivo novo, <code>ler.c</code>. O <code>-l</code> mostra o número de cada linha.</p></li>
+<li><span class="passo-rotulo">Passo 2</span> Copie o código abaixo e cole no nano (clique com o botão direito ou use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>):
+<div class="command codigo"><div class="command-head"><span>Código de ler.c · copie e cole no nano</span><button class="copy" type="button" aria-label="Copiar o código de ler.c">Copiar</button></div><pre tabindex="0"><code class="codigo-c">#include &lt;fcntl.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void) {
+    int fd = open(&quot;nota.txt&quot;, O_RDONLY);
+    printf(&quot;open devolveu o FD %d\n&quot;, fd);
+    if (fd == -1) {
+        printf(&quot;erro: nao foi possivel abrir nota.txt\n&quot;);
+        return 1;
+    }
+
+    char buffer[100];
+    ssize_t n = read(fd, buffer, sizeof buffer);
+    printf(&quot;read leu %zd bytes; agora write(1, ...) mostra na tela:\n&quot;, n);
+
+    write(1, buffer, n);
+    close(fd);
+    return 0;
+}
+// fim do codigo</code></pre></div>
+</li>
+<li><span class="passo-rotulo">Passo 3</span> Salve e saia: <kbd>Ctrl</kbd>+<kbd>O</kbd>, depois <kbd>Enter</kbd> (confirma o nome), depois <kbd>Ctrl</kbd>+<kbd>X</kbd> (sai do nano).</li>
+</ol>
+<p><b>O código, linha por linha:</b></p>
+<div class="tbl"><table><thead><tr><th>Linha</th><th>O que faz</th></tr></thead><tbody>
+<tr><td>1–3</td><td>Incluem as bibliotecas: <code>fcntl.h</code> (open), <code>stdio.h</code> (printf), <code>unistd.h</code> (read, write, close).</td></tr>
+<tr><td>5</td><td>Começo do programa: a função <code>main</code>.</td></tr>
+<tr><td>6</td><td><code>open</code> pede ao kernel para abrir <code>nota.txt</code> só para leitura (<code>O_RDONLY</code>). O número devolvido vai para <code>fd</code>.</td></tr>
+<tr><td>7</td><td>Mostra o número recebido.</td></tr>
+<tr><td>8–11</td><td>Se <code>fd</code> for −1, a abertura falhou: mostra um aviso e termina.</td></tr>
+<tr><td>13</td><td>Cria um espaço de 100 bytes na memória (<code>buffer</code>) para receber o texto.</td></tr>
+<tr><td>14</td><td><code>read</code> lê até 100 bytes do arquivo de número <code>fd</code> e guarda em <code>buffer</code>; <code>n</code> recebe quantos bytes vieram.</td></tr>
+<tr><td>15</td><td>Mostra quantos bytes foram lidos.</td></tr>
+<tr><td>17</td><td><code>write</code> escreve os <code>n</code> bytes no FD <b>1</b>, que é a tela.</td></tr>
+<tr><td>18</td><td><code>close</code> fecha o arquivo e libera o número.</td></tr>
+<tr><td>19</td><td>Termina o programa sem erro (0).</td></tr>
+<tr><td>21</td><td>Comentário que marca o fim do código.</td></tr>
+</tbody></table></div>
+
+<h3>Etapa B · Compilação</h3>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 4</span><button class="copy" type="button" aria-label="Copiar: Passo 4">Copiar</button></div><pre tabindex="0"><code>gcc ler.c -o ler   # traduz o texto ler.c no programa ler</code></pre></div>
+<p class="explica"><b>O que faz:</b> o compilador <code>gcc</code> lê o código (<code>ler.c</code>) e gera o programa executável (<code>-o ler</code>). <b>Observe:</b> se nada aparecer, compilou. Se aparecer erro, abra o nano de novo e confira o código.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 5</span><button class="copy" type="button" aria-label="Copiar: Passo 5">Copiar</button></div><pre tabindex="0"><code>ls -l ler.c ler   # compare o código e o programa</code></pre></div>
+<p class="explica"><b>Observe:</b> <code>ler</code> tem o <code>x</code> (executar) nas permissões; <code>ler.c</code> não. O código é texto; o programa é o que roda.</p></li>
+</ol>
+
+<h3>Etapa C · Execução</h3>
+<ol class="passos">
+<li>
+<div class="command"><div class="command-head"><span>Passo 6</span><button class="copy" type="button" aria-label="Copiar: Passo 6">Copiar</button></div><pre tabindex="0"><code>./ler   # roda o programa</code></pre></div>
+<p class="explica"><b>O que faz:</b> <code>./</code> diz “o programa que está nesta pasta”.</p>
+<div class="expected"><div class="expected-label">Saída esperada</div><pre tabindex="0">open devolveu o FD 3
+read leu 17 bytes; agora write(1, ...) mostra na tela:
+segredo da turma</pre></div>
+<p class="explica"><b>Observe:</b> o primeiro número livre é o 3, porque 0, 1 e 2 já estão abertos. A frase chegou à tela pelo FD 1.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 7</span><button class="copy" type="button" aria-label="Copiar: Passo 7">Copiar</button></div><pre tabindex="0"><code>ls -l /proc/self/fd   # descritores abertos pelo próprio ls</code></pre></div>
+<p class="explica"><b>O que faz:</b> <code>/proc</code> é uma janela para as tabelas do kernel (slide 12 do t01). <b>Observe:</b> os FDs 0, 1 e 2 apontam para o seu terminal (<code>/dev/pts/…</code>).</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 8</span><button class="copy" type="button" aria-label="Copiar: Passo 8">Copiar</button></div><pre tabindex="0"><code>chmod 000 nota.txt   # tira as permissões de nota.txt</code></pre></div>
+<p class="explica"><b>O que faz:</b> prepara um teste: o que o programa recebe quando não pode abrir o arquivo?</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 9</span><button class="copy" type="button" aria-label="Copiar: Passo 9">Copiar</button></div><pre tabindex="0"><code>./ler   # roda de novo, sem permissão</code></pre></div>
+<p class="explica"><b>Observe:</b> <code>open devolveu o FD -1</code>. Não houve leitura.</p></li>
+<li>
+<div class="command"><div class="command-head"><span>Passo 10</span><button class="copy" type="button" aria-label="Copiar: Passo 10">Copiar</button></div><pre tabindex="0"><code>chmod 644 nota.txt   # devolve as permissões</code></pre></div>
+<p class="explica"><b>O que faz:</b> volta ao normal. Se quiser, rode <code>./ler</code> outra vez.</p></li>
+</ol>
+<div class="question"><label for="p4-fd">Pelo passo 6: que número open devolveu e por que não foi 0?</label><textarea id="p4-fd" placeholder="Use os FDs 0, 1 e 2 do passo 7."></textarea></div>
+<div class="question"><label for="p4-linhas">Em qual linha do código o arquivo é aberto, em qual o texto vai para a tela e por qual FD?</label><textarea id="p4-linhas" placeholder="Cite os números das linhas."></textarea></div>
+<div class="question"><label for="p4-menos1">No passo 9, o que significa o −1? Qual ideia da Parte 3 explica o que aconteceu?</label><textarea id="p4-menos1" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Parte 4 concluída</label>
+</section>
+
+<section class="etapa"><h2>Entregar</h2>
+<p>Clique em <b>Baixar respostas (.txt)</b> no topo e envie o arquivo pelo canal indicado pelo professor.</p>
+<details><summary>Se algo der errado</summary><div><p><b>Aparece um <code>~</code> a mais no fim do comando colado:</b> não tem problema; ele fica dentro do comentário e é ignorado.</p><p><b>“Arquivo ou diretório inexistente”:</b> rode <code>cd ~/atividades/so-arquivos</code> e tente de novo.</p><p><b>O nano não salvou:</b> abra com <code>nano -l ler.c</code>, confira o código, <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p><p><b>Erro ao compilar:</b> o código foi colado pela metade. Abra o nano, apague tudo e cole de novo.</p><p><b><code>open devolveu o FD -1</code> no passo 6:</b> falta o <code>nota.txt</code> ou a permissão. Rode <code>chmod 644 nota.txt</code>.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Operacionais · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>
