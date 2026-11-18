@@ -12,6 +12,7 @@ apenas ferramenta de manutenção docente.
 | `un03/` | III — Gerência de memória (un03t01–t06): 3 atividades de até 30 min + 8 problemas | Publicada (9ac25ab); falta homologar no LIAC |
 | `un04/` | IV — Arquivos e sistemas de arquivos (un04t01–t04): 3 atividades de até 30 min + 8 problemas | Pronta localmente; não publicada; falta homologar no LIAC |
 | `un04-passos/` | IV — Versão simples (só t01 e t02): árvore, atributos, permissões e FD; um comando por passo; código C no nano, separado de compilar e rodar | Publicada em 17/11/2026; falta homologar no LIAC |
+| `un04-blocos/` | IV — Prática 2 (t03 e t04): volume, blocos, fragmentação interna, extents e mapa de bits; um comando por passo | Publicada em 17/11/2026; testada no LIAC |
 | `un04-codigo/` | IV — Investigar código C pronto: syscalls, FD, E/S com e sem buffer, argc/argv, diretórios (atividade separada) | Pronta localmente; não publicada; falta homologar no LIAC |
 
 ## Estrutura de uma unidade
@@ -37,6 +38,8 @@ python3 -I construir.py un04-codigo
 python3 -I verificar.py un04-codigo   # 17 verificacoes
 python3 -I construir.py un04-passos
 python3 -I verificar.py un04-passos   # 16 verificacoes; exige 1 linha com comentario por passo
+python3 -I construir.py un04-blocos
+python3 -I verificar.py un04-blocos   # 9 verificacoes
 ```
 
 O modelo usa diretivas no início da linha: `@@CMD`/`@@OUT` … `@@END`, `@@SRC

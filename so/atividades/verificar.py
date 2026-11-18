@@ -1,7 +1,7 @@
 """Valida a pagina da atividade executando os blocos como um aluno faria.
 Ferramenta de manutencao docente; nao acessa o LIAC. Requer Linux, GCC,
 pthreads, ps e (opcional) taskset.
-Uso: python3 -I verificar.py un02|un03|un04|un04-codigo|un04-passos
+Uso: python3 -I verificar.py un02|un03|un04|un04-codigo|un04-passos|un04-blocos
 """
 from html.parser import HTMLParser
 from pathlib import Path
@@ -11,6 +11,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
+PASSOS = {'un04-passos', 'un04-blocos'}   # paginas de um comando comentado por passo
 
 
 class Pagina(HTMLParser):
@@ -67,7 +68,7 @@ def verificar(unidade):
         assert nome, 'codigo da pagina diferente de arquivos/'
         assert corpo.endswith('// fim do codigo'), f'{nome}: falta a linha final de comentario'
         criados.add(nome)
-    if unidade == 'un04-passos':
+    if unidade in PASSOS:
         # Regra do professor: um comando por passo, sempre com comentario que absorve o '~'.
         for bloco in p.blocos:
             assert '\n' not in bloco and ' # ' in bloco, f'passo fora da regra: {bloco!r}'
@@ -81,8 +82,8 @@ def verificar(unidade):
         # Simula o terminal do LIAC, que gruda '~' no fim de cada bloco colado.
         sep = '~\n' if unidade.startswith('un04') else '\n'
         roteiro = sep.join(p.blocos).replace(f'~/atividades/so-{unidade}', tmp)
-        if unidade == 'un04-passos':
-            roteiro = roteiro.replace('~/atividades/so-arquivos', tmp)
+        if unidade in PASSOS:
+            roteiro = re.sub(r'~/atividades/so-[\w-]+', tmp, roteiro)
             # O aluno cola o codigo no nano; aqui o arquivo e copiado de arquivos/.
             roteiro = re.sub(r'^nano -l (\S+).*$', lambda m: f"cp '{pasta}/arquivos/{m.group(1)}' .",
                              roteiro, flags=re.M)
@@ -323,8 +324,31 @@ def checar_un04_passos(out, err, tmp):
     print(f'Roteiro executado: {len(verificacoes)} verificacoes OK')
 
 
+def checar_un04_blocos(out, err, tmp):
+    import os
+    t = Path(tmp)
+    du = dict((n, v) for v, n in re.findall(r'^(\S+)\s+(vazio|b1|b4096|b4097|b14000)$', out, re.M))
+    verificacoes = [
+        ('compilacao sem avisos', 'warning' not in err and 'error' not in err),
+        ('P1 df tipo', re.search(r'\s(ext4|xfs|btrfs)\s', out)),
+        ('P1 stat -f bloco e inodes', re.search(r'Block size: 4096', out, re.I) and 'Inodes:' in out),
+        ('P1 findmnt', 'TARGET' in out and 'FSTYPE' in out),
+        ('P2 tamanhos', all(re.search(rf' {n} .* {nome}$', out, re.M) for n, nome in
+                            [(0, 'vazio'), (1, 'b1'), (4096, 'b4096'), (4097, 'b4097'), (14000, 'b14000')])),
+        ('P2 du 0/4/4/8/16', [du.get(n, '').replace(',', '.') for n in ('vazio', 'b1', 'b4096', 'b4097', 'b14000')]
+                             == ['0', '4.0K', '4.0K', '8.0K', '16K']),
+        ('P3 1 MiB', (t / 'grande').stat().st_size == 1048576),
+        ('P3 extent', re.search(r'grande: \d+ extents? found', out) and '256 blocks of 4096 bytes' in out),
+        ('P4 mapa', 'antes:  0001100011110000' in out and 'o primeiro bloco livre era o 3' in out
+                    and 'depois: 0000100011110000' in out),
+    ]
+    falhas = [nome for nome, ok in verificacoes if not ok]
+    assert not falhas, f'falhas: {falhas}\n{out}\n{err}'
+    print(f'Roteiro executado: {len(verificacoes)} verificacoes OK')
+
+
 CHECAGENS = {'un03': checar_un03, 'un04': checar_un04, 'un04-codigo': checar_un04_codigo,
-             'un04-passos': checar_un04_passos}
+             'un04-passos': checar_un04_passos, 'un04-blocos': checar_un04_blocos}
 
 
 if __name__ == '__main__':

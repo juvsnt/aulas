@@ -1,0 +1,225 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Prática 2 da Unidade IV de Sistemas Operacionais: volume, blocos, fragmentação interna, extents e mapa de bits, um comando por vez."><meta name="theme-color" content="#13202a"><title>Onde o arquivo mora no disco · Unidade IV | SO</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un04-blocos"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../../materiais/#unidade-4">Materiais da unidade IV</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Prática 2 da Unidade IV · Sistemas Operacionais · UNEMAT</p><h1>Onde o arquivo mora no disco</h1><p class="lede">Quatro partes curtas no terminal, um comando por vez, sobre os slides t03 e t04 da unidade.</p><div class="meta"><span><b>4 partes</b> de cerca de 15 min</span><span><b>Medição real</b> e uma simulação</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Como fazer</h2>
+<ul>
+<li>Abra o terminal e entre com sua conta.</li>
+<li>Faça <b>um passo por vez</b>: copie a linha, cole no terminal, aperte <kbd>Enter</kbd> e confira o que aparece.</li>
+<li>Tudo o que vem depois de <code>#</code> é um <b>comentário</b>: o terminal ignora.</li>
+<li>Os seus números serão diferentes dos exemplos. Registre sempre os <b>seus</b>.</li>
+</ul>
+@@Q identificacao | Nome completo e matrícula | Ex.: Maria Silva — 202312345
+</section>
+
+<nav class="steps-nav" aria-label="Partes"><a href="#p1">1 · Volume</a> <a href="#p2">2 · Blocos</a> <a href="#p3">3 · Extents</a> <a href="#p4">4 · Mapa de bits</a></nav>
+
+<section class="etapa" id="p1"><p class="label">Parte 1 · cerca de 15 min <span class="tipo">Medição real</span></p><h2>O volume da minha pasta</h2>
+<p><b>Objetivo:</b> descobrir em que sistema de arquivos estão os seus arquivos e qual o tamanho do bloco.</p>
+<dl class="termos">
+<div><dt>Volume e sistema de arquivos (file system)</dt><dd>O volume é a parte do disco formatada; o sistema de arquivos (como ext4, NTFS ou FAT) é a forma de organizá-la. @@SLIDE t03 4</dd></div>
+<div><dt>Bloco (block)</dt><dd>Menor pedaço do disco que um arquivo pode ocupar. @@SLIDE t03 5</dd></div>
+<div><dt>Inode</dt><dd>A ficha de cada arquivo: dono, tamanho, permissões e onde estão os blocos. Cada volume tem um número fixo deles. @@SLIDE t03 6</dd></div>
+<div><dt>Journaling</dt><dd>Registro das mudanças antes de fazê-las, para o sistema não se corromper se a energia cair. @@SLIDE t04 5</dd></div>
+</dl>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+mkdir -p ~/atividades/so-blocos   # cria a pasta da prática
+@@END
+<p class="explica"><b>O que faz:</b> cria a pasta <code>so-blocos</code> dentro da sua pasta pessoal (<code>~</code>).</p></li>
+<li>
+@@CMD Passo 2
+cd ~/atividades/so-blocos   # entra na pasta da prática
+@@END
+<p class="explica"><b>O que faz:</b> todas as próximas partes acontecem nesta pasta.</p></li>
+<li>
+@@CMD Passo 3
+df -hT .   # tipo e espaço do volume desta pasta
+@@END
+<p class="explica"><b>O que faz:</b> <code>df</code> mostra os volumes; <code>-h</code> usa unidades fáceis (G, M); <code>-T</code> mostra o tipo; o <code>.</code> quer dizer “o volume onde está esta pasta”.</p>
+@@OUT Exemplo medido no LIAC
+Sist. Arq.     Tipo  Tam. Usado Disp. Uso% Montado em
+/dev/sdb2      ext4  192G   23M  182G   1% /srv/alunos
+@@END
+<p class="explica"><b>Observe:</b> a coluna <b>Tipo</b> e a coluna <b>Montado em</b>, a pasta da árvore onde esse volume aparece.</p></li>
+<li>
+@@CMD Passo 4
+findmnt -T .   # onde e como o volume está montado
+@@END
+<p class="explica"><b>Observe:</b> <code>TARGET</code> é a pasta de montagem (t04, slide 11) e <code>FSTYPE</code> é o tipo.</p></li>
+<li>
+@@CMD Passo 5
+stat -f .   # metadados do volume: blocos e inodes
+@@END
+<p class="explica"><b>Observe:</b> <code>Block size</code> (tamanho do bloco, em bytes) e a linha <code>Inodes</code>, com o total e os livres. O tipo pode aparecer como <code>ext2/ext3</code>: o <code>stat</code> usa esse nome para toda a família ext, inclusive o ext4.</p></li>
+</ol>
+@@Q p1-tipo | Qual o tipo do sistema de arquivos e o tamanho do bloco? Pela tabela do t04, slide 9, esse tipo tem journaling? | Use as saídas dos passos 3 e 5.
+@@Q p1-inodes | Quantos inodes livres há no volume? Se os inodes acabassem, ainda daria para criar arquivos, mesmo com espaço livre? Por quê? | Lembre: cada arquivo precisa de um inode.
+@@DONE 1 | Parte 1 concluída
+</section>
+
+<section class="etapa" id="p2"><p class="label">Parte 2 · cerca de 15 min <span class="tipo">Medição real</span></p><h2>Tamanho × espaço ocupado</h2>
+<p><b>Objetivo:</b> comparar o tamanho de um arquivo com o espaço que ele ocupa no disco.</p>
+<dl class="termos">
+<div><dt>Alocação em blocos</dt><dd>O sistema reserva espaço sempre em blocos inteiros. @@SLIDE t03 5</dd></div>
+<div><dt>Fragmentação interna</dt><dd>A sobra sem uso no último bloco do arquivo. @@SLIDE t03 14</dd></div>
+</dl>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+touch vazio   # cria um arquivo vazio
+@@END
+<p class="explica"><b>O que faz:</b> cria o arquivo <code>vazio</code>, com 0 bytes.</p></li>
+<li>
+@@CMD Passo 2
+head -c 1 /dev/zero > b1   # cria um arquivo de 1 byte
+@@END
+<p class="explica"><b>O que faz:</b> <code>head -c 1</code> pega 1 byte de <code>/dev/zero</code> (um arquivo especial que só tem zeros) e o <code>&gt;</code> grava em <code>b1</code>.</p></li>
+<li>
+@@CMD Passo 3
+head -c 4096 /dev/zero > b4096   # arquivo de 4.096 bytes (1 bloco)
+@@END
+<p class="explica"><b>O que faz:</b> o mesmo comando, agora com 4.096 bytes: exatamente um bloco.</p></li>
+<li>
+@@CMD Passo 4
+head -c 4097 /dev/zero > b4097   # 1 byte a mais que um bloco
+@@END
+<p class="explica"><b>O que faz:</b> 4.097 bytes: um bloco cheio e mais 1 byte.</p></li>
+<li>
+@@CMD Passo 5
+head -c 14000 /dev/zero > b14000   # o arquivo do exercício do slide 14
+@@END
+<p class="explica"><b>O que faz:</b> 14.000 bytes, o tamanho usado no exercício resolvido do t03, slide 14.</p></li>
+<li>
+@@CMD Passo 6
+ls -l vazio b1 b4096 b4097 b14000   # tamanho de cada arquivo
+@@END
+<p class="explica"><b>Observe:</b> a coluna do tamanho mostra 0, 1, 4096, 4097 e 14000 bytes.</p></li>
+<li>
+@@CMD Passo 7
+du -h vazio b1 b4096 b4097 b14000   # espaço ocupado no disco
+@@END
+<p class="explica"><b>O que faz:</b> <code>du</code> mostra quanto espaço de disco cada arquivo realmente usa.</p>
+@@OUT Saída esperada (bloco de 4 KiB)
+0       vazio
+4,0K    b1
+4,0K    b4096
+8,0K    b4097
+16K     b14000
+@@END
+<p class="explica"><b>Observe:</b> 1 byte já ocupa um bloco inteiro (4K); 1 byte a mais que um bloco (4.097) ocupa dois.</p></li>
+</ol>
+@@Q p2-frag | Por que b4097 ocupa 8K? Calcule a fragmentação interna de b14000 (espaço ocupado − tamanho, em bytes) e compare com o t03, slide 14. | 16K = 16.384 bytes.
+@@Q p2-vazio | O arquivo vazio ocupa 0 no disco, mas ele existe e aparece no ls. O que o sistema guardou sobre ele? | Pense no inode e no diretório.
+@@DONE 2 | Parte 2 concluída
+</section>
+
+<section class="etapa" id="p3"><p class="label">Parte 3 · cerca de 15 min <span class="tipo">Medição real</span></p><h2>Onde estão os blocos</h2>
+<p><b>Objetivo:</b> ver em que blocos do disco um arquivo foi gravado.</p>
+<dl class="termos">
+<div><dt>Alocação contígua</dt><dd>O arquivo ocupa blocos seguidos; basta saber o bloco inicial: bloco alvo = inicial + deslocamento. @@SLIDE t03 7</dd></div>
+<div><dt>Extent</dt><dd>No ext4, um único registro diz “começa no bloco X e segue por N blocos”. @@SLIDE t04 8</dd></div>
+</dl>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+head -c 1048576 /dev/zero > grande   # arquivo de 1 MiB
+@@END
+<p class="explica"><b>O que faz:</b> cria <code>grande</code> com 1 MiB (1.048.576 bytes), ou seja, 256 blocos de 4.096 bytes.</p></li>
+<li>
+@@CMD Passo 2
+sync grande   # grava no disco o que ainda está na memória
+@@END
+<p class="explica"><b>O que faz:</b> o sistema guarda as escritas na memória por um tempo; <code>sync</code> obriga a gravar agora, para os blocos já terem endereço no disco.</p></li>
+<li>
+@@CMD Passo 3
+ls -i grande   # número do inode
+@@END
+<p class="explica"><b>Observe:</b> o número antes do nome é o inode, a ficha que guarda onde estão os blocos.</p></li>
+<li>
+@@CMD Passo 4
+/usr/sbin/filefrag -v grande   # mostra os extents do arquivo
+@@END
+<p class="explica"><b>O que faz:</b> mostra quais blocos do disco o arquivo usa. O caminho completo <code>/usr/sbin/</code> é necessário porque esse programa fica numa pasta de ferramentas do sistema.</p>
+@@OUT Exemplo medido no LIAC · o número do bloco físico muda
+File size of grande is 1048576 (256 blocks of 4096 bytes)
+ ext:     logical_offset:        physical_offset: length:   expected: flags:
+   0:        0..     255:   17858816..  17859071:    256:             last,eof
+grande: 1 extent found
+@@END
+<p class="explica"><b>Observe:</b> os blocos lógicos 0 a 255 do arquivo estão nos blocos físicos 17858816 a 17859071 do disco: 256 blocos seguidos, descritos por <b>1 extent</b>.</p></li>
+</ol>
+@@Q p3-extent | Pela sua saída: em que bloco físico começa o arquivo e quantos blocos tem o extent? Em que bloco físico está o bloco lógico 10? | Use a fórmula do t03, slide 7.
+@@Q p3-ext4 | Um inode clássico precisaria de 256 ponteiros para este arquivo. Por que o ext4 consegue descrevê-lo com um registro só (t04, slide 8)? | Responda com suas palavras.
+@@DONE 3 | Parte 3 concluída
+</section>
+
+<section class="etapa" id="p4"><p class="label">Parte 4 · cerca de 20 min <span class="tipo">Simulação</span></p><h2>O mapa de bits</h2>
+<p><b>Objetivo:</b> simular, num programa em C, como o sistema acha um bloco livre para gravar. O programa usa um mapa inventado de 16 blocos: ele <b>não</b> lê o disco de verdade. O trabalho tem três etapas: <b>código</b>, <b>compilação</b> e <b>execução</b>.</p>
+<dl class="termos">
+<div><dt>Mapa de bits (bitmap)</dt><dd>Um bit para cada bloco do disco. No slide, 1 = livre e 0 = ocupado. @@SLIDE t04 3</dd></div>
+<div><dt>Alocar um bloco</dt><dd>Procurar o primeiro bit 1 e trocá-lo por 0. @@SLIDE t04 12</dd></div>
+</dl>
+<p class="small">O ext4 usa a convenção inversa (1 = ocupado). A ideia é a mesma.</p>
+
+<h3>Etapa A · Código</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+nano -l mapa.c   # abre o editor nano, com números de linha
+@@END
+<p class="explica"><b>O que faz:</b> abre o editor <code>nano</code> num arquivo novo, <code>mapa.c</code>.</p></li>
+<li><span class="passo-rotulo">Passo 2</span> Copie o código abaixo e cole no nano (botão direito ou <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>):
+@@CODE mapa.c
+</li>
+<li><span class="passo-rotulo">Passo 3</span> Salve e saia: <kbd>Ctrl</kbd>+<kbd>O</kbd>, depois <kbd>Enter</kbd>, depois <kbd>Ctrl</kbd>+<kbd>X</kbd>.</li>
+</ol>
+<p><b>O código, linha por linha:</b></p>
+<div class="tbl"><table><thead><tr><th>Linha</th><th>O que faz</th></tr></thead><tbody>
+<tr><td>1</td><td>Inclui <code>stdio.h</code>, para usar <code>printf</code>.</td></tr>
+<tr><td>4</td><td>O mapa de bits do slide 3 do t04: 16 blocos, numerados de 0 a 15.</td></tr>
+<tr><td>5</td><td>Quantos blocos o disco simulado tem.</td></tr>
+<tr><td>7–8</td><td>Mostram o número de cada bloco e o mapa antes da alocação.</td></tr>
+<tr><td>10</td><td><code>livre = -1</code> quer dizer “ainda não achei bloco livre”.</td></tr>
+<tr><td>11–16</td><td>Percorre o mapa do bloco 0 ao 15; no primeiro <code>'1'</code> (livre), guarda a posição e para (<code>break</code>).</td></tr>
+<tr><td>18–21</td><td>Se nenhum bloco estava livre, o disco está cheio.</td></tr>
+<tr><td>23</td><td>Marca o bloco encontrado como ocupado: troca <code>'1'</code> por <code>'0'</code>.</td></tr>
+<tr><td>24–25</td><td>Mostram qual bloco foi usado e o mapa depois.</td></tr>
+<tr><td>28</td><td>Comentário que marca o fim do código.</td></tr>
+</tbody></table></div>
+
+<h3>Etapa B · Compilação</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 4
+gcc mapa.c -o mapa   # traduz o texto mapa.c no programa mapa
+@@END
+<p class="explica"><b>Observe:</b> se nada aparecer, compilou. Se aparecer erro, abra o nano de novo e confira o código.</p></li>
+</ol>
+
+<h3>Etapa C · Execução</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 5
+./mapa   # roda o programa
+@@END
+@@OUT Saída esperada
+blocos: 0123456789012345
+antes:  0001100011110000
+o primeiro bloco livre era o 3; agora esta ocupado
+depois: 0000100011110000
+@@END
+<p class="explica"><b>Observe:</b> o primeiro <code>1</code> estava na posição 3 e virou <code>0</code>. Os outros bits não mudaram.</p></li>
+</ol>
+@@Q p4-linhas | Em que linhas o programa procura um bloco livre e em qual ele o marca como ocupado? | Cite os números das linhas.
+@@Q p4-proximo | Se o programa alocasse mais um bloco, a partir do mapa “depois”, qual bloco seria escolhido? Quantos blocos livres ainda restariam? | Conte os 1 do mapa.
+@@DONE 4 | Parte 4 concluída
+</section>
+
+<section class="etapa"><h2>Entregar</h2>
+<p>Clique em <b>Baixar respostas (.txt)</b> no topo e envie o arquivo pelo canal indicado pelo professor.</p>
+<details><summary>Se algo der errado</summary><div><p><b>Aparece um <code>~</code> a mais no fim do comando colado:</b> não tem problema; ele fica dentro do comentário e é ignorado.</p><p><b>“Arquivo ou diretório inexistente”:</b> rode <code>cd ~/atividades/so-blocos</code> e tente de novo.</p><p><b><code>filefrag</code> não encontrado ou com erro:</b> registre a mensagem na resposta e avise o professor.</p><p><b>O nano não salvou:</b> abra com <code>nano -l mapa.c</code>, confira o código, <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p><p><b>Erro ao compilar:</b> o código foi colado pela metade. Abra o nano, apague tudo e cole de novo.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Operacionais · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>
