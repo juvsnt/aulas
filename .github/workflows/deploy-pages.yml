@@ -19,6 +19,8 @@ on:
       - "aoc/cache-fisica/public/**"
       - "aoc/entrada-saida/index.html"
       - "aoc/entrada-saida/public/**"
+      - "aoc/pipeline/index.html"
+      - "aoc/pipeline/public/**"
       - "sd/materiais/**"
       - "sd/praticas/**"
       - "sd/atividades/**"
@@ -108,6 +110,11 @@ jobs:
           cp -r aoc/entrada-saida/public _site/aoc/entrada-saida/public
           test ! -d _site/aoc/entrada-saida/docente-local
           test ! -e _site/aoc/entrada-saida/public/professor.html
+          mkdir -p _site/aoc/pipeline
+          cp aoc/pipeline/index.html _site/aoc/pipeline/index.html
+          cp -r aoc/pipeline/public _site/aoc/pipeline/public
+          test ! -d _site/aoc/pipeline/docente-local
+          test ! -e _site/aoc/pipeline/public/professor.html
           cp -r sd/materiais _site/sd/materiais
           cp -r sd/praticas _site/sd/praticas
           cp -r sd/atividades _site/sd/atividades

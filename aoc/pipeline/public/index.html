@@ -1,0 +1,517 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade da Unidade 6 de AOC: três atividades curtas no terminal do LIAC sobre pipeline, dependência de dados e predição de desvios, com síntese."><meta name="theme-color" content="#13202a"><title>Linha de montagem de instruções · Atividade da Unidade 6 | AOC</title><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script></head><body data-unit="aoc-un06"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina AOC</a><a href="../../materiais/#unidade-6">Materiais da Unidade 6</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade da Unidade 6 · Arquitetura e Organização de Computadores · UNEMAT</p><h1>Linha de montagem de instruções</h1><p class="lede">Três atividades curtas no terminal para ver o pipeline funcionando: no papel, numa simulação e no processador de verdade.</p><div class="meta"><span><b>Individual</b></span><span><b>3 atividades</b> de até 30 min</span><span><b>Síntese</b> de 5 min</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Antes de começar</h2>
+<p>As atividades usam os slides da unidade: <a href="../../materiais/pdfs/un06t01.pdf" target="_blank" rel="noopener">Pipeline e desempenho (PDF) ↗</a>. Cada termo técnico traz o número do slide em que aparece. A leitura complementar é o capítulo 8 (seções 8.1 e 8.2) do livro <i>Arquitetura de Computadores: uma introdução</i>, de Gabriel P. Silva e José Antonio Borges, de onde vem a comparação com o lava-jato.</p>
+<ol>
+<li>Escreva seu nome e matrícula.</li>
+<li>Abra o terminal (a tela onde se digitam comandos), entre com sua conta e cole o bloco abaixo. Ele cria e abre sua pasta da atividade.</li>
+</ol>
+<div class="question"><label for="identificacao">Nome completo e matrícula</label><textarea id="identificacao" placeholder="Ex.: Maria Silva — 202312345"></textarea></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>mkdir -p ~/atividades/aoc-pipeline
+cd ~/atividades/aoc-pipeline
+# fim do bloco</code></pre></div>
+<p class="small">Todo bloco termina com a linha <code># fim do bloco</code>, que não faz nada. Ela existe porque o terminal às vezes acrescenta um <code>~</code> no fim do que foi colado; o <code>~</code> fica nessa linha e não atrapalha. Se aparecer <code>~</code> no fim de um comando que você digitou, apague antes de apertar Enter.</p>
+<ol start="3">
+<li>Conheça o processador em que você vai trabalhar. O comando <code>lscpu</code> descreve a CPU; o <code>grep</code> filtra só as linhas que interessam (modelo, frequência máxima e caches L1).
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>LC_ALL=C lscpu | grep -E &#x27;Model name|max MHz|L1[di]&#x27;
+# fim do bloco</code></pre></div>
+<div class="question"><label for="cpu">Cole aqui a saída.</label><textarea id="cpu" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<p class="small">Os números de tempo mudam de um computador para outro e de um momento para outro. Registre sempre os <b>seus</b> valores. Cada atividade tem quatro etapas: prever (5 min), executar (10 min), interpretar (10 min) e registrar (5 min).</p>
+</section>
+
+<nav class="steps-nav" aria-label="Atividades"><a href="#a1">Atividade 1</a> <a href="#a2">Atividade 2</a> <a href="#a3">Atividade 3</a> <a href="#sintese">Síntese</a> <a href="#entregar">Entregar</a></nav>
+
+<section class="etapa" id="a1"><p class="label">Atividade 1 · até 30 min <span class="tipo">Simulação</span></p><h2>O lava-jato das instruções</h2>
+<p><b>Objetivo:</b> ler um diagrama temporal e calcular quanto o pipeline ganha, e quanto não ganha.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Pipeline</dt><dd>Linha de montagem de instruções: a execução é dividida em etapas, e cada etapa trabalha numa instrução diferente ao mesmo tempo. <a href="../../materiais/pdfs/un06t01.pdf#page=3" target="_blank" rel="noopener">slide 3</a></dd></div>
+<div><dt>Estágio (stage)</dt><dd>Cada etapa da linha. No pipeline clássico são cinco: IF (busca), ID (decodificação), EX (execução), MEM (memória) e WB (escrita do resultado). No livro: B, D, E, M e W. <a href="../../materiais/pdfs/un06t01.pdf#page=4" target="_blank" rel="noopener">slide 4</a></dd></div>
+<div><dt>Ciclo de relógio (clock cycle)</dt><dd>O “tique” que faz cada instrução avançar um estágio. Se a frequência é f, o ciclo dura t = 1/f. O ciclo precisa caber o estágio mais lento.</dd></div>
+<div><dt>Latência × vazão (latency × throughput)</dt><dd>Latência: quanto tempo <b>uma</b> instrução leva do início ao fim. Vazão: quantas instruções terminam por unidade de tempo. <a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a></dd></div>
+</dl>
+<p class="small"><b>Simulação:</b> o programa desta atividade não mede o processador. Ele aplica as regras de um pipeline didático de 5 estágios, com ciclo de 2 ns, e desenha o resultado, como o diagrama do <a href="../../materiais/pdfs/un06t01.pdf#page=5" target="_blank" rel="noopener">slide 5</a>.</p>
+<h3>O que fazer</h3>
+<ol>
+<li>Comece pelo lava-jato. Lavar um carro tem 4 etapas de 15 min cada (1 h por carro). Sem pipeline, 5 carros levam 5 h. Com pipeline, entra um carro novo assim que a primeira etapa fica livre.
+<div class="question"><label for="a1-previsao">Previsão: com pipeline, quanto tempo levam os 5 carros? Quanto tempo leva cada carro, do início ao fim?</label><textarea id="a1-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
+</li>
+<li>Crie e compile o simulador. A opção <code>-O1</code> pede ao compilador uma otimização leve, a mesma usada nas outras atividades.
+<details><summary>Criar <code>pipeline.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar pipeline.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar pipeline.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; pipeline.c &lt;&lt;&#x27;FIM&#x27;
+/* pipeline.c - SIMULACAO de um pipeline didatico de 5 estagios.
+   Desenha o diagrama temporal (qual instrucao esta em qual estagio a cada
+   ciclo) e calcula tempos. Nao mede o processador: so aplica as regras.
+   Uso: ./pipeline 5            5 instrucoes sem dependencia
+        ./pipeline 1000000      um milhao de instrucoes (so os totais)
+        ./pipeline dependencia  ADD, SUB e OR do slide 9, sem adiantamento
+        ./pipeline adiantamento as mesmas, com adiantamento (forwarding) */
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+#define K 5        /* estagios: IF ID EX MEM WB */
+#define T_NS 2.0   /* duracao do ciclo de relogio, em nanossegundos */
+
+/* Cada instrucao: texto, registrador escrito e dois registradores lidos. */
+struct instr { const char *texto, *escreve, *le1, *le2; };
+
+static const struct instr exemplo[] = {
+    {&quot;ADD $s0,$t0,$t1&quot;, &quot;$s0&quot;, &quot;$t0&quot;, &quot;$t1&quot;},
+    {&quot;SUB $t2,$s0,$t3&quot;, &quot;$t2&quot;, &quot;$s0&quot;, &quot;$t3&quot;},   /* le $s0: depende do ADD */
+    {&quot;OR  $t4,$t5,$t6&quot;, &quot;$t4&quot;, &quot;$t5&quot;, &quot;$t6&quot;},   /* nao depende de ninguem */
+};
+
+static void totais(long m, long ciclos, long bolhas) {
+    double com = (double)ciclos * T_NS, sem = (double)K * (double)m * T_NS;
+    printf(&quot;Instrucoes (M):               %ld\n&quot;, m);
+    printf(&quot;Ciclos com pipeline:          %ld\n&quot;, ciclos);
+    printf(&quot;Bolhas (ciclos perdidos):     %ld\n&quot;, bolhas);
+    printf(&quot;Tempo com pipeline:           %.0f ns\n&quot;, com);
+    printf(&quot;Tempo sem pipeline (K*M*t):   %.0f ns\n&quot;, sem);
+    printf(&quot;Latencia sem bolhas (K*t):    %.0f ns por instrucao\n&quot;, K * T_NS);
+    printf(&quot;Ganho (speedup) sem/com:      %.2f vezes\n&quot;, sem / com);
+    printf(&quot;CPI (ciclos por instrucao):   %.2f\n&quot;, (double)ciclos / (double)m);
+}
+
+static void diagrama(int n, const char **nome, const int *busca, const int *decod) {
+    static const char *est[] = {&quot;ID&quot;, &quot;EX&quot;, &quot;MEM&quot;, &quot;WB&quot;};
+    int fim = decod[n - 1] + 3;
+    printf(&quot;%-17s&quot;, &quot;ciclo:&quot;);
+    for (int c = 1; c &lt;= fim; c++) printf(&quot;%-4d&quot;, c);
+    printf(&quot;\n&quot;);
+    for (int i = 0; i &lt; n; i++) {
+        printf(&quot;%-17s&quot;, nome[i]);
+        for (int c = 1; c &lt;= fim; c++) {
+            const char *s = &quot;&quot;;
+            if (c == busca[i]) s = &quot;IF&quot;;
+            else if (c &gt; busca[i] &amp;&amp; c &lt; decod[i]) s = &quot;--&quot;;   /* bolha */
+            else if (c &gt;= decod[i] &amp;&amp; c &lt;= decod[i] + 3) s = est[c - decod[i]];
+            printf(&quot;%-4s&quot;, s);
+        }
+        printf(&quot;\n&quot;);
+    }
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) {
+        fprintf(stderr, &quot;uso: %s &lt;numero&gt; | dependencia | adiantamento\n&quot;, argv[0]);
+        return 1;
+    }
+    printf(&quot;SIMULACAO: pipeline de %d estagios, ciclo de %.0f ns\n\n&quot;, K, T_NS);
+    int dep = strcmp(argv[1], &quot;dependencia&quot;) == 0;
+    int adi = strcmp(argv[1], &quot;adiantamento&quot;) == 0;
+    if (dep || adi) {
+        int n = 3, busca[3], decod[3];
+        const char *nome[3];
+        for (int i = 0; i &lt; n; i++) {
+            nome[i] = exemplo[i].texto;
+            busca[i] = i == 0 ? 1 : decod[i - 1];   /* busca quando a anterior decodifica */
+            decod[i] = busca[i] + 1;
+            for (int j = 0; j &lt; i &amp;&amp; dep; j++)      /* sem adiantamento: espera o WB */
+                if (!strcmp(exemplo[j].escreve, exemplo[i].le1) ||
+                    !strcmp(exemplo[j].escreve, exemplo[i].le2))
+                    if (decod[i] &lt; decod[j] + 3) decod[i] = decod[j] + 3;
+        }
+        diagrama(n, nome, busca, decod);
+        printf(&quot;\n-- = bolha (stall): a instrucao espera; um estagio fica sem trabalho util\n\n&quot;);
+        long ciclos = decod[n - 1] + 3;
+        totais(n, ciclos, ciclos - (K + (n - 1)));
+        return 0;
+    }
+    long m = strtol(argv[1], NULL, 10);
+    if (m &lt; 1 || m &gt; 1000000000L) {
+        fprintf(stderr, &quot;use um numero de 1 a 1000000000\n&quot;);
+        return 1;
+    }
+    if (m &lt;= 8) {
+        int busca[8], decod[8];
+        const char *nome[8];
+        static const char *rot[] = {&quot;I1&quot;, &quot;I2&quot;, &quot;I3&quot;, &quot;I4&quot;, &quot;I5&quot;, &quot;I6&quot;, &quot;I7&quot;, &quot;I8&quot;};
+        for (int i = 0; i &lt; m; i++) { nome[i] = rot[i]; busca[i] = i + 1; decod[i] = i + 2; }
+        diagrama((int)m, nome, busca, decod);
+        printf(&quot;\n&quot;);
+    }
+    totais(m, K + (m - 1), 0);   /* T = [K + (M - 1)] * t */
+    return 0;
+}
+FIM
+# fim do bloco</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-pipeline
+gcc -std=c11 -Wall -Wextra -O1 pipeline.c -o pipeline
+# fim do bloco</code></pre></div>
+</li>
+<li>Simule 5 instruções e depois 1 milhão de instruções:
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>./pipeline 5
+./pipeline 1000000
+# fim do bloco</code></pre></div>
+<div class="question"><label for="a1-saida">Cole aqui as duas saídas.</label><textarea id="a1-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Resultado da simulação · igual em qualquer computador</div><pre tabindex="0">SIMULACAO: pipeline de 5 estagios, ciclo de 2 ns
+
+ciclo:           1   2   3   4   5   6   7   8   9
+I1               IF  ID  EX  MEM WB
+I2                   IF  ID  EX  MEM WB
+I3                       IF  ID  EX  MEM WB
+I4                           IF  ID  EX  MEM WB
+I5                               IF  ID  EX  MEM WB
+
+Instrucoes (M):               5
+Ciclos com pipeline:          9
+Bolhas (ciclos perdidos):     0
+Tempo com pipeline:           18 ns
+Tempo sem pipeline (K*M*t):   50 ns
+Latencia sem bolhas (K*t):    10 ns por instrucao
+Ganho (speedup) sem/com:      2.78 vezes
+CPI (ciclos por instrucao):   1.80</pre></div>
+<p>Observe: leia o diagrama por coluna. No ciclo 5, os cinco estágios estão ocupados, cada um com uma instrução diferente. O total segue a fórmula do livro: <b>T = [K + (M − 1)] × t</b>, em que K é o número de estágios, M o de instruções e t a duração do ciclo. Sem pipeline, cada instrução passaria pelos K estágios sozinha: K × M × t.</p>
+<div class="question"><label for="a1-p1">No diagrama de 5 instruções: em que ciclo a I1 termina? E a I5? A partir do ciclo 5, de quanto em quanto tempo termina uma instrução? Confira o total com a fórmula T = [K + (M − 1)] × t.</label><textarea id="a1-p1" placeholder="Mostre a conta."></textarea></div>
+<div class="question"><label for="a1-p2">O ganho foi 2,78 vezes com 5 instruções e quanto com 1 milhão? Por que mudou, se o pipeline é o mesmo? E a latência de cada instrução (10 ns) diminuiu com o pipeline? (<a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>)</label><textarea id="a1-p2" placeholder="Use as duas saídas."></textarea></div>
+<p><b>Agora o exemplo do livro.</b> Num processador real, as instruções não levam o mesmo tempo. O livro de Silva e Borges supõe que, <b>sem pipeline</b>, cada instrução leva em média 6,5 ns (uma soma, só 6 ns), porque cada uma usa só as etapas de que precisa. <b>Com pipeline</b>, toda instrução passa pelos 5 estágios de 2 ns, mesmo nos que não usa.</p>
+<div class="question"><label for="a1-livro">(a) Com pipeline, quanto tempo leva uma soma do início ao fim? Ficou maior ou menor que os 6 ns sem pipeline? (b) Para 1.000.000 de instruções, calcule o tempo sem pipeline (6,5 ns × 1.000.000) e divida pelo “Tempo com pipeline” da sua saída. Qual o ganho real?</label><textarea id="a1-livro" placeholder="Mostre a conta, em ns ou ms."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Atividade 1 concluída</label>
+</section>
+
+<section class="etapa" id="a2"><p class="label">Atividade 2 · até 30 min <span class="tipo">Simulação + medição real</span></p><h2>Quando uma conta espera pela outra</h2>
+<p><b>Objetivo:</b> ver o que acontece quando uma instrução precisa do resultado da anterior, primeiro na simulação e depois no processador do LIAC.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Dependência de dados (RAW, read after write)</dt><dd>Uma instrução precisa ler um valor que a anterior ainda está calculando. <a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a></dd></div>
+<div><dt>Bolha (stall ou bubble)</dt><dd>Ciclo em que a instrução fica parada esperando; o estágio à frente dela fica sem trabalho útil. <a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a> e <a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a></dd></div>
+<div><dt>Adiantamento (forwarding ou bypassing)</dt><dd>Atalho no hardware que entrega o resultado da ULA direto para a instrução seguinte, sem esperar a escrita no registrador. <a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a></dd></div>
+<div><dt>Cadeia de somas</dt><dd>Sequência em que cada soma usa o resultado da anterior: <code>a = a + x</code>, depois <code>a = a + x</code> de novo... Duas cadeias (<code>a</code> e <code>b</code>) são independentes entre si.</dd></div>
+</dl>
+<h3>O que fazer</h3>
+<ol>
+<li>Veja o exemplo do <a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a> no simulador da Atividade 1. O <code>SUB</code> lê <code>$s0</code>, que o <code>ADD</code> acabou de calcular. O <code>OR</code> não depende de ninguém.
+<div class="question"><label for="a2-previsao">Previsão: sem adiantamento, quantos ciclos o SUB vai esperar? O OR também vai atrasar?</label><textarea id="a2-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
+<div class="command"><div class="command-head"><span>Cole no terminal</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-pipeline
+./pipeline dependencia
+./pipeline adiantamento
+# fim do bloco</code></pre></div>
+<div class="expected"><div class="expected-label">Resultado da simulação · sem adiantamento</div><pre tabindex="0">ciclo:           1   2   3   4   5   6   7   8   9
+ADD $s0,$t0,$t1  IF  ID  EX  MEM WB
+SUB $t2,$s0,$t3      IF  --  --  ID  EX  MEM WB
+OR  $t4,$t5,$t6                  IF  ID  EX  MEM WB
+
+-- = bolha (stall): a instrucao espera; um estagio fica sem trabalho util</pre></div>
+<div class="question"><label for="a2-p1">Quantas bolhas apareceram sem adiantamento e quantas com adiantamento? Quantos ciclos cada versão levou? Por que o OR atrasou, se ele não depende de ninguém?</label><textarea id="a2-p1" placeholder="Use as duas saídas."></textarea></div>
+</li>
+<li>Agora no processador real. O programa <code>cadeias</code> faz sempre as mesmas 100.663.296 somas, divididas em 1, 2, 4, 8 ou 12 cadeias independentes. Ele também mede uma <b>régua</b>: uma soma de inteiros em cadeia, que neste tipo de processador leva 1 ciclo. Assim ele converte nanossegundos em ciclos.
+<details><summary>Criar <code>cadeias.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar cadeias.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar cadeias.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; cadeias.c &lt;&lt;&#x27;FIM&#x27;
+/* cadeias.c - MEDICAO REAL: o somador do processador tambem e um pipeline.
+   Faz sempre o mesmo numero de somas de ponto flutuante (double), mas
+   divididas em 1, 2, 4, 8 ou 12 &quot;cadeias&quot;. Numa cadeia, cada soma usa o
+   resultado da anterior (dependencia de dados). Cadeias diferentes sao
+   independentes e podem ocupar o somador ao mesmo tempo.
+   Uso: ./cadeias */
+#define _POSIX_C_SOURCE 199309L
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+
+#define SOMAS (3L &lt;&lt; 25)   /* 100.663.296 somas em cada linha (divisivel por 12) */
+#define RODADAS 8          /* usa a rodada mais rapida de cada linha */
+#define REGUA (1L &lt;&lt; 24)   /* somas da regua em cada rodada */
+
+/* Tempo de CPU deste programa: nao conta o tempo em que ele esperou a vez
+   enquanto outros programas (de colegas) usavam o processador. */
+static double agora(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &amp;t);
+    return (double)t.tv_sec + (double)t.tv_nsec * 1e-9;
+}
+
+/* Regua: soma de inteiros em cadeia. Cada soma depende da anterior e leva
+   1 ciclo de relogio; entao &quot;ns por soma&quot; = duracao de 1 ciclo. Sao 8 somas
+   por volta para que o proprio laco (o salto de volta) nao atrase a regua.
+   O valor somado vem da memoria (passo), para o processador nao adiantar
+   a conta como faria com uma constante. */
+static volatile long passo = 1;
+#define SOMA1 x = x + y; __asm__ volatile(&quot;&quot; : &quot;+r&quot;(x));  /* asm: o compilador */
+static double regua_ns(void) {                            /* nao pode pular  */
+    long x = 0, y = passo;                                /* nenhuma soma    */
+    double t0 = agora();
+    for (long i = 0; i &lt; REGUA; i += 8) {
+        SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1
+    }
+    return (agora() - t0) / (double)REGUA * 1e9;
+}
+
+static volatile double um = 1.0;   /* lido da memoria: o compilador nao adivinha */
+
+/* Cada funcao faz as mesmas SOMAS somas, em 1, 2, 4, 8 ou 12 cadeias.
+   Cada cadeia comeca num valor diferente; se todas comecassem iguais, o
+   compilador perceberia e faria uma so. O resultado desconta esse inicio.
+   Sem &quot;static&quot;, o compilador mantem cada funcao separada e simples. */
+double cadeia1(double x) {
+    double a = 0;
+    for (long i = 0; i &lt; SOMAS; i++) { a += x; }
+    return a;
+}
+double cadeia2(double x) {
+    double a = 0, b = 1;
+    for (long i = 0; i &lt; SOMAS; i += 2) { a += x; b += x; }
+    return a + b - 1;
+}
+double cadeia4(double x) {
+    double a = 0, b = 1, c = 2, d = 3;
+    for (long i = 0; i &lt; SOMAS; i += 4) { a += x; b += x; c += x; d += x; }
+    return a + b + c + d - 6;
+}
+double cadeia8(double x) {
+    double a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6, h = 7;
+    for (long i = 0; i &lt; SOMAS; i += 8) {
+        a += x; b += x; c += x; d += x; e += x; f += x; g += x; h += x;
+    }
+    return a + b + c + d + e + f + g + h - 28;
+}
+double cadeia12(double x) {
+    double a = 0, b = 1, c = 2, d = 3, e = 4, f = 5, g = 6, h = 7;
+    double p = 8, q = 9, r = 10, s = 11;
+    for (long i = 0; i &lt; SOMAS; i += 12) {
+        a += x; b += x; c += x; d += x; e += x; f += x; g += x; h += x;
+        p += x; q += x; r += x; s += x;
+    }
+    return a + b + c + d + e + f + g + h + p + q + r + s - 66;
+}
+
+static double somar(int n) {
+    if (n == 1) return cadeia1(um);
+    if (n == 2) return cadeia2(um);
+    if (n == 4) return cadeia4(um);
+    if (n == 8) return cadeia8(um);
+    return cadeia12(um);
+}
+
+int main(void) {
+    /* Rodadas intercaladas: cada rodada mede a regua e todas as linhas.
+       Se outro programa dividir o mesmo nucleo por um momento, so algumas
+       rodadas ficam lentas; usamos a mais rapida de cada medida. */
+    const int n[] = {1, 2, 4, 8, 12};
+    double tempo[5] = {1e9, 1e9, 1e9, 1e9, 1e9}, resultado[5] = {0};
+    double ciclo = 1e9;
+    regua_ns();   /* aquecimento: da tempo ao processador de acelerar */
+    for (int r = 0; r &lt; RODADAS; r++) {
+        double c = regua_ns();
+        if (c &lt; ciclo) ciclo = c;
+        for (int k = 0; k &lt; 5; k++) {
+            double t0 = agora();
+            resultado[k] = somar(n[k]);
+            double t = agora() - t0;
+            if (t &lt; tempo[k]) tempo[k] = t;
+        }
+    }
+
+    printf(&quot;Mesmas %ld somas em cada linha; melhor de %d rodadas.\n&quot;, SOMAS, RODADAS);
+    printf(&quot;Regua: 1 ciclo de relogio = %.3f ns (clock estimado: %.1f GHz)\n\n&quot;,
+           ciclo, 1.0 / ciclo);
+    printf(&quot;cadeias   tempo(ms)   ns/soma   ciclos/soma    resultado\n&quot;);
+    for (int k = 0; k &lt; 5; k++) {
+        double ns = tempo[k] / (double)SOMAS * 1e9;
+        printf(&quot;%7d %11.1f %9.3f %13.2f %12.0f\n&quot;, n[k], tempo[k] * 1e3, ns, ns / ciclo,
+               resultado[k]);
+    }
+    return 0;
+}
+FIM
+# fim do bloco</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar e rodar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar e rodar">Copiar</button></div><pre tabindex="0"><code>gcc -std=c11 -Wall -Wextra -O1 cadeias.c -o cadeias
+./cadeias
+# fim do bloco</code></pre></div>
+<p class="small">Aqui o <code>-O1</code> é necessário: ele faz o compilador guardar as somas nos registradores, como num programa real. Sem ele, cada soma passaria pela memória e mediríamos outra coisa. O programa leva cerca de 2 segundos.</p>
+<div class="question"><label for="a2-saida">Cole aqui a saída de ./cadeias.</label><textarea id="a2-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Medido no LIAC (Intel Core i7-6700) · os seus números podem variar um pouco</div><pre tabindex="0">Mesmas 100663296 somas em cada linha; melhor de 8 rodadas.
+Regua: 1 ciclo de relogio = 0.271 ns (clock estimado: 3.7 GHz)
+
+cadeias   tempo(ms)   ns/soma   ciclos/soma    resultado
+      1       109.3     1.086          4.00    100663296
+      2        54.7     0.543          2.00    100663296
+      4        27.3     0.272          1.00    100663296
+      8        13.7     0.136          0.50    100663296
+     12        13.7     0.136          0.50    100663296</pre></div>
+<p>Observe: a coluna <b>resultado</b> é igual em todas as linhas, então o trabalho foi o mesmo. Só mudou quanto as somas dependiam umas das outras. Com 1 cadeia, cada soma espera a anterior terminar: os <b>ciclos por soma</b> mostram a latência do somador. Com várias cadeias, o somador recebe uma soma nova antes de a anterior acabar, como o lava-jato que recebe um carro novo a cada etapa. Repare que o tempo cai pela metade a cada vez que as cadeias dobram, até parar.</p>
+<p class="small"><b>Atenção:</b> o processador do LIAC não é o pipeline didático de 5 estágios. Ele tem bem mais estágios, executa mais de uma instrução por ciclo e até muda a ordem delas (capítulo 8 do livro, seções 8.2 e 8.3). O princípio, porém, é o mesmo: uma conta que depende de outra precisa esperar.</p>
+<div class="question"><label for="a2-p2">Com 1 cadeia, quantos ciclos leva cada soma? Esse número é a latência do somador. Com 2 cadeias, o número de somas é o mesmo; por que o tempo caiu quase pela metade? (<a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>)</label><textarea id="a2-p2" placeholder="Use os seus números."></textarea></div>
+<div class="question"><label for="a2-p3">A partir de quantas cadeias o tempo parou de cair? No melhor caso, quantas somas por ciclo o processador fez (1 ÷ ciclos por soma)? Multiplique pela latência: quantas somas chegam a estar em andamento ao mesmo tempo? Compare com o número de cadeias em que o tempo parou de cair.</label><textarea id="a2-p3" placeholder="Mostre a conta."></textarea></div>
+<div class="question"><label for="a2-clock">Compare o “clock estimado” pela régua com a linha “CPU max MHz” do lscpu (1.000 MHz = 1 GHz). Os valores são próximos?</label><textarea id="a2-clock" placeholder="Se a linha não apareceu no lscpu, diga isso."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Atividade 2 concluída</label>
+</section>
+
+<section class="etapa" id="a3"><p class="label">Atividade 3 · até 30 min <span class="tipo">Medição real</span></p><h2>O processador tenta adivinhar</h2>
+<p><b>Objetivo:</b> medir quanto custa ao pipeline errar a previsão de um desvio.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Desvio condicional (branch)</dt><dd>Instrução que decide se o programa continua na linha seguinte ou pula para outro trecho. Todo <code>if</code> vira um desvio. <a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a></dd></div>
+<div><dt>Predição de desvio (branch prediction)</dt><dd>Em vez de parar e esperar a decisão, o processador adivinha o caminho e já busca as próximas instruções. Para adivinhar, usa o histórico dos últimos desvios. <a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a></dd></div>
+<div><dt>Esvaziamento (flush) e penalidade</dt><dd>Se a previsão erra, as instruções buscadas pelo caminho errado são descartadas e o pipeline recomeça. Os ciclos perdidos são a penalidade. <a href="../../materiais/pdfs/un06t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a></dd></div>
+<div><dt>CPI (ciclos por instrução)</dt><dd>Média de ciclos gastos por instrução. Ideal = 1; bolhas e erros de previsão aumentam esse número. <a href="../../materiais/pdfs/un06t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a></dd></div>
+</dl>
+<h3>O que fazer</h3>
+<ol>
+<li>O programa <code>desvios</code> percorre os mesmos 65.536 números (de 0 a 255) e soma só os que são maiores ou iguais a 128. Esse <code>if</code> é o desvio. Ele faz isso com os números em três ordens: <b>ordenada</b> (crescente), <b>alternada</b> (pequeno, grande, pequeno, grande...) e <b>aleatória</b>.
+<div class="question"><label for="a3-previsao">Previsão: qual ordem será mais rápida? Qual será a mais lenta? Por quê?</label><textarea id="a3-previsao" placeholder="Não vale nota. Escreva o que você acha."></textarea></div>
+</li>
+<li>Crie, compile e rode:
+<details><summary>Criar <code>desvios.c</code></summary><div><div class="command"><div class="command-head"><span>Cole no terminal para criar desvios.c</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para criar desvios.c">Copiar</button></div><pre tabindex="0"><code>cat &gt; desvios.c &lt;&lt;&#x27;FIM&#x27;
+/* desvios.c - MEDICAO REAL: o processador tenta adivinhar os desvios.
+   Percorre os mesmos 65.536 numeros (0 a 255) em tres ordens e soma
+   so os que sao &gt;= 128. O &quot;if&quot; vira uma instrucao de desvio condicional
+   (branch). Muda so a ordem: a quantidade de trabalho e a mesma.
+   Uso: ./desvios */
+#define _POSIX_C_SOURCE 199309L
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+
+#define N 65536
+#define VOLTAS 200         /* 200 voltas: 13.107.200 desvios por ordem */
+#define RODADAS 10         /* usa a rodada mais rapida de cada ordem */
+#define REGUA (1L &lt;&lt; 24)   /* somas da regua em cada rodada */
+
+static unsigned char v[3][N];   /* os mesmos numeros em tres ordens */
+static unsigned semente = 2026;
+
+/* Tempo de CPU deste programa: nao conta o tempo em que ele esperou a vez
+   enquanto outros programas (de colegas) usavam o processador. */
+static double agora(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &amp;t);
+    return (double)t.tv_sec + (double)t.tv_nsec * 1e-9;
+}
+
+static unsigned sorteio(void) {   /* gerador simples, sempre a mesma sequencia */
+    semente = semente * 1103515245u + 12345u;
+    return semente &gt;&gt; 16;
+}
+
+/* Regua: soma de inteiros em cadeia. Cada soma depende da anterior e leva
+   1 ciclo de relogio; entao &quot;ns por soma&quot; = duracao de 1 ciclo. Sao 8 somas
+   por volta para que o proprio laco (o salto de volta) nao atrase a regua.
+   O valor somado vem da memoria (passo), para o processador nao adiantar
+   a conta como faria com uma constante. */
+static volatile long passo = 1;
+#define SOMA1 x = x + y; __asm__ volatile(&quot;&quot; : &quot;+r&quot;(x));  /* asm: o compilador */
+static double regua_ns(void) {                            /* nao pode pular  */
+    long x = 0, y = passo;                                /* nenhuma soma    */
+    double t0 = agora();
+    for (long i = 0; i &lt; REGUA; i += 8) {
+        SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1 SOMA1
+    }
+    return (agora() - t0) / (double)REGUA * 1e9;
+}
+
+static long percorrer(const unsigned char *a) {
+    long soma = 0;
+    for (int r = 0; r &lt; VOLTAS; r++)
+        for (int i = 0; i &lt; N; i++)
+            if (a[i] &gt;= 128) {                 /* o desvio que sera adivinhado */
+                soma += a[i];
+                __asm__ volatile(&quot;&quot;);           /* mantem o desvio de verdade */
+            }
+    return soma;
+}
+
+int main(void) {
+    /* alternada: pequeno (0-127), grande (128-255), pequeno, grande... */
+    int conta[256] = {0}, p = 0;
+    for (int i = 0; i &lt; N; i++) {
+        v[1][i] = (unsigned char)(sorteio() % 128 + (i % 2 ? 128 : 0));
+        v[2][i] = v[1][i];
+        conta[v[1][i]]++;
+    }
+    for (int x = 0; x &lt; 256; x++)                  /* ordenada: crescente */
+        while (conta[x]--) v[0][p++] = (unsigned char)x;
+    for (int i = N - 1; i &gt; 0; i--) {              /* aleatoria: embaralha */
+        int j = (int)(sorteio() % (unsigned)(i + 1));
+        unsigned char t = v[2][i]; v[2][i] = v[2][j]; v[2][j] = t;
+    }
+
+    /* Rodadas intercaladas: cada rodada mede a regua e as tres ordens.
+       Se outro programa dividir o mesmo nucleo por um momento, so algumas
+       rodadas ficam lentas; usamos a mais rapida de cada medida. */
+    const char *nome[] = {&quot;ordenada&quot;, &quot;alternada&quot;, &quot;aleatoria&quot;};
+    double tempo[3] = {1e9, 1e9, 1e9}, ciclo = 1e9;
+    long resultado[3] = {0, 0, 0};
+    regua_ns();   /* aquecimento: da tempo ao processador de acelerar */
+    for (int r = 0; r &lt; RODADAS; r++) {
+        double c = regua_ns();
+        if (c &lt; ciclo) ciclo = c;
+        for (int k = 0; k &lt; 3; k++) {
+            double t0 = agora();
+            resultado[k] = percorrer(v[k]);
+            double t = agora() - t0;
+            if (t &lt; tempo[k]) tempo[k] = t;
+        }
+    }
+
+    printf(&quot;Mesmos %d numeros, %d voltas: %ld desvios por ordem; melhor de %d rodadas.\n&quot;,
+           N, VOLTAS, (long)N * VOLTAS, RODADAS);
+    printf(&quot;Regua: 1 ciclo de relogio = %.3f ns (clock estimado: %.1f GHz)\n\n&quot;,
+           ciclo, 1.0 / ciclo);
+    printf(&quot;ordem        tempo(ms)   ns/numero   ciclos/numero    resultado\n&quot;);
+    for (int k = 0; k &lt; 3; k++) {
+        double ns = tempo[k] / ((double)N * VOLTAS) * 1e9;
+        printf(&quot;%-10s %11.1f %11.3f %15.2f %12ld\n&quot;, nome[k], tempo[k] * 1e3, ns, ns / ciclo,
+               resultado[k]);
+    }
+    return 0;
+}
+FIM
+# fim do bloco</code></pre></div></div></details>
+<div class="command"><div class="command-head"><span>Cole no terminal para compilar e rodar</span><button class="copy" type="button" aria-label="Copiar: Cole no terminal para compilar e rodar">Copiar</button></div><pre tabindex="0"><code>cd ~/atividades/aoc-pipeline
+gcc -std=c11 -Wall -Wextra -O1 desvios.c -o desvios
+./desvios
+# fim do bloco</code></pre></div>
+<div class="question"><label for="a3-saida">Cole aqui a tabela.</label><textarea id="a3-saida" placeholder="Cole as linhas que apareceram no terminal."></textarea></div>
+</li>
+</ol>
+<h3>Saída esperada</h3>
+<div class="expected"><div class="expected-label">Medido no LIAC (Intel Core i7-6700) · os seus números podem variar um pouco</div><pre tabindex="0">Mesmos 65536 numeros, 200 voltas: 13107200 desvios por ordem; melhor de 10 rodadas.
+Regua: 1 ciclo de relogio = 0.272 ns (clock estimado: 3.7 GHz)
+
+ordem        tempo(ms)   ns/numero   ciclos/numero    resultado
+ordenada           5.4       0.408            1.50   1254708200
+alternada          5.3       0.408            1.50   1254708200
+aleatoria         47.1       3.593           13.23   1254708200</pre></div>
+<p>Observe: o <b>resultado</b> é o mesmo nas três ordens, pois os números são os mesmos. Na ordem crescente, o <code>if</code> dá “não” muitas vezes seguidas e depois “sim” muitas vezes seguidas: fácil de prever. Na aleatória, não há padrão: o processador erra mais ou menos metade das vezes, e cada erro esvazia o pipeline.</p>
+<div class="question"><label for="a3-p1">Quantos ciclos a mais a ordem aleatória gastou por número, em relação à ordenada? Se o processador errou cerca de metade das previsões, quanto custa um erro (penalidade ≈ 2 × diferença)?</label><textarea id="a3-p1" placeholder="Mostre a conta com os seus números."></textarea></div>
+<div class="question"><label for="a3-p2">Na ordem alternada, a resposta do if muda a cada número. Mesmo assim ela foi rápida. Como o processador consegue acertar? (<a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>)</label><textarea id="a3-p2" placeholder="Responda com suas palavras."></textarea></div>
+<div class="question"><label for="a3-p3">Use a fórmula do <a href="../../materiais/pdfs/un06t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a>: CPI real = CPI ideal + (frequência da penalidade × custo). Num programa em que 20% das instruções são desvios e o processador erra 5% deles, a frequência é 0,20 × 0,05 = 0,01. Com a penalidade que você estimou, qual é o CPI real? Quanto mais lento que o ideal (CPI = 1)?</label><textarea id="a3-p3" placeholder="Mostre a conta."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Atividade 3 concluída</label>
+</section>
+
+<section class="etapa" id="sintese"><p class="label">Síntese · 5 min</p><h2>O que limita o pipeline?</h2>
+<p>Retome o <a href="../../materiais/pdfs/un06t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a> e o <a href="../../materiais/pdfs/un06t01.pdf#page=14" target="_blank" rel="noopener">slide 14</a>: o tempo de um programa é <b>número de instruções × CPI × duração do ciclo</b>. Responda em poucas frases.</p>
+<div class="question"><label for="s-hazards">Para cada tipo de conflito (hazard) do <a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a>, dê um exemplo visto hoje e a técnica que o reduz. Estrutural: dica, olhe as linhas L1d e L1i do seu lscpu e o <a href="../../materiais/pdfs/un06t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a>. De dados: Atividade 2. De controle: Atividade 3.</label><textarea id="s-hazards" placeholder="Três linhas: estrutural, dados, controle."></textarea></div>
+<div class="question"><label for="s-clock">O “mito do megahertz” (<a href="../../materiais/pdfs/un06t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a>): o processador A tem 4 GHz e CPI 1,5; o B tem 3 GHz e CPI 1,0. Qual executa mais rápido um programa de 1 bilhão de instruções?</label><textarea id="s-clock" placeholder="Tempo = instruções × CPI ÷ frequência. Mostre a conta."></textarea></div>
+<div class="question"><label for="s-profundo">No livro (seção 8.2), o lava-jato passa de 4 etapas de 15 min para 8 etapas de 7,5 min, e o Pentium 4 chegou a 20 estágios. Por que um pipeline mais longo entrega mais instruções por segundo, mas perde mais a cada previsão errada? Use a penalidade que você mediu.</label><textarea id="s-profundo" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Síntese concluída</label>
+</section>
+
+<section class="etapa" id="entregar"><h2>Entregar</h2>
+<ol>
+<li>Confira as respostas. Clique em <b>Preparar arquivo final</b>.
+<p><button type="button" id="preparar">Preparar arquivo final</button></p>
+<div id="entrega-comando" hidden><div class="command"><div class="command-head"><span>Cole no terminal para salvar entrega-pipeline.txt</span><button class="copy" type="button" aria-label="Copiar o comando do arquivo final">Copiar</button></div><pre tabindex="0"><code id="entrega-codigo"></code></pre></div></div>
+</li>
+<li>Cole o bloco no terminal. Ele grava <code>entrega-pipeline.txt</code> na sua pasta <code>~/atividades/aoc-pipeline</code> e mostra o caminho.</li>
+<li>Entregue esse arquivo pelo procedimento já usado no LIAC. Só o arquivo final é avaliado. Se mudar alguma resposta, prepare e cole de novo: o arquivo é substituído.</li>
+</ol>
+<p class="small">O botão <b>Baixar respostas (.txt)</b>, no topo, guarda uma cópia neste aparelho.</p>
+<details><summary>Como será avaliado</summary><div><ul>
+<li><b>Atividade 1:</b> lê o diagrama, aplica T = [K + (M − 1)] × t, explica por que o ganho se aproxima de K e distingue latência de vazão, inclusive no exemplo do livro.</li>
+<li><b>Atividade 2:</b> conta as bolhas e explica o atraso do OR; obtém dos seus números a latência do somador e o limite de somas por ciclo.</li>
+<li><b>Atividade 3:</b> calcula a diferença entre as ordens, estima a penalidade de um erro de previsão e aplica a fórmula do CPI real.</li>
+<li><b>Síntese:</b> relaciona cada tipo de conflito a uma técnica, faz a conta do mito do megahertz e liga a profundidade do pipeline à penalidade.</li>
+</ul><p>As previsões não valem nota. Pesos e prazo serão informados pelo professor.</p></div></details>
+<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco não foi colado até a última linha (<code>FIM</code>). Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro com <code>~</code> no fim:</b> apague o <code>~</code> e aperte Enter de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>Os tempos variam muito de uma execução para outra:</b> rode de novo; o programa já usa a rodada mais rápida de cada medida. Se o “clock estimado” ficar muito abaixo do “CPU max MHz” do lscpu, também rode de novo. Registre a execução que você colou.</p><p><b>“Permissão negada” ou “arquivo não encontrado”:</b> rode <code>cd ~/atividades/aoc-pipeline</code> e tente outra vez. Se continuar, registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Arquitetura e Organização de Computadores · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

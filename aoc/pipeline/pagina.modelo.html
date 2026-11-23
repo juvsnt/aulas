@@ -1,0 +1,214 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade da Unidade 6 de AOC: três atividades curtas no terminal do LIAC sobre pipeline, dependência de dados e predição de desvios, com síntese."><meta name="theme-color" content="#13202a"><title>Linha de montagem de instruções · Atividade da Unidade 6 | AOC</title><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script></head><body data-unit="aoc-un06"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina AOC</a><a href="../../materiais/#unidade-6">Materiais da Unidade 6</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade da Unidade 6 · Arquitetura e Organização de Computadores · UNEMAT</p><h1>Linha de montagem de instruções</h1><p class="lede">Três atividades curtas no terminal para ver o pipeline funcionando: no papel, numa simulação e no processador de verdade.</p><div class="meta"><span><b>Individual</b></span><span><b>3 atividades</b> de até 30 min</span><span><b>Síntese</b> de 5 min</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Antes de começar</h2>
+<p>As atividades usam os slides da unidade: <a href="../../materiais/pdfs/un06t01.pdf" target="_blank" rel="noopener">Pipeline e desempenho (PDF) ↗</a>. Cada termo técnico traz o número do slide em que aparece. A leitura complementar é o capítulo 8 (seções 8.1 e 8.2) do livro <i>Arquitetura de Computadores: uma introdução</i>, de Gabriel P. Silva e José Antonio Borges, de onde vem a comparação com o lava-jato.</p>
+<ol>
+<li>Escreva seu nome e matrícula.</li>
+<li>Abra o terminal (a tela onde se digitam comandos), entre com sua conta e cole o bloco abaixo. Ele cria e abre sua pasta da atividade.</li>
+</ol>
+@@Q identificacao | Nome completo e matrícula | Ex.: Maria Silva — 202312345
+@@CMD Cole no terminal
+mkdir -p ~/atividades/aoc-pipeline
+cd ~/atividades/aoc-pipeline
+@@END
+<p class="small">Todo bloco termina com a linha <code># fim do bloco</code>, que não faz nada. Ela existe porque o terminal às vezes acrescenta um <code>~</code> no fim do que foi colado; o <code>~</code> fica nessa linha e não atrapalha. Se aparecer <code>~</code> no fim de um comando que você digitou, apague antes de apertar Enter.</p>
+<ol start="3">
+<li>Conheça o processador em que você vai trabalhar. O comando <code>lscpu</code> descreve a CPU; o <code>grep</code> filtra só as linhas que interessam (modelo, frequência máxima e caches L1).
+@@CMD Cole no terminal
+LC_ALL=C lscpu | grep -E 'Model name|max MHz|L1[di]'
+@@END
+@@Q cpu | Cole aqui a saída. | Cole as linhas que apareceram no terminal.
+</li>
+</ol>
+<p class="small">Os números de tempo mudam de um computador para outro e de um momento para outro. Registre sempre os <b>seus</b> valores. Cada atividade tem quatro etapas: prever (5 min), executar (10 min), interpretar (10 min) e registrar (5 min).</p>
+</section>
+
+<nav class="steps-nav" aria-label="Atividades"><a href="#a1">Atividade 1</a> <a href="#a2">Atividade 2</a> <a href="#a3">Atividade 3</a> <a href="#sintese">Síntese</a> <a href="#entregar">Entregar</a></nav>
+
+<section class="etapa" id="a1"><p class="label">Atividade 1 · até 30 min <span class="tipo">Simulação</span></p><h2>O lava-jato das instruções</h2>
+<p><b>Objetivo:</b> ler um diagrama temporal e calcular quanto o pipeline ganha, e quanto não ganha.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Pipeline</dt><dd>Linha de montagem de instruções: a execução é dividida em etapas, e cada etapa trabalha numa instrução diferente ao mesmo tempo. @@SLIDE 3</dd></div>
+<div><dt>Estágio (stage)</dt><dd>Cada etapa da linha. No pipeline clássico são cinco: IF (busca), ID (decodificação), EX (execução), MEM (memória) e WB (escrita do resultado). No livro: B, D, E, M e W. @@SLIDE 4</dd></div>
+<div><dt>Ciclo de relógio (clock cycle)</dt><dd>O “tique” que faz cada instrução avançar um estágio. Se a frequência é f, o ciclo dura t = 1/f. O ciclo precisa caber o estágio mais lento.</dd></div>
+<div><dt>Latência × vazão (latency × throughput)</dt><dd>Latência: quanto tempo <b>uma</b> instrução leva do início ao fim. Vazão: quantas instruções terminam por unidade de tempo. @@SLIDE 6</dd></div>
+</dl>
+<p class="small"><b>Simulação:</b> o programa desta atividade não mede o processador. Ele aplica as regras de um pipeline didático de 5 estágios, com ciclo de 2 ns, e desenha o resultado, como o diagrama do @@SLIDE 5.</p>
+<h3>O que fazer</h3>
+<ol>
+<li>Comece pelo lava-jato. Lavar um carro tem 4 etapas de 15 min cada (1 h por carro). Sem pipeline, 5 carros levam 5 h. Com pipeline, entra um carro novo assim que a primeira etapa fica livre.
+@@Q a1-previsao | Previsão: com pipeline, quanto tempo levam os 5 carros? Quanto tempo leva cada carro, do início ao fim? | Não vale nota. Escreva o que você acha.
+</li>
+<li>Crie e compile o simulador. A opção <code>-O1</code> pede ao compilador uma otimização leve, a mesma usada nas outras atividades.
+@@SRC pipeline.c
+@@CMD Cole no terminal para compilar
+cd ~/atividades/aoc-pipeline
+gcc -std=c11 -Wall -Wextra -O1 pipeline.c -o pipeline
+@@END
+</li>
+<li>Simule 5 instruções e depois 1 milhão de instruções:
+@@CMD Cole no terminal
+./pipeline 5
+./pipeline 1000000
+@@END
+@@Q a1-saida | Cole aqui as duas saídas. | Cole as linhas que apareceram no terminal.
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Resultado da simulação · igual em qualquer computador
+SIMULACAO: pipeline de 5 estagios, ciclo de 2 ns
+
+ciclo:           1   2   3   4   5   6   7   8   9
+I1               IF  ID  EX  MEM WB
+I2                   IF  ID  EX  MEM WB
+I3                       IF  ID  EX  MEM WB
+I4                           IF  ID  EX  MEM WB
+I5                               IF  ID  EX  MEM WB
+
+Instrucoes (M):               5
+Ciclos com pipeline:          9
+Bolhas (ciclos perdidos):     0
+Tempo com pipeline:           18 ns
+Tempo sem pipeline (K*M*t):   50 ns
+Latencia sem bolhas (K*t):    10 ns por instrucao
+Ganho (speedup) sem/com:      2.78 vezes
+CPI (ciclos por instrucao):   1.80
+@@END
+<p>Observe: leia o diagrama por coluna. No ciclo 5, os cinco estágios estão ocupados, cada um com uma instrução diferente. O total segue a fórmula do livro: <b>T = [K + (M − 1)] × t</b>, em que K é o número de estágios, M o de instruções e t a duração do ciclo. Sem pipeline, cada instrução passaria pelos K estágios sozinha: K × M × t.</p>
+@@Q a1-p1 | No diagrama de 5 instruções: em que ciclo a I1 termina? E a I5? A partir do ciclo 5, de quanto em quanto tempo termina uma instrução? Confira o total com a fórmula T = [K + (M − 1)] × t. | Mostre a conta.
+@@Q a1-p2 | O ganho foi 2,78 vezes com 5 instruções e quanto com 1 milhão? Por que mudou, se o pipeline é o mesmo? E a latência de cada instrução (10 ns) diminuiu com o pipeline? (@@SLIDE 6) | Use as duas saídas.
+<p><b>Agora o exemplo do livro.</b> Num processador real, as instruções não levam o mesmo tempo. O livro de Silva e Borges supõe que, <b>sem pipeline</b>, cada instrução leva em média 6,5 ns (uma soma, só 6 ns), porque cada uma usa só as etapas de que precisa. <b>Com pipeline</b>, toda instrução passa pelos 5 estágios de 2 ns, mesmo nos que não usa.</p>
+@@Q a1-livro | (a) Com pipeline, quanto tempo leva uma soma do início ao fim? Ficou maior ou menor que os 6 ns sem pipeline? (b) Para 1.000.000 de instruções, calcule o tempo sem pipeline (6,5 ns × 1.000.000) e divida pelo “Tempo com pipeline” da sua saída. Qual o ganho real? | Mostre a conta, em ns ou ms.
+@@DONE 1 | Atividade 1 concluída
+</section>
+
+<section class="etapa" id="a2"><p class="label">Atividade 2 · até 30 min <span class="tipo">Simulação + medição real</span></p><h2>Quando uma conta espera pela outra</h2>
+<p><b>Objetivo:</b> ver o que acontece quando uma instrução precisa do resultado da anterior, primeiro na simulação e depois no processador do LIAC.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Dependência de dados (RAW, read after write)</dt><dd>Uma instrução precisa ler um valor que a anterior ainda está calculando. @@SLIDE 9</dd></div>
+<div><dt>Bolha (stall ou bubble)</dt><dd>Ciclo em que a instrução fica parada esperando; o estágio à frente dela fica sem trabalho útil. @@SLIDE 7 e @@SLIDE 9</dd></div>
+<div><dt>Adiantamento (forwarding ou bypassing)</dt><dd>Atalho no hardware que entrega o resultado da ULA direto para a instrução seguinte, sem esperar a escrita no registrador. @@SLIDE 10</dd></div>
+<div><dt>Cadeia de somas</dt><dd>Sequência em que cada soma usa o resultado da anterior: <code>a = a + x</code>, depois <code>a = a + x</code> de novo... Duas cadeias (<code>a</code> e <code>b</code>) são independentes entre si.</dd></div>
+</dl>
+<h3>O que fazer</h3>
+<ol>
+<li>Veja o exemplo do @@SLIDE 9 no simulador da Atividade 1. O <code>SUB</code> lê <code>$s0</code>, que o <code>ADD</code> acabou de calcular. O <code>OR</code> não depende de ninguém.
+@@Q a2-previsao | Previsão: sem adiantamento, quantos ciclos o SUB vai esperar? O OR também vai atrasar? | Não vale nota. Escreva o que você acha.
+@@CMD Cole no terminal
+cd ~/atividades/aoc-pipeline
+./pipeline dependencia
+./pipeline adiantamento
+@@END
+@@OUT Resultado da simulação · sem adiantamento
+ciclo:           1   2   3   4   5   6   7   8   9
+ADD $s0,$t0,$t1  IF  ID  EX  MEM WB
+SUB $t2,$s0,$t3      IF  --  --  ID  EX  MEM WB
+OR  $t4,$t5,$t6                  IF  ID  EX  MEM WB
+
+-- = bolha (stall): a instrucao espera; um estagio fica sem trabalho util
+@@END
+@@Q a2-p1 | Quantas bolhas apareceram sem adiantamento e quantas com adiantamento? Quantos ciclos cada versão levou? Por que o OR atrasou, se ele não depende de ninguém? | Use as duas saídas.
+</li>
+<li>Agora no processador real. O programa <code>cadeias</code> faz sempre as mesmas 100.663.296 somas, divididas em 1, 2, 4, 8 ou 12 cadeias independentes. Ele também mede uma <b>régua</b>: uma soma de inteiros em cadeia, que neste tipo de processador leva 1 ciclo. Assim ele converte nanossegundos em ciclos.
+@@SRC cadeias.c
+@@CMD Cole no terminal para compilar e rodar
+gcc -std=c11 -Wall -Wextra -O1 cadeias.c -o cadeias
+./cadeias
+@@END
+<p class="small">Aqui o <code>-O1</code> é necessário: ele faz o compilador guardar as somas nos registradores, como num programa real. Sem ele, cada soma passaria pela memória e mediríamos outra coisa. O programa leva cerca de 2 segundos.</p>
+@@Q a2-saida | Cole aqui a saída de ./cadeias. | Cole as linhas que apareceram no terminal.
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Medido no LIAC (Intel Core i7-6700) · os seus números podem variar um pouco
+Mesmas 100663296 somas em cada linha; melhor de 8 rodadas.
+Regua: 1 ciclo de relogio = 0.271 ns (clock estimado: 3.7 GHz)
+
+cadeias   tempo(ms)   ns/soma   ciclos/soma    resultado
+      1       109.3     1.086          4.00    100663296
+      2        54.7     0.543          2.00    100663296
+      4        27.3     0.272          1.00    100663296
+      8        13.7     0.136          0.50    100663296
+     12        13.7     0.136          0.50    100663296
+@@END
+<p>Observe: a coluna <b>resultado</b> é igual em todas as linhas, então o trabalho foi o mesmo. Só mudou quanto as somas dependiam umas das outras. Com 1 cadeia, cada soma espera a anterior terminar: os <b>ciclos por soma</b> mostram a latência do somador. Com várias cadeias, o somador recebe uma soma nova antes de a anterior acabar, como o lava-jato que recebe um carro novo a cada etapa. Repare que o tempo cai pela metade a cada vez que as cadeias dobram, até parar.</p>
+<p class="small"><b>Atenção:</b> o processador do LIAC não é o pipeline didático de 5 estágios. Ele tem bem mais estágios, executa mais de uma instrução por ciclo e até muda a ordem delas (capítulo 8 do livro, seções 8.2 e 8.3). O princípio, porém, é o mesmo: uma conta que depende de outra precisa esperar.</p>
+@@Q a2-p2 | Com 1 cadeia, quantos ciclos leva cada soma? Esse número é a latência do somador. Com 2 cadeias, o número de somas é o mesmo; por que o tempo caiu quase pela metade? (@@SLIDE 6) | Use os seus números.
+@@Q a2-p3 | A partir de quantas cadeias o tempo parou de cair? No melhor caso, quantas somas por ciclo o processador fez (1 ÷ ciclos por soma)? Multiplique pela latência: quantas somas chegam a estar em andamento ao mesmo tempo? Compare com o número de cadeias em que o tempo parou de cair. | Mostre a conta.
+@@Q a2-clock | Compare o “clock estimado” pela régua com a linha “CPU max MHz” do lscpu (1.000 MHz = 1 GHz). Os valores são próximos? | Se a linha não apareceu no lscpu, diga isso.
+@@DONE 2 | Atividade 2 concluída
+</section>
+
+<section class="etapa" id="a3"><p class="label">Atividade 3 · até 30 min <span class="tipo">Medição real</span></p><h2>O processador tenta adivinhar</h2>
+<p><b>Objetivo:</b> medir quanto custa ao pipeline errar a previsão de um desvio.</p>
+<h3>Conceitos</h3>
+<dl class="termos">
+<div><dt>Desvio condicional (branch)</dt><dd>Instrução que decide se o programa continua na linha seguinte ou pula para outro trecho. Todo <code>if</code> vira um desvio. @@SLIDE 7</dd></div>
+<div><dt>Predição de desvio (branch prediction)</dt><dd>Em vez de parar e esperar a decisão, o processador adivinha o caminho e já busca as próximas instruções. Para adivinhar, usa o histórico dos últimos desvios. @@SLIDE 10</dd></div>
+<div><dt>Esvaziamento (flush) e penalidade</dt><dd>Se a previsão erra, as instruções buscadas pelo caminho errado são descartadas e o pipeline recomeça. Os ciclos perdidos são a penalidade. @@SLIDE 8</dd></div>
+<div><dt>CPI (ciclos por instrução)</dt><dd>Média de ciclos gastos por instrução. Ideal = 1; bolhas e erros de previsão aumentam esse número. @@SLIDE 12</dd></div>
+</dl>
+<h3>O que fazer</h3>
+<ol>
+<li>O programa <code>desvios</code> percorre os mesmos 65.536 números (de 0 a 255) e soma só os que são maiores ou iguais a 128. Esse <code>if</code> é o desvio. Ele faz isso com os números em três ordens: <b>ordenada</b> (crescente), <b>alternada</b> (pequeno, grande, pequeno, grande...) e <b>aleatória</b>.
+@@Q a3-previsao | Previsão: qual ordem será mais rápida? Qual será a mais lenta? Por quê? | Não vale nota. Escreva o que você acha.
+</li>
+<li>Crie, compile e rode:
+@@SRC desvios.c
+@@CMD Cole no terminal para compilar e rodar
+cd ~/atividades/aoc-pipeline
+gcc -std=c11 -Wall -Wextra -O1 desvios.c -o desvios
+./desvios
+@@END
+@@Q a3-saida | Cole aqui a tabela. | Cole as linhas que apareceram no terminal.
+</li>
+</ol>
+<h3>Saída esperada</h3>
+@@OUT Medido no LIAC (Intel Core i7-6700) · os seus números podem variar um pouco
+Mesmos 65536 numeros, 200 voltas: 13107200 desvios por ordem; melhor de 10 rodadas.
+Regua: 1 ciclo de relogio = 0.272 ns (clock estimado: 3.7 GHz)
+
+ordem        tempo(ms)   ns/numero   ciclos/numero    resultado
+ordenada           5.4       0.408            1.50   1254708200
+alternada          5.3       0.408            1.50   1254708200
+aleatoria         47.1       3.593           13.23   1254708200
+@@END
+<p>Observe: o <b>resultado</b> é o mesmo nas três ordens, pois os números são os mesmos. Na ordem crescente, o <code>if</code> dá “não” muitas vezes seguidas e depois “sim” muitas vezes seguidas: fácil de prever. Na aleatória, não há padrão: o processador erra mais ou menos metade das vezes, e cada erro esvazia o pipeline.</p>
+@@Q a3-p1 | Quantos ciclos a mais a ordem aleatória gastou por número, em relação à ordenada? Se o processador errou cerca de metade das previsões, quanto custa um erro (penalidade ≈ 2 × diferença)? | Mostre a conta com os seus números.
+@@Q a3-p2 | Na ordem alternada, a resposta do if muda a cada número. Mesmo assim ela foi rápida. Como o processador consegue acertar? (@@SLIDE 10) | Responda com suas palavras.
+@@Q a3-p3 | Use a fórmula do @@SLIDE 12: CPI real = CPI ideal + (frequência da penalidade × custo). Num programa em que 20% das instruções são desvios e o processador erra 5% deles, a frequência é 0,20 × 0,05 = 0,01. Com a penalidade que você estimou, qual é o CPI real? Quanto mais lento que o ideal (CPI = 1)? | Mostre a conta.
+@@DONE 3 | Atividade 3 concluída
+</section>
+
+<section class="etapa" id="sintese"><p class="label">Síntese · 5 min</p><h2>O que limita o pipeline?</h2>
+<p>Retome o @@SLIDE 11 e o @@SLIDE 14: o tempo de um programa é <b>número de instruções × CPI × duração do ciclo</b>. Responda em poucas frases.</p>
+@@Q s-hazards | Para cada tipo de conflito (hazard) do @@SLIDE 7, dê um exemplo visto hoje e a técnica que o reduz. Estrutural: dica, olhe as linhas L1d e L1i do seu lscpu e o @@SLIDE 8. De dados: Atividade 2. De controle: Atividade 3. | Três linhas: estrutural, dados, controle.
+@@Q s-clock | O “mito do megahertz” (@@SLIDE 11): o processador A tem 4 GHz e CPI 1,5; o B tem 3 GHz e CPI 1,0. Qual executa mais rápido um programa de 1 bilhão de instruções? | Tempo = instruções × CPI ÷ frequência. Mostre a conta.
+@@Q s-profundo | No livro (seção 8.2), o lava-jato passa de 4 etapas de 15 min para 8 etapas de 7,5 min, e o Pentium 4 chegou a 20 estágios. Por que um pipeline mais longo entrega mais instruções por segundo, mas perde mais a cada previsão errada? Use a penalidade que você mediu. | Responda com suas palavras.
+@@DONE 4 | Síntese concluída
+</section>
+
+<section class="etapa" id="entregar"><h2>Entregar</h2>
+<ol>
+<li>Confira as respostas. Clique em <b>Preparar arquivo final</b>.
+<p><button type="button" id="preparar">Preparar arquivo final</button></p>
+<div id="entrega-comando" hidden><div class="command"><div class="command-head"><span>Cole no terminal para salvar entrega-pipeline.txt</span><button class="copy" type="button" aria-label="Copiar o comando do arquivo final">Copiar</button></div><pre tabindex="0"><code id="entrega-codigo"></code></pre></div></div>
+</li>
+<li>Cole o bloco no terminal. Ele grava <code>entrega-pipeline.txt</code> na sua pasta <code>~/atividades/aoc-pipeline</code> e mostra o caminho.</li>
+<li>Entregue esse arquivo pelo procedimento já usado no LIAC. Só o arquivo final é avaliado. Se mudar alguma resposta, prepare e cole de novo: o arquivo é substituído.</li>
+</ol>
+<p class="small">O botão <b>Baixar respostas (.txt)</b>, no topo, guarda uma cópia neste aparelho.</p>
+<details><summary>Como será avaliado</summary><div><ul>
+<li><b>Atividade 1:</b> lê o diagrama, aplica T = [K + (M − 1)] × t, explica por que o ganho se aproxima de K e distingue latência de vazão, inclusive no exemplo do livro.</li>
+<li><b>Atividade 2:</b> conta as bolhas e explica o atraso do OR; obtém dos seus números a latência do somador e o limite de somas por ciclo.</li>
+<li><b>Atividade 3:</b> calcula a diferença entre as ordens, estima a penalidade de um erro de previsão e aplica a fórmula do CPI real.</li>
+<li><b>Síntese:</b> relaciona cada tipo de conflito a uma técnica, faz a conta do mito do megahertz e liga a profundidade do pipeline à penalidade.</li>
+</ul><p>As previsões não valem nota. Pesos e prazo serão informados pelo professor.</p></div></details>
+<details><summary>Se algo der errado</summary><div><p><b>O terminal mostra <code>&gt;</code> e não volta:</b> o bloco não foi colado até a última linha (<code>FIM</code>). Aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e copie de novo.</p><p><b>Erro com <code>~</code> no fim:</b> apague o <code>~</code> e aperte Enter de novo.</p><p><b>Erro ao compilar:</b> crie o arquivo de novo, copiando o bloco inteiro.</p><p><b>Os tempos variam muito de uma execução para outra:</b> rode de novo; o programa já usa a rodada mais rápida de cada medida. Se o “clock estimado” ficar muito abaixo do “CPU max MHz” do lscpu, também rode de novo. Registre a execução que você colou.</p><p><b>“Permissão negada” ou “arquivo não encontrado”:</b> rode <code>cd ~/atividades/aoc-pipeline</code> e tente outra vez. Se continuar, registre a mensagem e avise o professor. Não use <code>sudo</code>.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Arquitetura e Organização de Computadores · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

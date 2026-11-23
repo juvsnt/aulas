@@ -1,0 +1,4 @@
+# Material exclusivo do professor: manter fora do Git e da pasta publica.
+docente-local/
+revisao/
+__pycache__/
