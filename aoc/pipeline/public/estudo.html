@@ -1,0 +1,113 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Estudo dirigido da Unidade 6 de AOC: leitura guiada do livro e dos slides sobre pipeline, conflitos e desempenho, como preparação para a atividade prática."><meta name="theme-color" content="#13202a"><title>Estudo dirigido: pipeline · Unidade 6 | AOC</title><link rel="stylesheet" href="styles.css"><script src="app.js" defer></script></head><body data-unit="aoc-un06-estudo" data-arquivo="estudo-pipeline.txt"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina AOC</a><a href="../../materiais/#unidade-6">Materiais da Unidade 6</a><a href="./">Atividade prática →</a></nav>
+<header class="hero"><p class="label">Estudo dirigido da Unidade 6 · Arquitetura e Organização de Computadores · UNEMAT</p><h1>Antes da linha de montagem</h1><p class="lede">Um roteiro para estudar a teoria de pipeline no livro e nos slides, com perguntas que preparam cada parte da atividade prática.</p><div class="meta"><span><b>Individual</b></span><span><b>3 leituras</b> em cerca de 80 min</span><span><b>Ficha</b> entregue no LIAC</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="preparar-leitura"><h2>Prepare a leitura</h2>
+<p><b>Objetivo:</b> estudar pipeline no livro e nos slides de um jeito ativo. Você vai ler procurando respostas, escrever com suas palavras e registrar de onde tirou cada ideia. Na atividade prática, as previsões que você fizer vão partir desta leitura.</p>
+<h3>Material</h3>
+<ul>
+<li><b>Livro:</b> SILVA, Gabriel P.; BORGES, José Antonio. <i>Arquitetura de Computadores: uma introdução</i>. Capítulo 8, seção 8.1, a mesma que você já leu (as demais seções são leitura extra). Abra o ebook pelo acesso indicado pelo professor.</li>
+<li><b>Slides:</b> <a href="../../materiais/pdfs/un06t01.pdf" target="_blank" rel="noopener">Pipeline e desempenho (PDF) ↗</a>. Os links “slide N” deste roteiro abrem a página certa.</li>
+</ul>
+<h3>Organize a tela</h3>
+<ol>
+<li>Abra o ebook numa janela e arraste-a para a metade esquerda da tela. Deixe este roteiro na metade direita. Se a tela for pequena, alterne entre as duas abas.</li>
+<li>No leitor do ebook, localize três ferramentas: o <b>sumário</b> (para ir direto à seção), a <b>busca</b> (lupa ou <kbd>Ctrl</kbd>+<kbd>F</kbd>, para achar um termo) e o <b>marca-texto</b> ou as notas, se houver.</li>
+<li>Escreva seu nome e matrícula.</li>
+</ol>
+<div class="question"><label for="identificacao">Nome completo e matrícula</label><textarea id="identificacao" placeholder="Ex.: Maria Silva — 202312345"></textarea></div>
+<div class="dica"><p class="label">Três regras desta leitura</p><ul>
+<li><b>Cite a fonte</b> em toda resposta: “livro, p. 123” ou “slide 9”.</li>
+<li><b>Escreva com suas palavras.</b> Copiar um trecho do livro não mostra que você entendeu e não vale como resposta.</li>
+<li><b>Se não achar no livro, procure nos slides</b>, e registre isso. Saber onde a informação está, e onde não está, também faz parte de estudar.</li>
+</ul></div>
+<label class="done"><input type="checkbox" id="feito-1" data-step="1">Tela organizada e material aberto</label>
+</section>
+
+<nav class="steps-nav" aria-label="Etapas"><a href="#panorama">1. Panorama</a> <a href="#leitura">2. Leitura guiada</a> <a href="#sintese">3. Síntese</a> <a href="#entregar">Entregar</a></nav>
+
+<section class="etapa" id="panorama"><p class="label">Leitura 1 · 10 min <span class="tipo">Panorama</span></p><h2>Olhe o mapa antes da viagem</h2>
+<p><b>Objetivo:</b> ter uma visão geral do capítulo antes de ler em detalhe. Leia <b>só</b> os títulos das seções e subseções, as figuras com suas legendas e os exemplos destacados. Não leia os parágrafos ainda.</p>
+<div class="question"><label for="pan-estrutura">Quais são os títulos da seção 8.1, de suas subseções e dos subtítulos sem número? Qual figura da seção parece mais importante para entender pipeline? Diga o número da figura e a página.</label><textarea id="pan-estrutura" placeholder="Liste os títulos e indique a figura."></textarea></div>
+<div class="question"><label for="pan-perguntas">Escreva três perguntas que você espera que o capítulo responda.</label><textarea id="pan-perguntas" placeholder="Ex.: “Se cada instrução continua levando o mesmo tempo, como o pipeline deixa o programa mais rápido?”"></textarea></div>
+<label class="done"><input type="checkbox" id="feito-2" data-step="2">Panorama concluído</label>
+</section>
+
+<section class="etapa" id="leitura"><p class="label">Leitura 2 · 50 min <span class="tipo">Leitura guiada</span></p><h2>Leia procurando respostas</h2>
+<p>Agora leia as seções com atenção. As perguntas estão em quatro blocos, um para cada parte da atividade prática. Cada bloco indica <b>onde procurar</b> e quais <b>termos buscar</b> no ebook; todos esses termos aparecem na seção 8.1. Alguns conceitos estão só nos slides, e o bloco avisa quando for o caso.</p>
+
+<h3>Bloco A · Prepara a Atividade 1 (o lava-jato das instruções)</h3>
+<p class="small"><b>Onde procurar:</b> livro, seção 8.1; <a href="../../materiais/pdfs/un06t01.pdf#page=3" target="_blank" rel="noopener">slide 3</a>, <a href="../../materiais/pdfs/un06t01.pdf#page=4" target="_blank" rel="noopener">slide 4</a>, <a href="../../materiais/pdfs/un06t01.pdf#page=5" target="_blank" rel="noopener">slide 5</a> e <a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>. <b>Buscar:</b> “lava a jato” (o livro escreve assim, sem hífen), “estágio”, “rendimento”. O livro não usa as palavras “latência” e “vazão”: ele fala no tempo para completar cada instrução e no rendimento do sistema. Os dois termos estão no <a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>.</p>
+<div class="question"><label for="la-analogia">Explique a analogia do lava-jato em até 4 linhas: o que corresponde ao carro, à etapa da lavagem e ao tempo de cada etapa num processador?</label><textarea id="la-analogia" placeholder="Responda com suas palavras e cite a página."></textarea></div>
+<div class="question"><label for="la-estagios">O livro chama os estágios de B, D, E, M e W; os slides usam IF, ID, EX, MEM e WB. Monte a correspondência e diga, em poucas palavras, o que acontece em cada estágio.</label><textarea id="la-estagios" placeholder="Ex.: B = IF = busca: ..."></textarea></div>
+<div class="question"><label for="la-latencia">Qual a diferença entre latência e vazão? O pipeline melhora qual delas? Por que a outra não melhora (e pode até piorar)? (<a href="../../materiais/pdfs/un06t01.pdf#page=6" target="_blank" rel="noopener">slide 6</a>)</label><textarea id="la-latencia" placeholder="Responda com suas palavras e cite a fonte."></textarea></div>
+<div class="question"><label for="la-formula">Localize a fórmula do tempo com pipeline, T = [K + (M − 1)] × t. O que significam K, M e t? Por que o termo é K + (M − 1) e não K × M?</label><textarea id="la-formula" placeholder="Explique a lógica, não só os símbolos."></textarea></div>
+<div class="question"><label for="la-exemplo">Encontre o exemplo do livro que compara 6,5 ns por instrução sem pipeline com 5 estágios de 2 ns com pipeline. Qual hipótese o livro faz sobre o tempo de cada instrução sem pipeline?</label><textarea id="la-exemplo" placeholder="Só a hipótese; a conta fica para a atividade."></textarea></div>
+
+<h3>Bloco B · Prepara a Atividade 2 (quando uma conta espera pela outra)</h3>
+<p class="small"><b>Onde procurar:</b> livro, seção 8.1, parte “Modificações arquiteturais no processador”; <a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a>, <a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a> e <a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>. <b>Buscar:</b> “conflito”, “dependência”, “adiantamento”. A divisão em três tipos de conflito e o termo “bolha” estão só nos slides.</p>
+<div class="question"><label for="lb-conflitos">O que é um conflito (hazard) no pipeline? Quais são os três tipos? Dê uma frase para cada. (<a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a>)</label><textarea id="lb-conflitos" placeholder="Estrutural: ... / De dados: ... / De controle: ..."></textarea></div>
+<div class="question"><label for="lb-raw">O que é uma dependência de dados do tipo RAW (read after write)? Escreva um exemplo seu, com duas instruções, em que a segunda depende da primeira. (<a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a>)</label><textarea id="lb-raw" placeholder="Ex. em pseudocódigo ou assembly."></textarea></div>
+<div class="question"><label for="lb-bolha">O que é uma bolha (stall)? No <a href="../../materiais/pdfs/un06t01.pdf#page=9" target="_blank" rel="noopener">slide 9</a>, quantos ciclos de bolha o SUB espera e por que ele precisa esperar?</label><textarea id="lb-bolha" placeholder="Responda com suas palavras e cite o slide."></textarea></div>
+<div class="question"><label for="lb-adiantamento">Como o adiantamento (forwarding) reduz ou elimina bolhas? De onde vem o valor, e para onde vai, sem esperar a escrita no registrador? (<a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>)</label><textarea id="lb-adiantamento" placeholder="Responda com suas palavras e cite a fonte."></textarea></div>
+
+<h3>Bloco C · Prepara a Atividade 3 (o processador tenta adivinhar)</h3>
+<p class="small"><b>Onde procurar:</b> livro, seção 8.1, parte “Ganho de desempenho do pipeline”; <a href="../../materiais/pdfs/un06t01.pdf#page=7" target="_blank" rel="noopener">slide 7</a>, <a href="../../materiais/pdfs/un06t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a>, <a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a> e <a href="../../materiais/pdfs/un06t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a>. <b>Buscar:</b> “desvio”, “previsão”. Predição, esvaziamento (flush), penalidade e CPI estão só nos slides.</p>
+<div class="question"><label for="lc-desvio">Por que um desvio condicional (um <code>if</code>, por exemplo) atrapalha o pipeline? O que o processador não sabe no momento em que precisa buscar a próxima instrução?</label><textarea id="lc-desvio" placeholder="Responda com suas palavras."></textarea></div>
+<div class="question"><label for="lc-predicao">O que é predição de desvio? Se a previsão erra, o que é o esvaziamento (flush) e o que é a penalidade? (<a href="../../materiais/pdfs/un06t01.pdf#page=8" target="_blank" rel="noopener">slide 8</a> e <a href="../../materiais/pdfs/un06t01.pdf#page=10" target="_blank" rel="noopener">slide 10</a>)</label><textarea id="lc-predicao" placeholder="Use os três termos na resposta."></textarea></div>
+<div class="question"><label for="lc-cpi">O que é CPI? Qual é o CPI ideal de um pipeline e por que, na prática, ele é maior? Copie a fórmula do CPI real do <a href="../../materiais/pdfs/un06t01.pdf#page=12" target="_blank" rel="noopener">slide 12</a> e explique cada termo.</label><textarea id="lc-cpi" placeholder="Fórmula + explicação de cada parte."></textarea></div>
+
+<h3>Bloco D · Prepara a Síntese</h3>
+<p class="small"><b>Onde procurar:</b> livro, seção 8.1.2; <a href="../../materiais/pdfs/un06t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a>. <b>Buscar:</b> “frequência”, “ciclo de relógio”.</p>
+<div class="question"><label for="ld-tres">O tempo de um programa é número de instruções × CPI × duração do ciclo. Explique por que olhar só a frequência (GHz) pode enganar: o “mito do megahertz”. (<a href="../../materiais/pdfs/un06t01.pdf#page=11" target="_blank" rel="noopener">slide 11</a>)</label><textarea id="ld-tres" placeholder="Responda com suas palavras."></textarea></div>
+<label class="done"><input type="checkbox" id="feito-3" data-step="3">Leitura guiada concluída</label>
+</section>
+
+<section class="etapa" id="sintese"><p class="label">Leitura 3 · 15 min <span class="tipo">Síntese</span></p><h2>Feche o livro e explique</h2>
+<p><b>Objetivo:</b> verificar o que ficou. Faça esta parte <b>sem olhar o livro</b>; volte a ele só para conferir no final.</p>
+<ol>
+<li><b>Glossário.</b> Defina cada termo em uma linha, com suas palavras: estágio, latência, vazão, bolha, adiantamento, penalidade.
+<div class="question"><label for="sin-glossario">Glossário (6 termos, uma linha cada)</label><textarea id="sin-glossario" placeholder="estágio: ... / latência: ... / vazão: ..."></textarea></div>
+</li>
+<li><b>Diagrama tempo × estágio.</b> Desenhe o avanço de 4 instruções <b>independentes</b> num pipeline de 5 estágios: cada linha é uma instrução, cada coluna é um ciclo. Use o modelo abaixo e complete até a I4. Depois responda: em quantos ciclos as 4 terminam? A fórmula do Bloco A confirma?
+<div class="expected"><div class="expected-label">Modelo · complete no campo de resposta</div><pre tabindex="0">ciclo:  1   2   3   4   5   6   7   8   9   10
+I1      IF  ID  EX  MEM WB
+I2          IF  ...</pre></div>
+<div class="question"><label for="sin-diagrama">Seu diagrama completo e o total de ciclos, conferido com a fórmula.</label><textarea id="sin-diagrama" placeholder="Cole o modelo e complete. Mostre a conta T = [K + (M − 1)] × t."></textarea></div>
+</li>
+<li><b>Volte às três perguntas do Panorama.</b> Elas foram respondidas?
+<div class="question"><label for="sin-retorno">Para cada uma das três perguntas do Panorama: respondida, parcialmente ou não? Responda brevemente as que foram.</label><textarea id="sin-retorno" placeholder="1) ... 2) ... 3) ..."></textarea></div>
+</li>
+<li><b>O que ficou confuso.</b> O professor vai usar estas respostas para começar a próxima aula.
+<div class="question"><label for="sin-duvidas">Qual conceito ficou menos claro? Escreva a dúvida como uma pergunta.</label><textarea id="sin-duvidas" placeholder="Ex.: “Por que o adiantamento não resolve todos os conflitos de dados?”"></textarea></div>
+</li>
+</ol>
+<div class="dica"><p class="label">Autoavaliação</p><p>Antes de entregar, veja se você consegue, sem consultar nada:</p><ul>
+<li>explicar por que o pipeline aumenta a vazão, mas não reduz a latência;</li>
+<li>dar um exemplo de cada tipo de conflito e de uma técnica que o reduz;</li>
+<li>dizer por que um erro de previsão custa mais num pipeline mais longo.</li>
+</ul><p>Se travou em algum item, volte ao bloco correspondente da Leitura 2.</p></div>
+<p class="small"><b>Sobre IA:</b> se quiser usar um assistente de IA, use-o <b>depois</b> da leitura e da síntese, para conferir seu entendimento (“expliquei bolha assim; está correto?”), e não para gerar as respostas. A ficha avalia a sua leitura.</p>
+<label class="done"><input type="checkbox" id="feito-4" data-step="4">Síntese concluída</label>
+</section>
+
+<section class="etapa" id="entregar"><h2>Entregar</h2>
+<ol>
+<li>Confira as respostas e as fontes citadas. Clique em <b>Preparar arquivo final</b>.
+<p><button type="button" id="preparar">Preparar arquivo final</button></p>
+<div id="entrega-comando" hidden><div class="command"><div class="command-head"><span>Cole no terminal para salvar estudo-pipeline.txt</span><button class="copy" type="button" aria-label="Copiar o comando do arquivo final">Copiar</button></div><pre tabindex="0"><code id="entrega-codigo"></code></pre></div></div>
+</li>
+<li>Abra o <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal do LIAC ↗</a>, entre com sua conta e cole o bloco. Ele grava <code>estudo-pipeline.txt</code> na pasta <code>~/atividades/aoc-pipeline</code>, a mesma da atividade prática.</li>
+<li>Entregue esse arquivo pelo procedimento já usado no LIAC. Se mudar alguma resposta, prepare e cole de novo: o arquivo é substituído.</li>
+</ol>
+<p class="small">O botão <b>Baixar respostas (.txt)</b>, no topo, guarda uma cópia neste aparelho.</p>
+<details><summary>Como será avaliado</summary><div><ul>
+<li><b>Fontes:</b> as respostas citam a página do livro ou o slide de onde vieram.</li>
+<li><b>Autoria:</b> as respostas estão nas suas palavras, sem trechos copiados do livro.</li>
+<li><b>Conceitos:</b> distingue latência de vazão, os três tipos de conflito e as técnicas que os reduzem, e explica o CPI real.</li>
+<li><b>Síntese:</b> glossário dos 6 termos e diagrama correto, conferido com a fórmula.</li>
+</ul><p>Pesos e prazo serão informados pelo professor.</p></div></details>
+<p><b>Próximo passo:</b> <a href="./">atividade prática “Linha de montagem de instruções”</a>. Deixe esta ficha aberta: ela ajuda nas previsões.</p>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Arquitetura e Organização de Computadores · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

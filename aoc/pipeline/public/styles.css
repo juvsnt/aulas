@@ -171,3 +171,6 @@ body{margin:0}.wrap{max-width:44rem}.topnav{display:flex;gap:1rem;flex-wrap:wrap
 #entrega-comando[hidden]{display:none}
 .slides-link{font-size:.9rem}
 #preparar{font:inherit;font-weight:700;border:1px solid var(--accent);border-radius:6px;padding:.7rem 1rem;background:var(--accent);color:#fff;min-height:44px;cursor:pointer}
+
+/* Estudo dirigido: diagrama tempo x estagio precisa de colunas alinhadas */
+textarea#sin-diagrama{font-family:var(--f-mono);font-size:.85em;min-height:9rem}

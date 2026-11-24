@@ -9,17 +9,19 @@
 
   /* Bloco Bash que grava o texto. O delimitador nunca coincide com uma
      linha escrita pelo aluno, e as aspas impedem a expansao do conteudo. */
-  function comandoEntrega(conteudo) {
+  function comandoEntrega(conteudo, arquivo) {
     if (typeof conteudo !== 'string') throw new Error('Conteúdo inválido.');
+    arquivo = arquivo || ARQUIVO;
+    if (!/^[\w.-]+\.txt$/.test(arquivo)) throw new Error('Nome de arquivo inválido.');
     const linhas = conteudo.split(/\r?\n/);
     let fim = 'FIM_ENTREGA_AOC';
     while (linhas.includes(fim)) fim += '_X';
     return 'mkdir -p ' + PASTA + ' &&\n' +
       'cd ' + PASTA + ' &&\n' +
-      "if cat > " + ARQUIVO + " <<'" + fim + "'\n" + linhas.join('\n') + '\n' + fim + '\n' +
+      "if cat > " + arquivo + " <<'" + fim + "'\n" + linhas.join('\n') + '\n' + fim + '\n' +
       'then\n' +
-      "  printf 'Arquivo final salvo na sua pasta do LIAC:\\n%s/" + ARQUIVO + "\\n' \"$PWD\"\n" +
-      '  ls -l ' + ARQUIVO + '\n' +
+      "  printf 'Arquivo final salvo na sua pasta do LIAC:\\n%s/" + arquivo + "\\n' \"$PWD\"\n" +
+      '  ls -l ' + arquivo + '\n' +
       'else\n' +
       "  printf 'Nao foi possivel salvar. Baixe suas respostas e avise o professor.\\n' >&2\n" +
       '  false\n' +
@@ -34,6 +36,7 @@
 
   const doc = root.document;
   const key = 'aoc-atividade-' + doc.body.dataset.unit + '-v1';
+  const arquivoFinal = doc.body.dataset.arquivo || ARQUIVO;
   const boxes = [...doc.querySelectorAll('[data-step]')];
   const fields = [...doc.querySelectorAll('textarea')];
   const status = doc.querySelector('#save-status');
@@ -98,7 +101,7 @@
   doc.querySelector('#preparar')?.addEventListener('click', event => {
     const vazias = fields.filter(f => !f.value.trim() && !f.id.endsWith('previsao')).length;
     if (vazias && !root.confirm(vazias + ' resposta(s) ainda em branco. Preparar mesmo assim?')) return;
-    doc.querySelector('#entrega-codigo').textContent = comandoEntrega(texto());
+    doc.querySelector('#entrega-codigo').textContent = comandoEntrega(texto(), arquivoFinal);
     doc.querySelector('#entrega-comando').hidden = false;
     event.target.textContent = 'Preparar arquivo final';
   });
@@ -106,7 +109,7 @@
   doc.querySelector('#download-answers')?.addEventListener('click', () => {
     const url = URL.createObjectURL(new Blob([texto() + '\n'], {type: 'text/plain;charset=utf-8'}));
     const a = doc.createElement('a');
-    a.href = url; a.download = 'aoc-un06-respostas.txt'; a.click();
+    a.href = url; a.download = (doc.body.dataset.unit || 'aoc-un06') + '-respostas.txt'; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
 

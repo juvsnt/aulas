@@ -136,5 +136,27 @@ ok('professor.html' not in PAGINA and 'docente' not in PAGINA.lower(), 'sem link
 ok(not (ROOT / 'public' / 'professor.html').exists(), 'guia docente fora da pasta pública')
 ok('aoc-pipeline' in (ROOT / 'public' / 'app.js').read_text(), 'app.js grava na pasta da Unidade 6')
 
+# 7. Estudo dirigido: perguntas, slides, ligacao com a atividade e arquivo proprio
+ESTUDO = (ROOT / 'public' / 'estudo.html').read_text()
+ids_e = re.findall(r'<textarea id="([^"]+)"', ESTUDO)
+ok(len(ids_e) == len(set(ids_e)) >= 15, f'estudo: {len(ids_e)} perguntas com identificadores únicos')
+paginas_e = {int(p) for p in re.findall(r'un06t01\.pdf#page=(\d+)', ESTUDO)}
+ok(paginas_e and max(paginas_e) <= 15, f'estudo: links para slides existentes: {sorted(paginas_e)}')
+ok('data-arquivo="estudo-pipeline.txt"' in ESTUDO and 'data-unit="aoc-un06-estudo"' in ESTUDO,
+   'estudo: arquivo e chave de salvamento próprios')
+ok('href="estudo.html"' in PAGINA and 'href="./"' in ESTUDO, 'atividade e estudo ligados entre si')
+ok(len(re.findall(r'data-step="', ESTUDO)) == 4, 'estudo: 4 etapas de progresso')
+js = ("const {comandoEntrega}=require(process.argv[1]);"
+      "process.stdout.write(comandoEntrega(JSON.parse(process.argv[2]), 'estudo-pipeline.txt'));")
+cmd = subprocess.run(['node', '-e', js, str(ROOT / 'public' / 'app.js'), json.dumps(dificil)],
+                     text=True, capture_output=True, check=True).stdout
+with tempfile.TemporaryDirectory() as tmp:
+    home = Path(tmp)
+    r = bash('cd /\n' + cmd + '~', home)
+    salvo = home / PASTA / 'estudo-pipeline.txt'
+    ok(r.returncode == 0 and salvo.exists() and salvo.read_text() == dificil + '\n'
+       and not list(home.rglob('INVADIU*')), 'estudo: arquivo final gravado com segurança')
+    ok(not (home / PASTA / 'entrega-pipeline.txt').exists(), 'estudo: não sobrescreve a entrega da atividade')
+
 print('\n' + ('TUDO OK' if not falhas else f'{len(falhas)} falha(s)'))
 raise SystemExit(1 if falhas else 0)

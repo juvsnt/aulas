@@ -8,6 +8,7 @@ Atividade individual sobre pipeline e desempenho: três atividades de até
 | Arquivo | Finalidade |
 | --- | --- |
 | `pagina.modelo.html` | Texto da página; `construir.py` gera `public/index.html`. |
+| `estudo.modelo.html` | Estudo dirigido da teoria (seção 8.1 e slides); `construir.py` gera `public/estudo.html`, que grava `estudo-pipeline.txt`. |
 | `public/arquivos/*.c` | Programas dos alunos (C11), inseridos na página como blocos copiáveis. |
 | `public/app.js` | Salvamento no navegador, botão Copiar e bloco que grava `entrega-pipeline.txt` no LIAC. |
 | `verificar.py` | Executa os blocos da página numa HOME temporária e testa o arquivo final. |

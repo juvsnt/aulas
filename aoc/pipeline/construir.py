@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Gera public/index.html a partir de pagina.modelo.html.
+"""Gera as paginas publicas a partir dos modelos:
+  pagina.modelo.html -> public/index.html  (atividade pratica)
+  estudo.modelo.html -> public/estudo.html (estudo dirigido da teoria)
 Ferramenta de manutencao docente; os alunos usam somente C e Bash.
 Uso: python3 aoc/pipeline/construir.py
 
@@ -56,8 +58,11 @@ def slide(texto):
                   f'rel="noopener">slide {m.group(1)}</a>', texto)
 
 
-def construir():
-    linhas = (ROOT / 'pagina.modelo.html').read_text().splitlines()
+PAGINAS = [('pagina.modelo.html', 'index.html'), ('estudo.modelo.html', 'estudo.html')]
+
+
+def construir(modelo, destino):
+    linhas = (ROOT / modelo).read_text().splitlines()
     html, ids, i = [], [], 0
     while i < len(linhas):
         linha = linhas[i]
@@ -91,9 +96,10 @@ def construir():
         else:
             html.append(slide(linha))
         i += 1
-    (PUBLIC / 'index.html').write_text('\n'.join(html) + '\n')
-    print(f'public/index.html gerado ({len(ids)} perguntas)')
+    (PUBLIC / destino).write_text('\n'.join(html) + '\n')
+    print(f'public/{destino} gerado ({len(ids)} perguntas)')
 
 
 if __name__ == '__main__':
-    construir()
+    for modelo, destino in PAGINAS:
+        construir(modelo, destino)
