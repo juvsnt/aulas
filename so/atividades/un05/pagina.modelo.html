@@ -1,0 +1,244 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Prática da Unidade V de Sistemas Operacionais: dispositivos de bloco e de caractere, polling e interrupções, buffer e cache, um comando por vez."><meta name="theme-color" content="#13202a"><title>Como o SO conversa com os dispositivos · Unidade V | SO</title><link rel="stylesheet" href="../styles.css"><script src="../script.js" defer></script></head><body data-unit="un05"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap"><nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SO</a><a href="../../materiais/#unidade-5">Materiais da unidade V</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Prática da Unidade V · Sistemas Operacionais · UNEMAT</p><h1>Como o SO conversa com os dispositivos</h1><p class="lede">Quatro partes curtas no terminal, um comando por vez, sobre os slides t01 e t02 da unidade.</p><div class="meta"><span><b>4 partes</b> de cerca de 15 min</span><span><b>Medição real</b>, uma simulação e uma síntese</span></div><div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button><button type="button" id="download-answers">Baixar respostas (.txt)</button></div><p class="status" id="save-status" aria-live="polite">As respostas ficam salvas neste navegador.</p><p id="progress-count">0/4 etapas</p><progress max="4" value="0" aria-label="Etapas concluídas"></progress></header>
+<main id="conteudo">
+
+<section class="etapa" id="comecar"><h2>Como fazer</h2>
+<ul>
+<li>Abra o terminal e entre com sua conta.</li>
+<li>Faça <b>um passo por vez</b>: copie a linha, cole no terminal, aperte <kbd>Enter</kbd> e confira o que aparece.</li>
+<li>Tudo o que vem depois de <code>#</code> é um <b>comentário</b>: o terminal ignora.</li>
+<li>Os seus números serão diferentes dos exemplos. Registre sempre os <b>seus</b>.</li>
+</ul>
+@@Q identificacao | Nome completo e matrícula | Ex.: Maria Silva — 202312345
+</section>
+
+<nav class="steps-nav" aria-label="Partes"><a href="#p1">1 · Bloco e caractere</a> <a href="#p2">2 · Polling e interrupção</a> <a href="#p3">3 · Buffer e cache</a> <a href="#p4">4 · Juntando as peças</a></nav>
+
+<section class="etapa" id="p1"><p class="label">Parte 1 · cerca de 10 min <span class="tipo">Medição real</span></p><h2>Como o SO enxerga os dispositivos</h2>
+<p><b>Objetivo:</b> ver que, para o Linux, cada dispositivo aparece como um arquivo especial em <code>/dev</code>, de bloco ou de caractere.</p>
+<dl class="termos">
+<div><dt>Dispositivo de bloco</dt><dd>Lê e grava em blocos de tamanho fixo, com endereço: dá para pedir “o bloco 4096”. Ex.: SSD, HD, pendrive. @@SLIDE t01 4</dd></div>
+<div><dt>Dispositivo de caractere</dt><dd>Entrega um fluxo de bytes em sequência, sem endereço. Ex.: teclado, mouse, terminal. @@SLIDE t01 4</dd></div>
+<div><dt>Driver e controlador</dt><dd>O driver é o software do SO que sabe falar com o controlador, o chip que comanda o dispositivo físico. @@SLIDE t01 5</dd></div>
+</dl>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+mkdir -p ~/atividades/so-dispositivos   # cria a pasta da prática
+@@END
+<p class="explica"><b>O que faz:</b> cria a pasta <code>so-dispositivos</code> dentro da sua pasta pessoal (<code>~</code>).</p></li>
+<li>
+@@CMD Passo 2
+cd ~/atividades/so-dispositivos   # entra na pasta da prática
+@@END
+<p class="explica"><b>O que faz:</b> todas as próximas partes acontecem nesta pasta.</p></li>
+<li>
+@@CMD Passo 3
+ls -l /dev/null /dev/zero /dev/tty   # três dispositivos de caractere
+@@END
+<p class="explica"><b>O que faz:</b> lista três arquivos especiais: <code>/dev/null</code> (descarta tudo), <code>/dev/zero</code> (só entrega zeros) e <code>/dev/tty</code> (o seu terminal).</p>
+@@OUT Exemplo medido no computador do professor
+crw-rw-rw- 1 root root 1, 3 Nov 24 16:04 /dev/null
+crw-rw-rw- 1 root tty  5, 0 Nov 24 16:04 /dev/tty
+crw-rw-rw- 1 root root 1, 5 Nov 24 16:04 /dev/zero
+@@END
+<p class="explica"><b>Observe:</b> a primeira letra é <b><code>c</code></b>, de <i>character</i> (caractere). Onde um arquivo comum mostra o tamanho, aparecem dois números: o primeiro indica <b>qual driver</b> atende o dispositivo.</p></li>
+<li>
+@@CMD Passo 4
+ls -l /dev | grep '^b'   # só os dispositivos de bloco
+@@END
+<p class="explica"><b>O que faz:</b> lista tudo em <code>/dev</code> e o <code>grep '^b'</code> mostra só as linhas que <b>começam</b> com <code>b</code>, de <i>block</i> (bloco).</p>
+@@OUT Exemplo medido no LIAC (trecho)
+brw-rw----   1 root disk      7,     0 nov 16 16:10 loop0
+brw-rw----   1 root disk      7,     1 nov 16 16:10 loop1
+brw-rw----   1 root disk      8,     0 nov 16 16:10 sda
+brw-rw----   1 root disk      8,     1 nov 16 16:45 sda1
+brw-rw----   1 root disk      8,     2 nov 16 16:45 sda2
+brw-rw----   1 root disk      8,    16 nov 16 16:10 sdb
+brw-rw----   1 root disk      8,    17 nov 16 16:45 sdb1
+brw-rw----   1 root disk      8,    18 nov 16 16:45 sdb2
+@@END
+<p class="explica"><b>Observe:</b> <code>sda</code> e <code>sdb</code> são os discos; <code>sda1</code>, <code>sdb2</code> etc. são partições deles. Os <code>loop</code> são discos virtuais feitos a partir de arquivos. Repare no <b>primeiro número</b>: todos os discos e partições têm <b>8</b>, porque são atendidos pelo mesmo driver de disco; os <code>loop</code> têm <b>7</b>, outro driver.</p></li>
+<li>
+@@CMD Passo 5
+lsblk -d -e 7 -o NAME,TYPE,SIZE,ROTA   # discos que o kernel reconhece
+@@END
+<p class="explica"><b>O que faz:</b> <code>lsblk</code> mostra os dispositivos de bloco; <code>-d</code> mostra só os discos (sem as partições); <code>-e 7</code> esconde os <code>loop</code>; <code>-o</code> escolhe as colunas.</p>
+@@OUT Exemplo medido no LIAC
+NAME TYPE   SIZE ROTA
+sda  disk 931,5G    1
+sdb  disk 931,5G    1
+@@END
+<p class="explica"><b>Observe:</b> a coluna <code>ROTA</code> diz como o kernel enxerga o disco: <b>1</b> = gira (HD mecânico), <b>0</b> = não gira (SSD). No LIAC, os dois discos são HDs mecânicos. Se o cabeçalho aparecer quebrado em duas linhas, não tem problema: é só a forma como o terminal desenhou o texto.</p></li>
+</ol>
+@@Q p1-tipo | Pelo passo 3 e pelo passo 4, como você sabe se um arquivo de /dev é de bloco ou de caractere? Cite um exemplo de cada que apareceu na sua tela. Qual o primeiro número de sda e de sdb1, e o que isso indica sobre o driver? | Olhe a primeira letra e o primeiro número de cada linha.
+@@Q p1-teclado | Por que um teclado é de caractere e um disco é de bloco? Use a ideia de “pedir o bloco 4096” do t01, slide 4. | Dá para pedir a um teclado “a tecla de 5 minutos atrás”?
+@@DONE 1 | Parte 1 concluída
+</section>
+
+<section class="etapa" id="p2"><p class="label">Parte 2 · cerca de 20 min <span class="tipo">Simulação + medição real</span></p><h2>Polling ou interrupção?</h2>
+<p><b>Objetivo:</b> medir quanto de CPU se gasta esperando um dispositivo de dois jeitos diferentes. O programa simula um “dispositivo” que fica pronto em 2 segundos: ele <b>não</b> conversa com um hardware de verdade. O trabalho tem três etapas: <b>código</b>, <b>compilação</b> e <b>execução</b>.</p>
+<dl class="termos">
+<div><dt>Polling (espera ativa)</dt><dd>A CPU pergunta sem parar “Pronto?” ao registrador de status, gastando ciclos enquanto espera. @@SLIDE t02 3</dd></div>
+<div><dt>Interrupção (IRQ)</dt><dd>A CPU faz outra coisa; quando o trabalho termina, o hardware avisa com um sinal elétrico e o SO acorda quem esperava. @@SLIDE t02 4</dd></div>
+</dl>
+
+<h3>Etapa A · Código</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+nano -l espera.c   # abre o editor nano, com números de linha
+@@END
+<p class="explica"><b>O que faz:</b> abre o editor <code>nano</code> num arquivo novo, <code>espera.c</code>.</p></li>
+<li><span class="passo-rotulo">Passo 2</span> Copie o código abaixo e cole no nano (botão direito ou <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>):
+@@CODE espera.c
+</li>
+<li><span class="passo-rotulo">Passo 3</span> Salve e saia: <kbd>Ctrl</kbd>+<kbd>O</kbd>, depois <kbd>Enter</kbd>, depois <kbd>Ctrl</kbd>+<kbd>X</kbd>.</li>
+</ol>
+<p><b>O código, linha por linha:</b></p>
+<div class="tbl"><table><thead><tr><th>Linha</th><th>O que faz</th></tr></thead><tbody>
+<tr><td>1–3</td><td>Incluem as bibliotecas de <code>printf</code>, de <code>strcmp</code> (comparar textos) e de relógio.</td></tr>
+<tr><td>5–9</td><td>A função <code>agora()</code> devolve a hora atual em segundos, com casas decimais.</td></tr>
+<tr><td>12–15</td><td>Se você não disser o modo (<code>polling</code> ou <code>interrupcao</code>), o programa explica como usar e termina.</td></tr>
+<tr><td>16</td><td>O “dispositivo” fica pronto daqui a 2 segundos.</td></tr>
+<tr><td>18–23</td><td><b>Polling:</b> enquanto não chegou a hora, pergunta de novo e conta quantas vezes perguntou.</td></tr>
+<tr><td>24–27</td><td><b>Interrupção:</b> o programa pede ao kernel para dormir 2 s (<code>nanosleep</code>). Ele sai da CPU; o relógio do hardware gera uma interrupção e o kernel o acorda.</td></tr>
+<tr><td>31</td><td>Comentário que marca o fim do código.</td></tr>
+</tbody></table></div>
+
+<h3>Etapa B · Compilação</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 4
+gcc espera.c -o espera   # traduz o texto espera.c no programa espera
+@@END
+<p class="explica"><b>Observe:</b> se nada aparecer, compilou. Se aparecer erro, abra o nano de novo e confira o código.</p></li>
+</ol>
+
+<h3>Etapa C · Execução</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 5
+time ./espera polling   # espera perguntando sem parar
+@@END
+<p class="explica"><b>O que faz:</b> <code>time</code> roda o programa e, no fim, mostra três tempos: <code>real</code> (o relógio da parede), <code>user</code> (CPU gasta no programa) e <code>sys</code> (CPU gasta no kernel, a pedido do programa).</p>
+@@OUT Exemplo medido no computador do professor · os seus números mudam
+polling: perguntei 58162462 vezes se estava pronto
+
+real    0m2.002s
+user    0m1.993s
+sys     0m0.004s
+@@END
+<p class="explica">No terminal em português, os decimais aparecem com vírgula (<code>0m2,002s</code>).</p>
+<p class="explica"><b>Observe:</b> <code>user</code> fica quase igual a <code>real</code>: a CPU passou os 2 segundos inteiros perguntando.</p></li>
+<li>
+@@CMD Passo 6
+time ./espera interrupcao   # espera dormindo até ser acordado
+@@END
+@@OUT Exemplo medido no computador do professor · os seus números mudam
+interrupcao: dormi 2 s e o kernel me acordou
+
+real    0m2.003s
+user    0m0.001s
+sys     0m0.000s
+@@END
+<p class="explica"><b>Observe:</b> o mesmo <code>real</code> de 2 s, mas <code>user</code> perto de zero: nesse tempo a CPU ficou livre para outros programas.</p></li>
+</ol>
+
+<h3>As interrupções de verdade</h3>
+<p>O seu computador recebe interrupções o tempo todo (relógio, disco, rede, teclado). O kernel conta todas elas desde que o computador foi ligado.</p>
+<ol class="passos">
+<li>
+@@CMD Passo 7
+grep -w intr /proc/stat | cut -d ' ' -f 2   # total de interrupções até agora
+@@END
+<p class="explica"><b>O que faz:</b> <code>/proc/stat</code> é um arquivo que o kernel gera com estatísticas; a linha <code>intr</code> começa com o total de interrupções. O <code>cut</code> mostra só esse número. <b>Anote-o.</b></p></li>
+<li>
+@@CMD Passo 8
+sleep 10   # espera 10 segundos
+@@END
+<p class="explica"><b>O que faz:</b> não faz nada por 10 segundos. O cursor volta sozinho.</p></li>
+<li>
+@@CMD Passo 9
+grep -w intr /proc/stat | cut -d ' ' -f 2   # total de interrupções de novo
+@@END
+<p class="explica"><b>Observe:</b> o número cresceu. A diferença é quantas interrupções aconteceram em cerca de 10 segundos (os passos levam um pouco mais, por causa do tempo de copiar e colar).</p></li>
+</ol>
+@@Q p2-tempos | Copie os tempos real e user dos passos 5 e 6. Por que o real é igual e o user é tão diferente? Qual dos dois desperdiça CPU? | Ligue com o t02, slides 3 e 4.
+@@Q p2-intr | Quais os dois números dos passos 7 e 9? Quantas interrupções, mais ou menos, aconteceram por segundo? Se a CPU usasse polling para cada uma dessas fontes, o que aconteceria? | Diferença ÷ 10. Os números são grandes: use a calculadora.
+@@DONE 2 | Parte 2 concluída
+</section>
+
+<section class="etapa" id="p3"><p class="label">Parte 3 · cerca de 15 min <span class="tipo">Medição real</span></p><h2>Buffer e cache na memória</h2>
+<p><b>Objetivo:</b> medir a diferença entre gravar e ler passando pela memória (RAM) do SO e indo direto ao disco.</p>
+<p class="small">Os arquivos são pequenos (10 MiB) porque cada conta tem uma <b>cota</b>, um limite de espaço no disco do servidor.</p>
+<dl class="termos">
+<div><dt>Buffer</dt><dd>Área da RAM que acomoda dados em trânsito entre quem produz e quem consome, compensando a diferença de velocidade. @@SLIDE t02 7</dd></div>
+<div><dt>Cache</dt><dd>Cópia, na RAM, de dados já lidos do disco. Se o dado está lá (cache hit), não é preciso ir ao disco. @@SLIDE t02 8</dd></div>
+<div><dt>Buff/cache do Linux</dt><dd>O Linux usa a mesma área da RAM para os dois papéis; o comando <code>sync</code> força a gravação no disco do que ainda está só na memória. @@SLIDE t02 12</dd></div>
+</dl>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+free -m   # como a RAM está sendo usada, em MiB
+@@END
+<p class="explica"><b>Observe:</b> a coluna <code>buff/cache</code>: memória que o Linux está usando como buffer e cache de disco. Ela é devolvida aos programas quando eles precisam.</p></li>
+<li>
+@@CMD Passo 2
+dd if=/dev/zero of=dados bs=1M count=10   # grava 10 MiB passando pelo buffer
+@@END
+<p class="explica"><b>O que faz:</b> <code>dd</code> copia dados: lê de <code>if</code> (<i>input file</i>, aqui <code>/dev/zero</code>) e grava em <code>of</code> (<i>output file</i>, o arquivo <code>dados</code>), em 10 pedaços (<code>count</code>) de 1 MiB (<code>bs</code>). No fim, mostra o tempo e a velocidade.</p>
+<p class="explica"><b>Observe:</b> a velocidade na última linha (MB/s ou GB/s). O <code>dd</code> termina quando os dados chegam ao buffer na RAM; o kernel grava no disco depois.</p></li>
+<li>
+@@CMD Passo 3
+dd if=/dev/zero of=dados_sync bs=1M count=10 oflag=dsync   # grava esperando o disco
+@@END
+<p class="explica"><b>O que faz:</b> a mesma gravação, mas <code>oflag=dsync</code> obriga a esperar cada pedaço chegar ao disco antes de mandar o próximo.</p>
+<p class="explica"><b>Observe:</b> compare a velocidade com a do passo 2.</p></li>
+<li>
+@@CMD Passo 4
+dd if=dados of=/dev/null bs=1M   # lê o arquivo, que já está no cache
+@@END
+<p class="explica"><b>O que faz:</b> lê o arquivo <code>dados</code> e joga fora o que leu (<code>/dev/null</code>). Como acabou de ser gravado, ele ainda está no cache.</p></li>
+<li>
+@@CMD Passo 5
+dd if=dados of=/dev/null bs=1M iflag=direct   # lê ignorando o cache, direto do disco
+@@END
+<p class="explica"><b>O que faz:</b> <code>iflag=direct</code> pede ao kernel para não usar o cache: os dados vêm do disco.</p>
+@@OUT Última linha de cada dd, medida no LIAC · os seus números mudam
+passo 2:  10485760 bytes (10 MB, 10 MiB) copied, 0,00272082 s, 3,9 GB/s
+passo 3:  10485760 bytes (10 MB, 10 MiB) copied, 0,409038 s, 25,6 MB/s
+passo 4:  10485760 bytes (10 MB, 10 MiB) copied, 0,00107442 s, 9,8 GB/s
+passo 5:  10485760 bytes (10 MB, 10 MiB) copied, 0,0725569 s, 145 MB/s
+@@END
+<p class="explica"><b>Observe:</b> no exemplo, gravar pelo buffer foi cerca de 150 vezes mais rápido que esperar o disco (3,9 GB/s × 25,6 MB/s), e ler do cache, cerca de 68 vezes mais rápido que ler do disco (9,8 GB/s × 145 MB/s). Lembre: 1 GB/s = 1.000 MB/s. Num servidor compartilhado os números variam, porque outras pessoas usam o mesmo disco ao mesmo tempo.</p></li>
+<li>
+@@CMD Passo 6
+rm dados dados_sync   # apaga os arquivos de teste
+@@END
+<p class="explica"><b>O que faz:</b> apaga os 20 MiB de teste, para não ocupar a sua cota de disco à toa.</p></li>
+</ol>
+@@Q p3-gravar | Copie as velocidades dos passos 2 e 3. Por que gravar esperando o disco (dsync) é mais lento? Que papel o buffer cumpriu no passo 2? | t02, slide 7.
+@@Q p3-ler | Copie as velocidades dos passos 4 e 5. Qual foi um cache hit? Dê um exemplo do seu dia a dia em que o cache deixa o computador mais rápido. | t02, slide 8: reabrir a mesma planilha.
+@@DONE 3 | Parte 3 concluída
+</section>
+
+<section class="etapa" id="p4"><p class="label">Parte 4 · cerca de 15 min <span class="tipo">Síntese</span></p><h2>Juntando as peças</h2>
+<p><b>Objetivo:</b> usar o que você mediu para explicar o caminho de uma operação de E/S e escolher a técnica certa para cada dispositivo. Esta parte não usa o terminal.</p>
+<dl class="termos">
+<div><dt>O ciclo de uma leitura</dt><dd>Aplicação → SO → driver → controlador → dispositivo, e a volta pelo registrador de status. @@SLIDE t01 9</dd></div>
+<div><dt>DMA (acesso direto à memória)</dt><dd>O controlador copia um bloco inteiro direto para a RAM e só interrompe a CPU no fim. A CPU configura no início e trata a interrupção no fim. @@SLIDE t02 5</dd></div>
+<div><dt>Spooling</dt><dd>Fila de trabalhos inteiros, guardada em disco, para um dispositivo que só atende um de cada vez, como a impressora. @@SLIDE t02 9</dd></div>
+</dl>
+@@Q p4-caminho | No passo 5 da Parte 3 (leitura direto do disco), descreva com suas palavras o caminho do pedido: quem pede, quem roteia, quem programa o controlador, quem avisa que terminou e quem recebe os dados. | Use os 6 passos do t01, slide 9.
+@@Q p4-tecnica | Para cada situação, diga qual técnica é a principal (polling, interrupção, DMA, buffer, cache ou spooling) e por quê, em uma frase: (a) digitar um texto; (b) copiar um arquivo de 4 GB para um pendrive; (c) três pessoas mandam imprimir ao mesmo tempo na mesma impressora; (d) abrir pela segunda vez a mesma foto. | t02, slides 6 e 11.
+@@Q p4-dma | Um colega afirma: “com DMA, a CPU não participa da transferência de jeito nenhum”. Explique o que está errado na frase, dizendo o que a CPU faz no início e no fim. | t02, slide 5.
+@@DONE 4 | Parte 4 concluída
+</section>
+
+<section class="etapa"><h2>Entregar</h2>
+<p>Clique em <b>Baixar respostas (.txt)</b> no topo e envie o arquivo pelo canal indicado pelo professor.</p>
+<details><summary>Se algo der errado</summary><div><p><b>Aparece um <code>~</code> a mais no fim do comando colado:</b> não tem problema; ele fica dentro do comentário e é ignorado.</p><p><b>“Arquivo ou diretório inexistente”:</b> rode <code>cd ~/atividades/so-dispositivos</code> e tente de novo.</p><p><b>O nano não salvou:</b> abra com <code>nano -l espera.c</code>, confira o código, <kbd>Ctrl</kbd>+<kbd>O</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>X</kbd>.</p><p><b>Erro ao compilar:</b> o código foi colado pela metade. Abra o nano, apague tudo e cole de novo.</p><p><b>O programa não termina:</b> aperte <kbd>Ctrl</kbd>+<kbd>C</kbd> e confira se escreveu <code>polling</code> ou <code>interrupcao</code> (sem acento).</p><p><b>“Cota de disco excedida”:</b> a sua conta chegou ao limite de espaço. Rode <code>rm dados dados_sync</code> e <code>du -sh ~</code> (quanto você está usando) e avise o professor.</p><p><b><code>dd</code> com erro em <code>iflag=direct</code>:</b> copie a mensagem na resposta e avise o professor.</p></div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Operacionais · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

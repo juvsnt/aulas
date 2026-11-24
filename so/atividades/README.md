@@ -14,6 +14,7 @@ apenas ferramenta de manutenção docente.
 | `un04-passos/` | IV — Versão simples (só t01 e t02): árvore, atributos, permissões e FD; um comando por passo; código C no nano, separado de compilar e rodar | Publicada em 17/11/2026; falta homologar no LIAC |
 | `un04-blocos/` | IV — Prática 2 (t03 e t04): volume, blocos, fragmentação interna, extents e mapa de bits; um comando por passo | Publicada em 17/11/2026; testada no LIAC |
 | `un04-codigo/` | IV — Investigar código C pronto: syscalls, FD, E/S com e sem buffer, argc/argv, diretórios (atividade separada) | Pronta localmente; não publicada; falta homologar no LIAC |
+| `un05/` | V — Gerência de dispositivos (só t01 e t02): bloco × caractere em /dev, polling × interrupção (`espera.c` + /proc/stat), buffer e cache com dd, síntese | Publicada em 24/11/2026; testada no LIAC (cota de disco: arquivos de 10 MiB) |
 
 ## Estrutura de uma unidade
 
@@ -40,6 +41,8 @@ python3 -I construir.py un04-passos
 python3 -I verificar.py un04-passos   # 16 verificacoes; exige 1 linha com comentario por passo
 python3 -I construir.py un04-blocos
 python3 -I verificar.py un04-blocos   # 9 verificacoes
+python3 -I construir.py un05
+python3 -I verificar.py un05   # 11 verificacoes; ~20 s (dd e esperas de 2 s e 10 s)
 ```
 
 O modelo usa diretivas no início da linha: `@@CMD`/`@@OUT` … `@@END`, `@@SRC

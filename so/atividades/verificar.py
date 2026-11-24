@@ -1,7 +1,7 @@
 """Valida a pagina da atividade executando os blocos como um aluno faria.
 Ferramenta de manutencao docente; nao acessa o LIAC. Requer Linux, GCC,
 pthreads, ps e (opcional) taskset.
-Uso: python3 -I verificar.py un02|un03|un04|un04-codigo|un04-passos|un04-blocos
+Uso: python3 -I verificar.py un02|un03|un04|un04-codigo|un04-passos|un04-blocos|un05
 """
 from html.parser import HTMLParser
 from pathlib import Path
@@ -11,7 +11,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parent
-PASSOS = {'un04-passos', 'un04-blocos'}   # paginas de um comando comentado por passo
+PASSOS = {'un04-passos', 'un04-blocos', 'un05'}   # paginas de um comando comentado por passo
 
 
 class Pagina(HTMLParser):
@@ -76,11 +76,12 @@ def verificar(unidade):
     assert criados == esperados, f'fontes fora da pagina: {esperados - criados}'
     print(f'{unidade}: {len(p.campos)} campos, {len(p.blocos)} blocos, fontes sincronizadas')
 
-    # un04 mede blocos: precisa de disco real (ext4 da pasta pessoal), nao do tmpfs de /tmp.
-    base = Path.home() if unidade.startswith('un04') else None
+    # un04 mede blocos e un05 usa iflag=direct: precisam de disco real (pasta pessoal), nao do tmpfs de /tmp.
+    disco_real = unidade.startswith(('un04', 'un05'))
+    base = Path.home() if disco_real else None
     with tempfile.TemporaryDirectory(prefix='so-atividade-', dir=base) as tmp:
         # Simula o terminal do LIAC, que gruda '~' no fim de cada bloco colado.
-        sep = '~\n' if unidade.startswith('un04') else '\n'
+        sep = '~\n' if disco_real else '\n'
         roteiro = sep.join(p.blocos).replace(f'~/atividades/so-{unidade}', tmp)
         if unidade in PASSOS:
             roteiro = re.sub(r'~/atividades/so-[\w-]+', tmp, roteiro)
@@ -347,8 +348,35 @@ def checar_un04_blocos(out, err, tmp):
     print(f'Roteiro executado: {len(verificacoes)} verificacoes OK')
 
 
+def checar_un05(out, err, tmp):
+    t = Path(tmp)
+    user = [float(m.replace(',', '.')) for m in re.findall(r'^user\s+0m([\d.,]+)s$', err, re.M)]
+    intr = [int(n) for n in re.findall(r'^(\d+)$', out, re.M)]
+    velocidades = re.findall(r'copied|copiados', err)
+    verificacoes = [
+        ('compilacao sem avisos', 'warning' not in err and 'error' not in err),
+        ('P1 caractere', re.search(r'^c\S+ .* /dev/null$', out, re.M) and re.search(r'^c\S+ .* /dev/tty$', out, re.M)),
+        ('P1 bloco', re.search(r'^b\S+ ', out, re.M)),
+        ('P1 lsblk', re.search(r'^NAME\s+TYPE\s+SIZE\s+ROTA', out, re.M) and ' disk ' in out),
+        ('P2 polling', re.search(r'polling: perguntei \d+ vezes', out)),
+        ('P2 interrupcao', 'interrupcao: dormi 2 s e o kernel me acordou' in out),
+        ('P2 user polling alto, interrupcao baixo', len(user) == 2 and user[0] > 1.5 and user[1] < 0.1),
+        ('P2 contador de interrupcoes cresce', len(intr) == 2 and intr[1] > intr[0]),
+        ('P3 free', 'buff/cache' in out),
+        ('P3 quatro dd', len(velocidades) == 4),
+        ('P3 limpeza', not (t / 'dados').exists() and not (t / 'dados_sync').exists()),
+    ]
+    falhas = [nome for nome, ok in verificacoes if not ok]
+    assert not falhas, f'falhas: {falhas}\n{out}\n{err}'
+    print(f'Roteiro executado: {len(verificacoes)} verificacoes OK; user = {user}; '
+          f'interrupcoes em ~10 s = {intr[1] - intr[0]}')
+    for linha in re.findall(r'^.*(?:copied|copiados).*$', err, re.M):
+        print('  dd:', linha)
+
+
 CHECAGENS = {'un03': checar_un03, 'un04': checar_un04, 'un04-codigo': checar_un04_codigo,
-             'un04-passos': checar_un04_passos, 'un04-blocos': checar_un04_blocos}
+             'un04-passos': checar_un04_passos, 'un04-blocos': checar_un04_blocos,
+             'un05': checar_un05}
 
 
 if __name__ == '__main__':
