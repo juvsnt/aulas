@@ -17,15 +17,19 @@
   const valor = (id) => (document.getElementById(id)?.value || '').trim();
   const perguntas = [...document.querySelectorAll('textarea[data-entrega]')];
   const tabela = [...document.querySelectorAll('[data-tabela]')];
+  // Cada atividade declara sigla e título no <body>; evidências e tabela são opcionais.
+  const sigla = unidade.toUpperCase();
+  const titulo = document.body.dataset.titulo || 'P05 - Uma mensagem para todos';
+  const temEvid = !!document.getElementById('evidencias');
 
   // Lista do que falta: a mesma regra vale para o aviso e para o botão.
   const pendencias = () => {
     const falta = [];
     if (!valor('nome')) falta.push('Nome completo');
     if (!valor('matricula')) falta.push('Matrícula');
-    if (!valor('evidencias') && !document.getElementById('evid-captura')?.checked)
+    if (temEvid && !valor('evidencias') && !document.getElementById('evid-captura')?.checked)
       falta.push('Evidências (cole a saída ou marque a opção da captura)');
-    if (tabela.some(c => !/^\d+$/.test(c.value.trim()))) falta.push('Tabela de mensagens (todos os números)');
+    if (tabela.length && tabela.some(c => !/^\d+$/.test(c.value.trim()))) falta.push('Tabela de mensagens (todos os números)');
     perguntas.forEach((p, i) => { if (!p.value.trim()) falta.push(`Pergunta ${i + 1}`); });
     return falta;
   };
@@ -33,7 +37,8 @@
   const atualizar = () => {
     if (!lista) return;
     const falta = pendencias();
-    const itens = ['Identificação', 'Evidências', 'Tabela de mensagens', ...perguntas.map((_, i) => `Pergunta ${i + 1}`)];
+    const itens = ['Identificação', ...(temEvid ? ['Evidências'] : []), ...(tabela.length ? ['Tabela de mensagens'] : []),
+      ...perguntas.map((_, i) => `Pergunta ${i + 1}`)];
     lista.replaceChildren(...itens.map(item => {
       const li = document.createElement('li');
       const pendente = falta.some(f => f.startsWith(item) || (item === 'Identificação' && (f === 'Nome completo' || f === 'Matrícula')));
@@ -61,7 +66,7 @@
   const nomeArquivo = (nome) => {
     const base = nome.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'aluno';
-    return `P05_SD_${base}.txt`;
+    return `${sigla}_SD_${base}.txt`;
   };
   document.querySelector('#gerar-entrega')?.addEventListener('click', () => {
     const aviso = document.querySelector('#gerar-status');
@@ -74,19 +79,21 @@
     const linha = '='.repeat(40);
     const celula = (id) => valor(id).padStart(5);
     const evid = valor('evidencias') || '[enviada em captura de tela anexa]';
+    let n = 0;
+    const secao = (nome) => `${++n}) ${nome}`;
     const texto = [
-      'P05 - Uma mensagem para todos',
+      titulo,
       'Sistemas Distribuídos - UNEMAT, Campus de Alto Araguaia',
       `Nome: ${valor('nome')}`,
       `Matrícula: ${valor('matricula')}`,
       `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
-      linha, '1) EVIDÊNCIAS (python3 p05.py evidencias)', evid,
-      linha, '2) TABELA DE MENSAGENS',
-      'Situação       Dest  Dados  Conf.  Total',
-      `Unicast           1 ${celula('t1-dados')}  ${celula('t1-conf')}  ${celula('t1-total')}`,
-      `Difusão           3 ${celula('t3-dados')}  ${celula('t3-conf')}  ${celula('t3-total')}`,
-      `Difusão           6 ${celula('t6-dados')}  ${celula('t6-conf')}  ${celula('t6-total')}`,
-      linha, '3) RESPOSTAS',
+      ...(temEvid ? [linha, secao('EVIDÊNCIAS (python3 p05.py evidencias)'), evid] : []),
+      ...(tabela.length ? [linha, secao('TABELA DE MENSAGENS'),
+        'Situação       Dest  Dados  Conf.  Total',
+        `Unicast           1 ${celula('t1-dados')}  ${celula('t1-conf')}  ${celula('t1-total')}`,
+        `Difusão           3 ${celula('t3-dados')}  ${celula('t3-conf')}  ${celula('t3-total')}`,
+        `Difusão           6 ${celula('t6-dados')}  ${celula('t6-conf')}  ${celula('t6-total')}`] : []),
+      linha, secao('RESPOSTAS'),
       ...perguntas.map(p => `${rotulo(p)}\n${p.value.trim()}\n`)
     ].join('\n');
     const url = URL.createObjectURL(new Blob([texto + '\n'], { type: 'text/plain;charset=utf-8' }));

@@ -7,6 +7,13 @@ Diretivas do modelo (cada uma no inicio de uma linha):
   @@SRC arquivo                      arquivo de arquivos/ em here-document recolhivel
   @@ENTREGA id | rotulo              pergunta que entra no arquivo de entrega
   @@PENSAR texto                     pergunta para pensar (nao entra na entrega)
+  @@CODE arquivo                     codigo de arquivos/ para colar no nano (sem "$ ")
+  @@DONE n | texto                   caixa de parte concluida
+  @@SLIDE unNNtNN n (no texto)       link para a pagina n de ../../materiais/pdfs/unNNtNN.pdf
+@@OUT aceita tambem o tipo "exemplo": saida de referencia em que a ordem das
+linhas e os tempos podem mudar (o verificador compara as linhas ordenadas).
+Fora da P05, o Plano B (@@SRC) termina com '# fim do bloco': o terminal web
+do LIAC pode grudar um '~' na ultima linha colada, e o comentario o absorve.
 O texto fora das diretivas e copiado sem alteracao.
 """
 from html import escape
@@ -15,6 +22,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parent
+SEM_FIM_BLOCO = {'p05-difusao'}   # publicada e homologada assim; mudar so a pedido
 
 
 def linhas(texto):
@@ -44,7 +52,8 @@ def comando(titulo, texto):
 
 def saida(tipo, rotulo, texto):
     padrao = {'exata': 'Saída esperada',
-              'aprox': 'Saída esperada · os tempos podem variar um pouco'}[tipo]
+              'aprox': 'Saída esperada · os tempos podem variar um pouco',
+              'exemplo': 'Exemplo · os seus tempos e a ordem das linhas podem mudar'}[tipo]
     return (f'<div class="expected saida-{tipo}"><div class="expected-label">' +
             escape(rotulo or padrao) + '</div><pre tabindex="0">' + escape(texto) +
             '</pre></div>')
@@ -55,17 +64,37 @@ def fonte(pasta, nome):
     if 'FIM\n' in conteudo.splitlines(keepends=True):
         raise SystemExit(f'{nome} contem uma linha FIM; o here-document quebraria.')
     bloco = f"cat > {nome} <<'FIM'\n{conteudo}FIM"
+    if pasta.name not in SEM_FIM_BLOCO:
+        bloco += '\n# fim do bloco'
     return ('<details class="source"><summary>Plano B: criar <code>' + escape(nome) +
             '</code> colando o código</summary>' +
             comando(f'Cole no terminal para criar {nome}', bloco) + '</details>')
 
 
+def codigo(pasta, nome):
+    """Codigo para o aluno colar no nano: sem o "$ " dos comandos."""
+    conteudo = (pasta / 'arquivos' / nome).read_text(encoding='utf-8').rstrip('\n')
+    rotulo = escape(f'Código de {nome} · copie e cole no nano')
+    return ('<div class="command codigo"><div class="command-head"><span>' + rotulo +
+            '</span><button class="copy" type="button" aria-label="Copiar o código de ' +
+            escape(nome) + '">Copiar</button></div><pre tabindex="0"><code>' +
+            escape(conteudo) + '</code></pre></div>')
+
+
+def slide(texto):
+    """@@SLIDE un06t01 5 vira link para a pagina 5 do PDF da unidade."""
+    return re.sub(r'@@SLIDE (un\d\dt\d\d) (\d+)',
+                  lambda m: f'<a href="../../materiais/pdfs/{m.group(1)}.pdf#page={m.group(2)}" '
+                            f'target="_blank" rel="noopener">slide {m.group(2)}</a>', texto)
+
+
 def entrega(ident, rotulo):
     num = re.search(r'\d+', ident)
     tag = f'ENTREGA · Pergunta {num.group()}' if num else 'ENTREGA'
+    puro = re.sub(r'@@SLIDE un\d\dt\d\d (\d+)', r'slide \1', rotulo)   # texto do arquivo .txt
     return (f'<div class="question entrega"><span class="tag-entrega">{tag}</span>'
-            f'<label for="{ident}">{escape(rotulo)}</label>'
-            f'<textarea id="{ident}" data-entrega="{escape(rotulo)}" required '
+            f'<label for="{ident}">{slide(escape(rotulo))}</label>'
+            f'<textarea id="{ident}" data-entrega="{escape(puro)}" required '
             f'placeholder="Responda com suas palavras e cite o que a saída mostrou."></textarea></div>')
 
 
@@ -94,11 +123,17 @@ def construir(atividade):
             html.append(entrega(ident.strip(), rotulo.strip()))
         elif linha.startswith('@@PENSAR '):
             html.append('<p class="pensar"><span class="tag-pensar">Para pensar · não entra '
-                        'na entrega</span> ' + escape(linha[9:].strip()) + '</p>')
+                        'na entrega</span> ' + slide(escape(linha[9:].strip())) + '</p>')
+        elif linha.startswith('@@CODE '):
+            html.append(codigo(pasta, linha.split()[1]))
+        elif linha.startswith('@@DONE '):
+            num, _, texto = linha[7:].partition('|')
+            html.append(f'<label class="done"><input type="checkbox" id="feito-{num.strip()}" '
+                        f'data-step="{num.strip()}">{escape(texto.strip())}</label>')
         elif linha.startswith('@@'):
             raise SystemExit(f'Diretiva desconhecida na linha {i + 1}: {linha}')
         else:
-            html.append(linha)
+            html.append(slide(linha))
         i += 1
     (pasta / 'index.html').write_text('\n'.join(html) + '\n', encoding='utf-8')
     print(f'{atividade}/index.html gerado')

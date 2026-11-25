@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="description" content="Atividade P06 de Sistemas Distribuídos: estado compartilhado, condição de corrida, trava, réplicas e consistência forte e eventual, um comando por vez, no Terminal Linux do LIAC."><meta name="theme-color" content="#13202a"><title>P06 · Quem levou o último item? | SD</title><link rel="stylesheet" href="../../praticas/styles.css"><link rel="stylesheet" href="../atividades.css"><script src="../script.js" defer></script></head>
+<body data-unit="p06" data-titulo="P06 - Quem levou o último item?"><a class="skip" href="#conteudo">Pular para o conteúdo</a><div class="wrap">
+<nav class="topnav" aria-label="Navegação principal"><a href="../../">← Disciplina SD</a><a href="../../materiais/#unidade-6">Materiais da unidade 6</a><a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">Abrir terminal ↗ <span class="sr-only">(nova aba)</span></a></nav>
+<header class="hero"><p class="label">Atividade P06 · Sistemas Distribuídos · UNEMAT</p><h1>Quem levou o último item?</h1><p class="lede">Concorrência e compartilhamento de informação, um comando por vez, no seu terminal Linux do LIAC.</p>
+<div class="meta"><span><b>4 partes</b> cerca de 60 min</span><span><b>Individual</b></span><span><b>Unidade 6</b> slide un06t01</span><span><b>C + Bash</b></span></div>
+<p class="small">Esta atividade é independente da P06 do <a href="../../praticas/un06/">percurso de práticas</a> (“Concorrência e réplicas”), que trata de outro aspecto do tema.</p>
+<div class="controls"><button type="button" id="theme" aria-pressed="false">Alternar tema</button></div>
+<p class="status" id="save-status" aria-live="polite">O que você escreve aqui fica só neste navegador. Nada é enviado automaticamente.</p></header>
+<main id="conteudo">
+
+<section class="etapa entrega-resumo" id="o-que-entregar" aria-labelledby="titulo-entrega"><p class="label">Leia antes de começar</p><h2 id="titulo-entrega">O que você vai entregar</h2>
+<p><b>Um único arquivo de texto</b>, gerado pelo botão <a href="#gerar">Gerar arquivo de entrega</a> no fim desta página. O nome sai pronto: <code>P06_SD_seu-nome.txt</code>.</p>
+<ol class="partes">
+<li><b>Identificação:</b> nome completo e matrícula.</li>
+<li><b>Respostas às 6 perguntas</b> marcadas com a etiqueta <span class="tag-entrega">ENTREGA</span>. Algumas pedem que você cole a saída do terminal: copie do terminal e cole no campo. Se não conseguir copiar (comum no celular), digite as linhas principais.</li>
+</ol>
+<p><b>Onde e até quando:</b> <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>. O prazo é o da própria Tarefa.</p>
+<p class="small">As perguntas marcadas <span class="tag-pensar">Para pensar</span> ajudam a entender, mas não entram na entrega. O botão confere se falta alguma parte antes de gerar o arquivo.</p>
+</section>
+
+<section class="etapa" id="comecar" aria-labelledby="t-comecar"><h2 id="t-comecar">O cenário e como fazer</h2>
+<p>Uma loja on-line tem <b>um único item</b> no estoque. Dois clientes, <b>Ana</b> e <b>Beto</b>, clicam em “Comprar” quase no mesmo instante. Cada cliente será um <b>processo</b> separado do Linux (um programa em execução), e o estoque será um arquivo de texto que os dois leem e alteram: o <b>estado compartilhado</b> do sistema (@@SLIDE un06t01 3).</p>
+<div class="diagram" role="img" aria-label="Ana e Beto, dois processos, acessam o mesmo arquivo estoque.txt.">Ana ──▶ estoque.txt ◀── Beto</div>
+<div class="dica"><strong>O que este experimento é, e o que não é.</strong><p>Os processos, o arquivo e a trava são reais, e tudo roda na sua conta, sem depender de colegas. Mas é <b>uma única máquina</b>, não uma rede. Na Parte 3, três arquivos fazem o papel de três servidores, e uma pausa (<code>sleep</code>) faz o papel do atraso da rede. Os conceitos (corrida, trava, cópias desatualizadas) são os mesmos de um sistema distribuído de verdade.</p></div>
+<ul>
+<li>Abra o <a href="https://terminal.liac-lab.dev" target="_blank" rel="noopener">terminal</a> e entre com sua conta.</li>
+<li>Faça <b>um passo por vez</b>: clique em <b>Copiar</b>, cole no terminal, aperte <kbd>Enter</kbd> e confira o que aparece. Não digite o <code>$</code>: ele só indica onde começa o comando.</li>
+<li>Tudo o que vem depois de <code>#</code> é um <b>comentário</b>: o terminal ignora.</li>
+<li>Seus tempos e a ordem de algumas linhas podem ser diferentes dos exemplos. Registre sempre os <b>seus</b>.</li>
+</ul>
+</section>
+
+<nav class="steps-nav" aria-label="Partes"><a href="#parte1">1 · O último item</a> <a href="#parte2">2 · A trava</a> <a href="#parte3">3 · Cópias atrasadas</a> <a href="#parte4">4 · Diagnóstico</a> <a href="#gerar">Entrega</a></nav>
+
+<section class="etapa" id="parte1" aria-labelledby="t1"><p class="label">Parte 1 · cerca de 20 min <span class="tipo">Medição real</span></p><h2 id="t1">O último item</h2>
+<p><b>Objetivo:</b> ver dois clientes comprarem o mesmo item, que só existia uma vez.</p>
+<dl class="termos">
+<div><dt>Estado compartilhado</dt><dd>Informação que vários processos leem e alteram, e que representa a “verdade” do sistema naquele momento: um saldo, um assento, um estoque. @@SLIDE un06t01 3</dd></div>
+<div><dt>Concorrência</dt><dd>Vários processos independentes agindo ao mesmo tempo, sem uma fila natural que os organize. @@SLIDE un06t01 4</dd></div>
+<div><dt>Condição de corrida</dt><dd>Quando o resultado depende da ordem, imprevisível, em que as ações dos processos se intercalam. @@SLIDE un06t01 6</dd></div>
+</dl>
+
+<h3>Etapa A · Código</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+mkdir -p ~/atividades/sd-p06   # cria a pasta da atividade
+@@END
+<p class="explica"><b>O que faz:</b> cria a pasta <code>sd-p06</code> dentro de <code>atividades</code>, na sua pasta pessoal (<code>~</code>). Se ela já existir, nada acontece.</p></li>
+<li>
+@@CMD Passo 2
+cd ~/atividades/sd-p06   # entra na pasta da atividade
+@@END
+<p class="explica"><b>O que faz:</b> todas as partes acontecem nesta pasta.</p></li>
+<li>
+@@CMD Passo 3
+nano -l compra.c   # abre o editor nano, com números de linha
+@@END
+<p class="explica"><b>O que faz:</b> abre o editor <code>nano</code> num arquivo novo, <code>compra.c</code>.</p></li>
+<li><span class="passo-rotulo">Passo 4</span> Copie o código abaixo e cole no nano (botão direito ou <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>):
+@@CODE compra.c
+</li>
+<li><span class="passo-rotulo">Passo 5</span> Salve e saia: <kbd>Ctrl</kbd>+<kbd>O</kbd>, depois <kbd>Enter</kbd>, depois <kbd>Ctrl</kbd>+<kbd>X</kbd>.</li>
+</ol>
+<details><summary>Plano B: se a colagem no nano não funcionar</summary><div>
+<p>Cole o bloco abaixo direto no terminal (não no nano). Ele cria o mesmo <code>compra.c</code>.</p>
+@@SRC compra.c
+</div></details>
+<p><b>O código, linha por linha:</b></p>
+<div class="tbl"><table><thead><tr><th>Linha</th><th>O que faz</th></tr></thead><tbody>
+<tr><td>1–6</td><td>Incluem as bibliotecas de texto na tela, conversão de números, arquivos e travas.</td></tr>
+<tr><td>9–11</td><td>Leem o nome do cliente (<code>Ana</code>, <code>Beto</code>) e se ele deve usar a trava (só na Parte 2).</td></tr>
+<tr><td>12–13</td><td>Abrem o arquivo <code>estoque.txt</code>, o estado compartilhado, para ler e gravar.</td></tr>
+<tr><td>14–18</td><td>Só com <code>trava</code>: pedem a trava do arquivo e esperam a vez (Parte 2).</td></tr>
+<tr><td>19–22</td><td><b>1. LER:</b> leem quantos itens há no estoque e mostram na tela.</td></tr>
+<tr><td>23</td><td>Esperam 0,5 segundo <b>de propósito</b>. Num único computador, a corrida quase nunca aparece sozinha; essa pausa faz o papel do tempo que as mensagens levariam numa rede (@@SLIDE un06t01 6).</td></tr>
+<tr><td>24–29</td><td>Se havia item: <b>2. CALCULAR</b> (estoque − 1) e <b>3. ESCREVER</b> o novo valor no arquivo.</td></tr>
+<tr><td>30–31</td><td>Se não havia: compra negada.</td></tr>
+<tr><td>33</td><td>Fecham o arquivo. Se havia trava, fechar a solta.</td></tr>
+<tr><td>36</td><td>Comentário que marca o fim do código.</td></tr>
+</tbody></table></div>
+
+<h3>Etapa B · Compilação</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 6
+gcc compra.c -o compra   # traduz o texto compra.c no programa compra
+@@END
+<p class="explica"><b>Observe:</b> se nada aparecer, compilou. Se aparecer erro, abra o nano de novo e confira o código.</p></li>
+</ol>
+
+<h3>Etapa C · Execução</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 7
+echo 1 > estoque.txt   # coloca 1 item no estoque
+@@END
+<p class="explica"><b>O que faz:</b> grava o número <code>1</code> no arquivo <code>estoque.txt</code>.</p></li>
+<li>
+@@CMD Passo 8
+./compra Ana   # Ana compra sozinha
+@@END
+@@OUT exata Saída esperada
+[Ana] li estoque = 1
+[Ana] COMPREI! gravei estoque = 0
+@@END
+<p class="explica"><b>Observe:</b> com um cliente só, tudo certo: havia 1 item, Ana comprou, sobrou 0.</p></li>
+<li>
+@@CMD Passo 9
+echo 1 > estoque.txt   # repõe o item
+@@END
+</li>
+<li>
+@@CMD Passo 10
+./compra Ana & ./compra Beto & wait   # os dois clientes ao mesmo tempo
+@@END
+<p class="explica"><b>O que faz:</b> o <code>&amp;</code> coloca cada programa para rodar <b>em segundo plano</b>, sem esperar o anterior terminar: Ana e Beto começam praticamente juntos. O <code>wait</code> espera os dois acabarem.</p>
+@@OUT exemplo Exemplo medido no computador do professor
+[1] 4310
+[2] 4311
+[Ana] li estoque = 1
+[Beto] li estoque = 1
+[Ana] COMPREI! gravei estoque = 0
+[Beto] COMPREI! gravei estoque = 0
+[1]-  Done                    ./compra Ana
+[2]+  Done                    ./compra Beto
+@@END
+<p class="explica">As linhas <code>[1] 4310</code> e <code>Done</code> são avisos do terminal: o número do trabalho e o número do processo. Os seus serão outros, e podem nem aparecer.</p>
+<p class="explica"><b>Observe:</b> os dois leram <code>1</code> <b>antes</b> de qualquer um gravar <code>0</code>. Os dois compraram.</p></li>
+<li>
+@@CMD Passo 11
+cat estoque.txt   # quanto sobrou no estoque?
+@@END
+@@OUT exata Saída esperada
+0
+@@END
+<p class="explica"><b>Observe:</b> o estoque diz <code>0</code>, como se tudo estivesse certo, mas foram feitas <b>duas</b> vendas de um item que só existia <b>uma</b> vez. Compare com o @@SLIDE un06t01 5.</p></li>
+</ol>
+@@PENSAR Por que ./compra Ana, sozinha, nunca erra? Se a pausa da linha 23 fosse de um milionésimo de segundo, o erro sumiria ou só ficaria mais raro?
+@@ENTREGA p1 | Pergunta 1. Cole a saída do Passo 10 da Parte 1 e o resultado do Passo 11. Quantos itens existiam e quantas compras foram aprovadas? Em que ponto da saída a sequência LER-CALCULAR-ESCREVER de Ana foi “invadida” por Beto (@@SLIDE un06t01 5)?
+@@DONE 1 | Parte 1 concluída
+</section>
+
+<section class="etapa" id="parte2" aria-labelledby="t2"><p class="label">Parte 2 · cerca de 10 min <span class="tipo">Medição real</span></p><h2 id="t2">A trava</h2>
+<p><b>Objetivo:</b> usar uma trava para que LER-CALCULAR-ESCREVER aconteça como uma operação única, e medir quanto isso custa.</p>
+<dl class="termos">
+<div><dt>Consistência</dt><dd>Garantia de que o sistema só passa de um estado válido para outro estado válido. Vender 2 itens de um estoque de 1 não é válido. @@SLIDE un06t01 7</dd></div>
+<div><dt>Sincronização (trava, <i>lock</i>)</dt><dd>Mecanismo de coordenação: quem tem a trava faz a operação inteira; os outros esperam. A sequência vira <b>atômica</b>, isto é, indivisível. @@SLIDE un06t01 8</dd></div>
+</dl>
+<p>O mesmo programa usa a trava quando você acrescenta a palavra <code>trava</code>. Ela é pedida com <code>flock</code>, uma chamada do Linux que trava um arquivo (linhas 14–18).</p>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+echo 1 > estoque.txt   # repõe o item
+@@END
+</li>
+<li>
+@@CMD Passo 2
+./compra Ana trava & ./compra Beto trava & wait   # os dois, agora com trava
+@@END
+@@OUT exemplo Exemplo medido no computador do professor
+[1] 4402
+[2] 4403
+[Ana] pedi a trava
+[Ana] consegui a trava
+[Ana] li estoque = 1
+[Beto] pedi a trava
+[Ana] COMPREI! gravei estoque = 0
+[Beto] consegui a trava
+[Beto] li estoque = 0
+[Beto] compra negada: estoque esgotado
+[1]-  Done                    ./compra Ana trava
+[2]+  Done                    ./compra Beto trava
+@@END
+<p class="explica"><b>Observe:</b> quem pediu a trava em segundo lugar ficou <b>parado</b> entre “pedi” e “consegui” até o outro terminar. Quando leu, o estoque já era <code>0</code>. Na sua tela, quem compra pode ser o Beto: depende de quem chega primeiro.</p></li>
+<li>
+@@CMD Passo 3
+cat estoque.txt   # quanto sobrou no estoque?
+@@END
+@@OUT exata Saída esperada
+0
+@@END
+</li>
+</ol>
+<p><b>Quanto custa a trava?</b> O comando <code>time</code> mede o tempo total. Os parênteses juntam os dois clientes numa medição só; a saída dos programas é descartada (<code>&gt; /dev/null</code>) para sobrar só o tempo.</p>
+<ol class="passos">
+<li>
+@@CMD Passo 4
+echo 1 > estoque.txt   # repõe o item
+@@END
+</li>
+<li>
+@@CMD Passo 5
+time (./compra Ana & ./compra Beto & wait) > /dev/null   # mede SEM trava
+@@END
+@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
+real    0m0.505s
+user    0m0.004s
+sys     0m0.003s
+@@END
+</li>
+<li>
+@@CMD Passo 6
+echo 1 > estoque.txt   # repõe o item
+@@END
+</li>
+<li>
+@@CMD Passo 7
+time (./compra Ana trava & ./compra Beto trava & wait) > /dev/null   # mede COM trava
+@@END
+@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
+real    0m1.005s
+user    0m0.002s
+sys     0m0.006s
+@@END
+<p class="explica"><b>Observe:</b> o <code>real</code> (tempo de relógio). Sem trava, os dois esperam a pausa de 0,5 s <b>juntos</b>; com trava, um espera o outro, e as pausas se somam. No terminal em português, os decimais aparecem com vírgula.</p></li>
+</ol>
+@@PENSAR No @@SLIDE un06t01 7, a conta tem R$ 200, um processo deposita R$ 100 e outro saca R$ 50. Sem trava, o saldo pode terminar em R$ 150 ou em R$ 300. Por que dois resultados errados diferentes, e qual seria o certo?
+@@ENTREGA p2 | Pergunta 2. Cole a saída do Passo 2 da Parte 2. O que o segundo cliente fez entre “pedi a trava” e “consegui a trava”? Por que, desta vez, ele leu 0?
+@@ENTREGA p3 | Pergunta 3. Anote o tempo real dos Passos 5 e 7 da Parte 2. O que a trava garantiu e o que ela custou? Em um site com milhares de compradores ao mesmo tempo, que problema esse custo poderia causar?
+@@DONE 2 | Parte 2 concluída
+</section>
+
+<section class="etapa" id="parte3" aria-labelledby="t3"><p class="label">Parte 3 · cerca de 20 min <span class="tipo">Simulação local</span></p><h2 id="t3">Cópias atrasadas</h2>
+<p><b>Objetivo:</b> ver o que acontece quando a mesma informação tem <b>três cópias</b> e uma atualização leva tempo para chegar a todas.</p>
+<p>Um servidor único é um <b>ponto único de falha</b>: se ele cai, o sistema inteiro para. Por isso, sistemas grandes guardam cópias (réplicas) em vários servidores. Aqui, os arquivos <code>replica_A.txt</code>, <code>replica_B.txt</code> e <code>replica_C.txt</code> fazem o papel de três servidores, e uma pausa (<code>sleep</code>) faz o papel do atraso da rede. <b>Não é rede de verdade</b>: é um modelo para observar a ideia.</p>
+<dl class="termos">
+<div><dt>Replicação</dt><dd>Manter cópias da mesma informação em vários servidores, para tolerar falhas, ficar sempre disponível e atender mais perto do cliente. @@SLIDE un06t01 9</dd></div>
+<div><dt>Propagação</dt><dd>O tempo que uma atualização leva para chegar a todas as cópias. Nesse intervalo, partes do sistema mostram “verdades diferentes”. @@SLIDE un06t01 10</dd></div>
+<div><dt>Consistência forte × eventual</dt><dd><b>Forte:</b> todos veem o mesmo valor imediatamente, ao custo de esperar. <b>Eventual:</b> responde rápido, as cópias divergem por um tempo e depois convergem. @@SLIDE un06t01 11</dd></div>
+</dl>
+
+<h3>Etapa A · Script</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 1
+nano -l replicas.sh   # abre o nano num arquivo novo
+@@END
+<p class="explica"><b>O que faz:</b> desta vez o arquivo é um <b>script</b>: uma lista de comandos do terminal (Bash) guardada num arquivo.</p></li>
+<li><span class="passo-rotulo">Passo 2</span> Copie o script abaixo e cole no nano:
+@@CODE replicas.sh
+</li>
+<li><span class="passo-rotulo">Passo 3</span> Salve e saia: <kbd>Ctrl</kbd>+<kbd>O</kbd>, depois <kbd>Enter</kbd>, depois <kbd>Ctrl</kbd>+<kbd>X</kbd>.</li>
+</ol>
+<details><summary>Plano B: se a colagem no nano não funcionar</summary><div>
+<p>Cole o bloco abaixo direto no terminal (não no nano). Ele cria o mesmo <code>replicas.sh</code>.</p>
+@@SRC replicas.sh
+</div></details>
+<p><b>O script, por partes:</b></p>
+<div class="tbl"><table><thead><tr><th>Linhas</th><th>Modo</th><th>O que faz</th></tr></thead><tbody>
+<tr><td>6–8</td><td><code>iniciar</code></td><td>Grava “foto antiga” nas três réplicas.</td></tr>
+<tr><td>10–14</td><td><code>eventual</code></td><td>Grava só em A e <b>responde na hora</b>. Em segundo plano (<code>&amp;</code>), a atualização chega a B depois de 5 s e a C depois de mais 5 s.</td></tr>
+<tr><td>16–23</td><td><code>forte</code></td><td>Pega a trava (<code>flock</code>), grava em A, B e C, com 1 s de “rede” em cada, e <b>só então</b> responde.</td></tr>
+<tr><td>25–28</td><td><code>ler</code></td><td>Mostra as três réplicas. Se houver uma escrita forte em andamento, espera a trava ser solta.</td></tr>
+</tbody></table></div>
+
+<h3>Etapa B · Execução</h3>
+<ol class="passos">
+<li>
+@@CMD Passo 4
+chmod +x replicas.sh   # dá permissão de execução ao script
+@@END
+<p class="explica"><b>O que faz:</b> sem essa permissão, o Linux não deixa rodar o arquivo como programa.</p></li>
+<li>
+@@CMD Passo 5
+./replicas.sh iniciar   # três réplicas iguais
+@@END
+@@OUT exata Saída esperada
+As tres replicas comecam iguais.
+@@END
+</li>
+<li>
+@@CMD Passo 6
+./replicas.sh eventual "foto nova"; ./replicas.sh ler   # grava e já lê
+@@END
+<p class="explica"><b>O que faz:</b> o <code>;</code> separa dois comandos na mesma linha: primeiro grava “foto nova” no modo eventual, logo em seguida lê as três réplicas.</p>
+@@OUT exata Saída esperada
+Gravei em A e ja respondi ao cliente.
+Replica A: foto nova
+Replica B: foto antiga
+Replica C: foto antiga
+@@END
+<p class="explica"><b>Observe:</b> o cliente já recebeu a resposta, mas quem ler em B ou C ainda vê a foto antiga.</p></li>
+<li>
+@@CMD Passo 7
+sleep 12; ./replicas.sh ler   # espera 12 s e lê de novo
+@@END
+<p class="explica"><b>O que faz:</b> não faz nada por 12 segundos (o cursor volta sozinho) e lê de novo.</p>
+@@OUT exata Saída esperada
+Replica A: foto nova
+Replica B: foto nova
+Replica C: foto nova
+@@END
+<p class="explica"><b>Observe:</b> as cópias <b>convergiram</b>: agora todas concordam.</p></li>
+<li>
+@@CMD Passo 8
+time ./replicas.sh forte "foto 3"   # grava em todas antes de responder
+@@END
+@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
+Gravei em A, B e C. So agora respondo ao cliente.
+
+real    0m3.016s
+user    0m0.007s
+sys     0m0.007s
+@@END
+<p class="explica"><b>Observe:</b> o cliente esperou cerca de 3 s pela resposta, mas, quando ela chegou, as três cópias já eram iguais.</p></li>
+<li>
+@@CMD Passo 9
+./replicas.sh forte "foto 4" & sleep 0.5; time ./replicas.sh ler   # lê DURANTE uma escrita forte
+@@END
+<p class="explica"><b>O que faz:</b> começa uma escrita forte em segundo plano e, meio segundo depois, tenta ler, medindo quanto a leitura demora.</p>
+@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
+[1] 4527
+Gravei em A, B e C. So agora respondo ao cliente.
+Replica A: foto 4
+Replica B: foto 4
+Replica C: foto 4
+
+real    0m2.524s
+user    0m0.014s
+sys     0m0.019s
+@@END
+<p class="explica"><b>Observe:</b> a leitura <b>esperou</b> a escrita terminar e não viu nenhuma mistura de “foto 3” com “foto 4”. Depois, aperte <kbd>Enter</kbd> se aparecer uma linha <code>Done</code>.</p></li>
+</ol>
+@@ENTREGA p4 | Pergunta 4. Cole as saídas dos Passos 6 e 7 da Parte 3. Em algum momento o sistema mostrou “verdades diferentes” (@@SLIDE un06t01 10)? Por quanto tempo, no máximo, uma leitura em C poderia ver a foto antiga?
+@@ENTREGA p5 | Pergunta 5. Anote o tempo real dos Passos 8 e 9 da Parte 3. Por que a leitura do Passo 9 demorou, e o que ela viu? Relacione com a linha “O Trade-off” da tabela do @@SLIDE un06t01 11.
+@@DONE 3 | Parte 3 concluída
+</section>
+
+<section class="etapa" id="parte4" aria-labelledby="t4"><p class="label">Parte 4 · cerca de 10 min <span class="tipo">Síntese</span></p><h2 id="t4">Diagnóstico</h2>
+<p><b>Objetivo:</b> usar o que você mediu para decidir o que cada sistema real precisa. Não há comandos nesta parte.</p>
+<p>Na Parte 2, a trava custou tempo e garantiu o resultado certo. Na Parte 3, o modo eventual respondeu na hora, mas mostrou cópias diferentes por alguns segundos, e o modo forte fez o contrário. Sistemas reais escolhem um lado conforme o estrago que um valor errado causaria (@@SLIDE un06t01 12).</p>
+<ol>
+<li>Venda de ingressos <b>numerados</b> para um show: duas pessoas clicam na mesma cadeira.</li>
+<li>Contador de <b>curtidas</b> de uma postagem muito popular.</li>
+<li><b>Transferência PIX</b> de uma conta conjunta, feita pelos dois titulares ao mesmo tempo.</li>
+<li>O site da universidade mudou de servidor e o <b>DNS</b> (o “catálogo” que traduz nomes em endereços) demora algumas horas para mostrar o endereço novo em todo lugar.</li>
+<li><b>Prontuário médico</b>: uma alergia acabou de ser registrada e outro médico vai prescrever um remédio.</li>
+</ol>
+@@ENTREGA p6 | Pergunta 6. Para cada um dos 5 cenários, diga se ele precisa de consistência forte ou aceita consistência eventual, e se há risco de condição de corrida que exija trava. Justifique cada um em uma frase, usando algo que você observou nas Partes 1 a 3.
+@@PENSAR Monte, com suas palavras, a cadeia do @@SLIDE un06t01 13: concorrência → estado compartilhado → condição de corrida → sincronização → consistência → replicação → modelos de consistência. Em que parte da atividade você viu cada elo?
+@@DONE 4 | Parte 4 concluída
+</section>
+
+<section class="etapa" id="gerar" aria-labelledby="t-gerar"><p class="label">Entrega</p><h2 id="t-gerar">Monte e gere o seu arquivo</h2>
+<p>Preencha sua identificação e clique em <b>Gerar arquivo de entrega</b>. As perguntas que você já respondeu entram automaticamente.</p>
+<div class="question entrega"><span class="tag-entrega">ENTREGA · Identificação</span><label for="nome">Nome completo</label><input id="nome" autocomplete="name" required><label for="matricula">Matrícula</label><input id="matricula" inputmode="numeric" required></div>
+<ul class="checklist" aria-label="Situação da entrega" id="situacao"></ul>
+<button type="button" class="gerar" id="gerar-entrega">Gerar arquivo de entrega (.txt)</button>
+<p class="status" id="gerar-status" aria-live="polite"></p>
+<div class="dica"><strong>Depois de gerar</strong><p>O arquivo é baixado no aparelho em que esta página está aberta (pasta Downloads), não no servidor. Envie esse arquivo <span class="destaque-entrega">no <b>SIGAA</b>, na Tarefa indicada pelo professor</span>, dentro do prazo da Tarefa. Por fim, digite <code>exit</code> no terminal.</p></div>
+<details><summary>Se algo der errado</summary><div>
+<p><b><code>gcc</code> mostrou erro:</b> a colagem no nano ficou incompleta. Abra com <code>nano -l compra.c</code>, apague tudo e cole de novo, ou use o Plano B.</p>
+<p><b><code>Crie antes: echo 1 &gt; estoque.txt</code>:</b> você está fora da pasta ou o arquivo do estoque não existe. Rode <code>cd ~/atividades/sd-p06</code> e <code>echo 1 &gt; estoque.txt</code>.</p>
+<p><b>No Passo 10 da Parte 1, só um comprou:</b> pode acontecer, raramente, se um processo começou bem depois do outro. Rode de novo os Passos 9 e 10.</p>
+<p><b><code>Permission denied</code> ao rodar <code>./replicas.sh</code>:</b> faltou o Passo 4 da Parte 3 (<code>chmod +x replicas.sh</code>).</p>
+<p><b>No Passo 6 da Parte 3, B já aparecia com “foto nova”:</b> você rodou o passo de novo depois de ter esperado. Rode <code>./replicas.sh iniciar</code> e repita o Passo 6.</p>
+<p><b>Sem JavaScript:</b> os textos e comandos continuam visíveis, mas o botão de gerar não funciona. Escreva a identificação e as respostas em um arquivo de texto próprio.</p>
+</div></details>
+</section>
+</main>
+<footer>Prof. Me. Juvenal Silva Neto · Sistemas Distribuídos · Bacharelado em Ciência da Computação · UNEMAT, Campus de Alto Araguaia</footer></div></body></html>

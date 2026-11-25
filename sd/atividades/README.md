@@ -9,6 +9,7 @@ das partes obrigatórias e geração do arquivo de entrega).
 | Pasta | Atividade | Situação |
 | --- | --- | --- |
 | `p05-difusao/` | P05 — Uma mensagem para todos (Unidade 5) | Homologada no LIAC em 05/11/2026 |
+| `p06-estoque/` | P06 — Quem levou o último item? (Unidade 6, un06t01): corrida, trava (`flock`), réplicas forte × eventual; modelo misto | Pronta localmente; não publicada; falta homologar no LIAC |
 
 ## P05 — exceção de Python
 
@@ -34,15 +35,28 @@ Distribuição para os alunos: `/srv/material/sd/p05.py` no LIAC (atalho
 `~/material/sd/p05.py`). A página tem um Plano B que recria o arquivo por
 colagem (here-document).
 
+## Modelo misto (a partir da P06)
+
+Por decisão do professor (25/11/2026), a P06 junta a granularidade das
+atividades de SO (`so/atividades/un04-blocos`, `un05`: um comando por passo
+com comentário `#`, "O que faz"/"Observe", termos com link para o slide,
+código C digitado no nano → `gcc` → execução) com a entrega da P05
+(`@@ENTREGA`/`@@PENSAR`, arquivo `<SIGLA>_SD_<nome>.txt`, SIGAA). Alunos usam
+C e Bash. A sigla vem de `data-unit` e o título do arquivo de `data-titulo`,
+no `<body>`; evidências e tabela entram no arquivo só se a página as tiver.
+
 ## Estrutura
 
 - `<atividade>/pagina.modelo.html` — fonte editável da página.
 - `<atividade>/index.html` — página gerada (não editar à mão).
 - `<atividade>/arquivos/` — programas entregues aos alunos.
 - `<atividade>/PROFESSOR.md` — respostas esperadas e mediação (**só local**, no `.gitignore`).
+- `<atividade>/PLANEJAMENTO.md` — decisões, medições e pendências (**só local**, no `.gitignore`).
 
-Diretivas do modelo: `@@CMD`, `@@OUT exata|aprox`, `@@SRC`, `@@ENTREGA id | rótulo`
-e `@@PENSAR` (detalhes em `construir.py`). Só `@@ENTREGA`, a tabela, a
+Diretivas do modelo: `@@CMD`, `@@OUT exata|aprox|exemplo`, `@@SRC`, `@@ENTREGA id | rótulo`,
+`@@PENSAR`, `@@CODE arquivo` (código para o nano, sem `$`), `@@DONE n | texto` e
+`@@SLIDE un06t01 5` no texto (detalhes em `construir.py`). Fora da P05, o Plano B
+termina com `# fim do bloco`, que absorve o `~` que o terminal web pode grudar. Só `@@ENTREGA`, a tabela, a
 identificação e as evidências entram no arquivo de entrega.
 
 ## Manutenção
@@ -51,6 +65,8 @@ identificação e as evidências entram no arquivo de entrega.
 cd sd/atividades
 python3 -I construir.py p05-difusao   # gera index.html
 python3 -I verificar.py p05-difusao   # executa todos os comandos da página
+python3 -I construir.py p06-estoque
+python3 -I verificar.py p06-estoque   # 21 passos, 12 saídas, 5+5 rodadas; ~30 s
 ```
 
 O verificador executa os blocos da página na ordem, numa pasta HOME

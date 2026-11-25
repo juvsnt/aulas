@@ -52,3 +52,19 @@ button.gerar:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .status.ok{color:var(--ok);font-weight:700}
 .done{margin-top:.4rem}
 @media print{.controls,.copy,.done,.topnav,button.gerar,.checklist{display:none!important}}
+
+/* Modelo misto (a partir da P06): passos de SO, um comando por passo. */
+.termos{margin:.6rem 0 1rem;padding:0;display:grid;gap:.45rem}
+.termos div{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:.55rem .75rem}
+.termos dt{font-weight:700}
+.termos dd{margin:.15rem 0 0;color:var(--ink)}
+.termos dd a{white-space:nowrap}
+.tipo{display:inline-block;margin-left:.4rem;padding:.05rem .5rem;border-radius:99px;background:var(--accent-soft);color:var(--ink);font-size:.8rem}
+.passos{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;list-style:none;padding-left:0}
+.passos > li{min-width:0}
+.passos pre code{background:none;padding:0;border-radius:0}   /* anula "li code" do percurso */
+.explica{margin:.45rem 0 0;font-size:.95rem;color:var(--ink)}
+.passo-rotulo{display:inline-block;margin-right:.4rem;padding:.05rem .5rem;border-radius:99px;background:var(--accent-soft);font-size:.8rem;font-weight:700}
+/* Código para o nano: texto comum (não azul) e sem "$", para não parecer comando. */
+.command.codigo{border-left-color:var(--muted)}
+.command.codigo code{color:var(--ink);font-weight:400}
