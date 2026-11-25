@@ -116,17 +116,16 @@ echo 1 > estoque.txt   # repõe o item
 ./compra Ana & ./compra Beto & wait   # os dois clientes ao mesmo tempo
 @@END
 <p class="explica"><b>O que faz:</b> o <code>&amp;</code> coloca cada programa para rodar <b>em segundo plano</b>, sem esperar o anterior terminar: Ana e Beto começam praticamente juntos. O <code>wait</code> espera os dois acabarem.</p>
-@@OUT exemplo Exemplo medido no computador do professor
-[1] 4310
-[2] 4311
+@@OUT exemplo Exemplo medido no LIAC
+[1] 501784
+[2] 501785
 [Ana] li estoque = 1
 [Beto] li estoque = 1
 [Ana] COMPREI! gravei estoque = 0
 [Beto] COMPREI! gravei estoque = 0
-[1]-  Done                    ./compra Ana
-[2]+  Done                    ./compra Beto
+[1]-  Concluído              ./compra Ana
 @@END
-<p class="explica">As linhas <code>[1] 4310</code> e <code>Done</code> são avisos do terminal: o número do trabalho e o número do processo. Os seus serão outros, e podem nem aparecer.</p>
+<p class="explica">As linhas <code>[1] 501784</code> e <code>Concluído</code> são avisos do terminal: o número do trabalho, o número do processo e o fim de cada programa em segundo plano. Os seus números serão outros, e um aviso <code>Concluído</code> pode aparecer só depois do próximo comando.</p>
 <p class="explica"><b>Observe:</b> os dois leram <code>1</code> <b>antes</b> de qualquer um gravar <code>0</code>. Os dois compraram.</p></li>
 <li>
 @@CMD Passo 11
@@ -159,9 +158,9 @@ echo 1 > estoque.txt   # repõe o item
 @@CMD Passo 2
 ./compra Ana trava & ./compra Beto trava & wait   # os dois, agora com trava
 @@END
-@@OUT exemplo Exemplo medido no computador do professor
-[1] 4402
-[2] 4403
+@@OUT exemplo Exemplo medido no LIAC
+[1] 502357
+[2] 502358
 [Ana] pedi a trava
 [Ana] consegui a trava
 [Ana] li estoque = 1
@@ -169,9 +168,9 @@ echo 1 > estoque.txt   # repõe o item
 [Ana] COMPREI! gravei estoque = 0
 [Beto] consegui a trava
 [Beto] li estoque = 0
+[1]-  Concluído              ./compra Ana trava
 [Beto] compra negada: estoque esgotado
-[1]-  Done                    ./compra Ana trava
-[2]+  Done                    ./compra Beto trava
+[2]+  Concluído              ./compra Beto trava
 @@END
 <p class="explica"><b>Observe:</b> quem pediu a trava em segundo lugar ficou <b>parado</b> entre “pedi” e “consegui” até o outro terminar. Quando leu, o estoque já era <code>0</code>. Na sua tela, quem compra pode ser o Beto: depende de quem chega primeiro.</p></li>
 <li>
@@ -194,10 +193,10 @@ echo 1 > estoque.txt   # repõe o item
 @@CMD Passo 5
 time (./compra Ana & ./compra Beto & wait) > /dev/null   # mede SEM trava
 @@END
-@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
-real    0m0.505s
-user    0m0.004s
-sys     0m0.003s
+@@OUT exemplo Exemplo medido no LIAC · os seus números mudam
+real    0m0,504s
+user    0m0,001s
+sys     0m0,002s
 @@END
 </li>
 <li>
@@ -209,12 +208,12 @@ echo 1 > estoque.txt   # repõe o item
 @@CMD Passo 7
 time (./compra Ana trava & ./compra Beto trava & wait) > /dev/null   # mede COM trava
 @@END
-@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
-real    0m1.005s
-user    0m0.002s
-sys     0m0.006s
+@@OUT exemplo Exemplo medido no LIAC · os seus números mudam
+real    0m1,002s
+user    0m0,002s
+sys     0m0,001s
 @@END
-<p class="explica"><b>Observe:</b> o <code>real</code> (tempo de relógio). Sem trava, os dois esperam a pausa de 0,5 s <b>juntos</b>; com trava, um espera o outro, e as pausas se somam. No terminal em português, os decimais aparecem com vírgula.</p></li>
+<p class="explica"><b>Observe:</b> o <code>real</code> (tempo de relógio). Sem trava, os dois esperam a pausa de 0,5 s <b>juntos</b>; com trava, um espera o outro, e as pausas se somam.</p></li>
 </ol>
 @@PENSAR No @@SLIDE un06t01 7, a conta tem R$ 200, um processo deposita R$ 100 e outro saca R$ 50. Sem trava, o saldo pode terminar em R$ 150 ou em R$ 300. Por que dois resultados errados diferentes, e qual seria o certo?
 @@ENTREGA p2 | Pergunta 2. Cole a saída do Passo 2 da Parte 2. O que o segundo cliente fez entre “pedi a trava” e “consegui a trava”? Por que, desta vez, ele leu 0?
@@ -297,12 +296,12 @@ Replica C: foto nova
 @@CMD Passo 8
 time ./replicas.sh forte "foto 3"   # grava em todas antes de responder
 @@END
-@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
+@@OUT exemplo Exemplo medido no LIAC · os seus números mudam
 Gravei em A, B e C. So agora respondo ao cliente.
 
-real    0m3.016s
-user    0m0.007s
-sys     0m0.007s
+real    0m3,006s
+user    0m0,002s
+sys     0m0,004s
 @@END
 <p class="explica"><b>Observe:</b> o cliente esperou cerca de 3 s pela resposta, mas, quando ela chegou, as três cópias já eram iguais.</p></li>
 <li>
@@ -310,18 +309,19 @@ sys     0m0.007s
 ./replicas.sh forte "foto 4" & sleep 0.5; time ./replicas.sh ler   # lê DURANTE uma escrita forte
 @@END
 <p class="explica"><b>O que faz:</b> começa uma escrita forte em segundo plano e, meio segundo depois, tenta ler, medindo quanto a leitura demora.</p>
-@@OUT exemplo Exemplo medido no computador do professor · os seus números mudam
-[1] 4527
+@@OUT exemplo Exemplo medido no LIAC · os seus números mudam
+[1] 502722
 Gravei em A, B e C. So agora respondo ao cliente.
 Replica A: foto 4
 Replica B: foto 4
 Replica C: foto 4
+[1]+  Concluído              ./replicas.sh forte "foto 4"
 
-real    0m2.524s
-user    0m0.014s
-sys     0m0.019s
+real    0m2,521s
+user    0m0,005s
+sys     0m0,011s
 @@END
-<p class="explica"><b>Observe:</b> a leitura <b>esperou</b> a escrita terminar e não viu nenhuma mistura de “foto 3” com “foto 4”. Depois, aperte <kbd>Enter</kbd> se aparecer uma linha <code>Done</code>.</p></li>
+<p class="explica"><b>Observe:</b> a leitura <b>esperou</b> a escrita terminar e não viu nenhuma mistura de “foto 3” com “foto 4”. A linha <code>Concluído</code> só avisa que a escrita em segundo plano terminou.</p></li>
 </ol>
 @@ENTREGA p4 | Pergunta 4. Cole as saídas dos Passos 6 e 7 da Parte 3. Em algum momento o sistema mostrou “verdades diferentes” (@@SLIDE un06t01 10)? Por quanto tempo, no máximo, uma leitura em C poderia ver a foto antiga?
 @@ENTREGA p5 | Pergunta 5. Anote o tempo real dos Passos 8 e 9 da Parte 3. Por que a leitura do Passo 9 demorou, e o que ela viu? Relacione com a linha “O Trade-off” da tabela do @@SLIDE un06t01 11.
