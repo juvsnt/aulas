@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Disciplinas do Prof. Me. Juvenal Silva Neto, da Universidade do Estado de Mato Grosso.">
+  <meta name="description" content="Disciplinas e Laboratório LIAC do Prof. Me. Juvenal Silva Neto, da Universidade do Estado de Mato Grosso.">
   <meta name="theme-color" content="#1e4d38">
   <title>Prof. Juvenal Silva Neto · Disciplinas</title>
   <style>
@@ -21,6 +21,8 @@
     .discipline-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:22px;height:100%;min-height:234px;padding:32px 22px;background:var(--surface);border:1px solid var(--border);border-radius:16px;text-align:center;text-decoration:none;color:var(--text)}
     .discipline-icon{display:grid;place-items:center;width:80px;height:80px;border-radius:24px;background:var(--soft);color:var(--icon);flex-shrink:0}.discipline-icon svg{width:48px;height:48px}.discipline-name{display:block;max-width:260px;font-size:1.05rem;font-weight:650;line-height:1.4;text-wrap:balance}
     a.discipline-card:hover{border-color:var(--icon);box-shadow:0 4px 20px #173f3210}
+    .section-block{margin-top:56px}.section-intro{margin:-12px 0 24px;color:var(--muted);font-size:.95rem}.discipline-hint{display:block;margin-top:-14px;color:var(--muted);font-size:.85rem}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
     .site-footer{text-align:center;border-top:1px solid var(--border);padding:24px;color:var(--muted);font-size:.8rem}.site-footer p{margin:0}.site-footer a{color:inherit;text-underline-offset:3px}
     @media(prefers-color-scheme:dark){:root{--bg:#14231b;--surface:#1b2e23;--text:#f2f1ea;--muted:#b2bcb5;--border:#36513f;--brand:#16301f;--icon:#83d4a8;--soft:#244834;--gold:#f0c04a}}
     @media(max-width:760px){.disciplines{grid-template-columns:repeat(2,minmax(0,1fr))}.discipline-card{min-height:220px;padding:28px 18px}}
@@ -91,6 +93,35 @@
               <span class="discipline-name">Introdução à Computação</span>
             </div>
           </li>
+      </ul>
+    </section>
+    <section id="liac" class="section-block" aria-labelledby="titulo-liac">
+      <h2 id="titulo-liac">Laboratório LIAC</h2>
+      <p class="section-intro">Laboratório de Inovação e Aplicações Computacionais: projeto e serviços em uso nas disciplinas.</p>
+      <ul class="disciplines">
+          <li id="liac-projeto">
+            <a class="discipline-card" href="https://juvsnt.github.io/projeto-liac/" target="_blank" rel="noopener noreferrer">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M12 3h8m-6 0v8L5 26a2 2 0 0 0 1.7 3h18.6a2 2 0 0 0 1.7-3L18 11V3"/><path d="M9 20h14"/></svg></span>
+              <span class="discipline-name">Projeto LIAC</span>
+              <span class="discipline-hint">Apresentação do laboratório<span class="sr-only"> (abre em nova aba)</span></span>
+            </a>
+          </li>
+          <li id="liac-terminal">
+            <a class="discipline-card" href="https://terminal.liac-lab.dev/" target="_blank" rel="noopener noreferrer">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="5" width="26" height="22" rx="3"/><path d="m9 13 4 3-4 3m7 0h7"/></svg></span>
+              <span class="discipline-name">Terminal Linux do LIAC</span>
+              <span class="discipline-hint">terminal.liac-lab.dev<span class="sr-only"> (abre em nova aba)</span></span>
+            </a>
+          </li>
+          <li id="liac-cluster">
+            <a class="discipline-card" href="https://cluster.liac-lab.dev/" target="_blank" rel="noopener noreferrer">
+              <span class="discipline-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="5" y="3" width="22" height="7" rx="1.5"/><rect x="5" y="12.5" width="22" height="7" rx="1.5"/><rect x="5" y="22" width="22" height="7" rx="1.5"/><path d="M9 6.5h.01M9 16h.01M9 25.5h.01M15 6.5h8M15 16h8M15 25.5h8"/></svg></span>
+              <span class="discipline-name">Cluster do LIAC</span>
+              <span class="discipline-hint">cluster.liac-lab.dev<span class="sr-only"> (abre em nova aba)</span></span>
+            </a>
+          </li>
+          <!-- Para incluir uma nova página do LIAC, copie um dos itens <li> acima,
+               troque o id, o href, o ícone, o nome e a linha de descrição. -->
       </ul>
     </section>
   </main>
