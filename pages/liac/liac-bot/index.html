@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="LIAC bot: assistente de voz do LIAC — UNEMAT, Campus de Alto Araguaia. Como funciona, tecnologias usadas e o que ele é capaz de fazer.">
+  <meta name="theme-color" content="#1e4d38">
+  <title>LIAC bot · Assistente de voz do LIAC</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f7f7f2;--surface:#fff;--text:#1c1c1a;--muted:#5a5a54;--border:#e2e1d8;--brand:#1e4d38;--icon:#286345;--soft:#e8f2ec;--gold:#d99e17;--warn:#8a5a00;--warn-bg:#fbf0d9;font:16px/1.6 system-ui,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}
+    a{color:var(--icon);text-underline-offset:3px}a:focus-visible{outline:3px solid var(--gold);outline-offset:4px}
+    .skip{position:absolute;top:-100px;left:16px;padding:12px;background:var(--surface);color:var(--text);z-index:20}.skip:focus{top:8px}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+    .site-header{background:var(--brand);border-bottom:3px solid var(--gold);padding:14px 24px;color:#fdfdfa}
+    .site-header .inner{max-width:1040px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+    .brand{font-weight:700;font-size:.95rem;color:#fdfdfa;text-decoration:none}.back{color:#fdfdfa;font-size:.9rem}
+    main{max-width:1088px;margin:auto;padding:0 24px 64px}
+    .hero{margin:0 -24px 40px;padding:40px 24px 36px;background:var(--brand);color:#fdfdfa;border-radius:0 0 24px 24px}
+    .hero .inner{max-width:1040px;margin:auto}.eyebrow{font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:0}
+    .hero h1{font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.2;margin:8px 0 12px}.hero p{max-width:760px;margin:0 0 10px;opacity:.92}
+    .jump{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;padding:0;list-style:none}.jump a{display:inline-flex;align-items:center;min-height:40px;padding:6px 14px;border:1px solid #ffffff60;border-radius:999px;color:#fdfdfa;text-decoration:none;font-size:.85rem}.jump a:hover{border-color:var(--gold);background:#ffffff10}
+    h2{font-size:1.4rem;line-height:1.3;margin:0 0 6px;font-weight:650}h3{font-size:1.08rem;margin:28px 0 10px;font-weight:650}
+    section.block{margin-top:56px;scroll-margin-top:16px}.lead{color:var(--muted);margin:0 0 20px;max-width:820px}
+    .talk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+    .talk li{padding:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+    .talk .say{display:block;font-weight:650;margin-bottom:6px}.talk .say q{color:var(--icon)}.talk p{margin:0;color:var(--muted);font-size:.92rem}
+    .flow{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:passo}
+    .flow li{position:relative;display:grid;grid-template-columns:48px 1fr;gap:16px;padding:0 0 22px;counter-increment:passo}
+    .flow li::before{content:counter(passo);display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--icon);font-weight:700;border:2px solid var(--icon);z-index:1}
+    .flow li:not(:last-child)::after{content:"";position:absolute;left:19px;top:42px;bottom:0;width:2px;background:var(--border)}
+    .flow .box{padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    .flow h4{margin:0 0 4px;font-size:1rem}.flow p{margin:0;color:var(--muted);font-size:.93rem}
+    .where{display:inline-block;margin-left:6px;padding:1px 9px;border-radius:999px;font-size:.72rem;font-weight:650;vertical-align:middle;background:var(--soft);color:var(--icon)}.where.cloud{background:var(--warn-bg);color:var(--warn)}
+    .skills{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+    .skills li{padding:18px 20px;background:var(--surface);border:1px solid var(--border);border-radius:14px}
+    .skills h4{margin:0 0 6px;font-size:1rem}.skills p{margin:0;color:var(--muted);font-size:.92rem}.skills .ex{margin-top:8px;font-size:.86rem;color:var(--icon);font-style:italic}
+    .table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+    table{width:100%;border-collapse:collapse;font-size:.92rem}caption{text-align:left;padding:12px 16px 0;font-weight:650;color:var(--muted);font-size:.85rem}
+    th,td{padding:10px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}tr:last-child>*{border-bottom:0}
+    thead th{background:var(--soft);font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--icon);white-space:nowrap}
+    tbody th{font-weight:650;color:var(--text)}td.num,th.num{text-align:right;white-space:nowrap}
+    ul.facts{margin:0;padding-left:20px}ul.facts li{margin:6px 0}
+    .foot-note{font-size:.82rem;color:var(--muted);margin:8px 2px 0}
+    .note{margin-top:16px;padding:14px 18px;border-radius:10px;background:var(--warn-bg);color:#4a3600;font-size:.9rem}.note strong{color:var(--warn)}
+    .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.two>div{padding:20px 22px;background:var(--surface);border:1px solid var(--border);border-radius:14px}.two h3{margin-top:0}
+    .site-footer{text-align:center;border-top:1px solid var(--border);padding:24px;color:var(--muted);font-size:.8rem}.site-footer p{margin:2px 0}.site-footer a{color:inherit}
+    @media(prefers-color-scheme:dark){:root{--bg:#14231b;--surface:#1b2e23;--text:#f2f1ea;--muted:#b2bcb5;--border:#36513f;--brand:#16301f;--icon:#83d4a8;--soft:#244834;--gold:#f0c04a;--warn:#f0c04a;--warn-bg:#3a3118}.note{color:#f2e6c4}}
+    @media(max-width:860px){.talk,.skills{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
+    @media(max-width:560px){main{padding:0 16px 40px}.site-header{padding:12px 16px}.hero{margin:0 -16px 32px;padding:30px 16px}.talk,.skills{grid-template-columns:1fr}th,td{padding:9px 12px}.flow li{grid-template-columns:40px 1fr;gap:12px}.flow li::before{width:34px;height:34px}.flow li:not(:last-child)::after{left:16px;top:36px}}
+    @media print{.site-header,.jump,.skip{display:none}.hero{background:white;color:black;padding:0 0 16px}.eyebrow{color:#1e4d38}.talk li,.skills li,.flow li,.table-wrap,.two>div{break-inside:avoid}section.block{margin-top:28px}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="../../">Prof. Juvenal Silva Neto</a>
+      <a class="back" href="../../#liac">← Voltar ao Laboratório LIAC</a>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero" aria-labelledby="titulo-pagina">
+      <div class="inner">
+        <p class="eyebrow">Laboratório LIAC · UNEMAT · Campus de Alto Araguaia</p>
+        <h1 id="titulo-pagina">LIAC bot, o assistente de voz do laboratório</h1>
+        <p>Basta dizer "LIAC bot" e fazer uma pergunta. Ele ouve pelo microfone do laboratório, entende o pedido, consulta o que for preciso e responde em voz alta pela caixa de som, mostrando na TV uma janela com ondas que acompanham a conversa.</p>
+        <p>Funciona no <a href="../infraestrutura/#servidor" style="color:#fdfdfa">servidor Dell XPS 8900</a> do LIAC, o mesmo do Terminal Linux. Informações atualizadas em 27/11/2026.</p>
+        <ul class="jump" aria-label="Ir para">
+          <li><a href="#conversar">Como conversar</a></li>
+          <li><a href="#funciona">Como funciona</a></li>
+          <li><a href="#capaz">O que ele faz</a></li>
+          <li><a href="#tecnologias">Tecnologias</a></li>
+          <li><a href="#seguranca">Segurança e privacidade</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ===================== CONVERSAR ===================== -->
+    <section id="conversar" aria-labelledby="titulo-conversar">
+      <h2 id="titulo-conversar">Como conversar com ele</h2>
+      <p class="lead">O bot fica ouvindo o tempo todo, mas só responde quando ouve o próprio nome. Assim, as conversas normais do laboratório não o acionam.</p>
+      <ul class="talk">
+        <li><span class="say"><q>LIAC bot, vai chover amanhã?</q></span><p>Nome e pergunta na mesma frase: ele toca um bipe curto e responde.</p></li>
+        <li><span class="say"><q>LIAC bot.</q> … <q>Pois não?</q></span><p>Só o nome: ele responde "Pois não?" e espera a pergunta por 10 segundos, sem precisar repetir o nome.</p></li>
+        <li><span class="say">Quando ele pergunta algo</span><p>Se a resposta termina com uma pergunta (por exemplo, "qual janela devo fechar?"), há 6 segundos para responder sem dizer o nome.</p></li>
+      </ul>
+      <p class="foot-note">O bot lembra o assunto da conversa enquanto ela continua. Depois de 10 minutos sem uso, começa uma conversa nova. Se a resposta demorar mais de 5 segundos, ele avisa: "Só um instante".</p>
+    </section>
+
+    <!-- ===================== COMO FUNCIONA ===================== -->
+    <section id="funciona" class="block" aria-labelledby="titulo-funciona">
+      <h2 id="titulo-funciona">Como funciona, passo a passo</h2>
+      <p class="lead">O caminho de uma pergunta, do microfone até a caixa de som. As etapas marcadas como <span class="where">local</span> rodam no próprio servidor do laboratório; a marcada como <span class="where cloud">nuvem</span> depende da internet.</p>
+      <ol class="flow">
+        <li><div class="box"><h4>Ouvir <span class="where">local</span></h4><p>O microfone é lido continuamente, em blocos de 0,1 s, a 16 mil amostras por segundo. Um filtro elimina o zumbido grave (abaixo de 150 Hz), como o do ar-condicionado.</p></div></li>
+        <li><div class="box"><h4>Perceber que alguém está falando <span class="where">local</span></h4><p>O bot mede o ruído de fundo da sala o tempo todo e considera fala quando o som na faixa da voz humana (250 a 3 500 Hz) fica claramente acima desse ruído. O trecho termina depois de 0,6 s de silêncio, com no máximo 15 s.</p></div></li>
+        <li><div class="box"><h4>Limpar o áudio e transcrever <span class="where">local</span></h4><p>Uma técnica chamada subtração espectral retira o ruído constante (ventoinhas, ar-condicionado). Depois, o modelo de reconhecimento de fala Whisper transforma o áudio em texto, no próprio processador do servidor, sem enviar a gravação para a internet.</p></div></li>
+        <li><div class="box"><h4>Procurar o nome "LIAC bot" <span class="where">local</span></h4><p>O texto é comparado com as formas como o Whisper costuma escrever o nome ("liac bot", "liaque bote" e outras). Transcrições com baixa confiança são descartadas, o que evita que um ruído seja confundido com o nome.</p></div></li>
+        <li><div class="box"><h4>Pensar na resposta <span class="where cloud">nuvem</span></h4><p>Só o texto da pergunta, com a data e a hora, vai para o Claude, o modelo de inteligência artificial da Anthropic. Pedidos simples (hora, volume, previsão do tempo) vão para o modelo mais leve, o Haiku; perguntas sobre o curso, a câmera ou explicações vão para o Sonnet. O Claude só pode usar as ferramentas liberadas (veja <a href="#seguranca">Segurança</a>).</p></div></li>
+        <li><div class="box"><h4>Falar <span class="where">local</span></h4><p>A resposta, de no máximo duas frases curtas, é convertida em voz pelo Piper, um sintetizador que roda no servidor e começa a falar em cerca de 0,3 s. Enquanto ele fala, a janela na TV mostra as ondas do som e a legenda.</p></div></li>
+        <li><div class="box"><h4>Voltar a ouvir <span class="where">local</span></h4><p>Tudo o que o microfone captou enquanto o bot pensava e falava é descartado. Assim, ele não responde à própria voz.</p></div></li>
+      </ol>
+    </section>
+
+    <!-- ===================== CAPACIDADES ===================== -->
+    <section id="capaz" class="block" aria-labelledby="titulo-capaz">
+      <h2 id="titulo-capaz">O que ele é capaz de fazer</h2>
+      <p class="lead">As respostas são curtas e faladas, pensadas para quem está no laboratório. Se precisar de mais detalhes, basta pedir.</p>
+      <ul class="skills">
+        <li><h4>Responder sobre o curso</h4><p>Consulta uma cópia do site oficial do curso de Ciência da Computação da UNEMAT (horários, disciplinas, professores, estágio, TCC, eventos, documentos e regulamentos), atualizada automaticamente a cada 15 minutos. Se não encontrar a informação, diz que não encontrou.</p><p class="ex">"LIAC bot, quem orienta o estágio?"</p></li>
+        <li><h4>Contar as novidades do mural</h4><p>Lê os avisos do mural virtual do curso, sabe quais são novos e pode conferir o mural na hora.</p><p class="ex">"LIAC bot, quais as novidades?"</p></li>
+        <li><h4>Dar a previsão do tempo</h4><p>Agora, hoje, amanhã e depois de amanhã, para Alto Araguaia ou qualquer cidade, com dados do serviço aberto Open-Meteo.</p><p class="ex">"LIAC bot, vai chover em Cuiabá amanhã?"</p></li>
+        <li><h4>Olhar o laboratório pela câmera</h4><p>Tira uma foto e responde o que foi perguntado: se há pessoas, quantas, se algo está ligado. Não identifica ninguém pelo nome nem comenta aparência.</p><p class="ex">"LIAC bot, tem alguém no laboratório?"</p></li>
+        <li><h4>Controlar a TV</h4><p>Abre e fecha o navegador, o btop, o htop, o terminal, o gerenciador de arquivos, a calculadora, o editor de texto e o LibreOffice, e lista as janelas abertas.</p><p class="ex">"LIAC bot, abre o btop na TV."</p></li>
+        <li><h4>Controlar o som</h4><p>Ajusta o volume, deixa mudo, troca a saída de som (por exemplo, para a TV pelo HDMI) e toca músicas do YouTube, só em áudio.</p><p class="ex">"LIAC bot, aumenta o volume."</p></li>
+        <li><h4>Informar o estado do servidor</h4><p>Carga do processador, memória, disco, temperatura, tempo ligado, usuários conectados e os programas que mais consomem processamento.</p><p class="ex">"LIAC bot, como está o servidor?"</p></li>
+        <li><h4>Pesquisar na internet</h4><p>Busca notícias, cotações e fatos atuais e responde com o resultado, sem ler links em voz alta.</p><p class="ex">"LIAC bot, qual a cotação do dólar hoje?"</p></li>
+        <li><h4>Explicar conceitos</h4><p>Responde dúvidas gerais de computação de forma breve, como numa conversa.</p><p class="ex">"LIAC bot, o que é um sistema operacional?"</p></li>
+      </ul>
+    </section>
+
+    <!-- ===================== TECNOLOGIAS ===================== -->
+    <section id="tecnologias" class="block" aria-labelledby="titulo-tecnologias">
+      <h2 id="titulo-tecnologias">Tecnologias usadas</h2>
+      <p class="lead">O programa principal foi escrito em Python e roda continuamente no servidor, como serviço do usuário do sistema (systemd).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Parte</th><th scope="col">Tecnologia</th><th scope="col">Função</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Captura de som</th><td>PulseAudio (<code>parec</code>)</td><td>Lê o microfone em mono, 16 kHz</td></tr>
+            <tr><th scope="row">Processamento de sinal</th><td>NumPy e SciPy</td><td>Filtros passa-altas e passa-faixa, medição do ruído, subtração espectral e espectro para o painel</td></tr>
+            <tr><th scope="row">Reconhecimento de fala</th><td>faster-whisper, modelo <em>small</em>, com números inteiros de 8 bits (int8) no processador</td><td>Transforma a fala em texto, em português, sem placa de vídeo</td></tr>
+            <tr><th scope="row">Raciocínio</th><td>Claude (Anthropic), modelos Haiku e Sonnet, executado pelo Claude Code em modo não interativo</td><td>Entende o pedido, usa as ferramentas liberadas e escreve a resposta</td></tr>
+            <tr><th scope="row">Voz</th><td>Piper, voz pt-BR "faber" (média qualidade)</td><td>Converte a resposta em fala no próprio servidor</td></tr>
+            <tr><th scope="row">Painel na TV</th><td>Janela em Python que recebe eventos do bot (Server-Sent Events)</td><td>Mostra ondas de som e o estado: ouvindo, aguardando, pensando, falando ou limite atingido</td></tr>
+            <tr><th scope="row">Base de conhecimento</th><td>Script agendado (cron), a cada 15 minutos</td><td>Copia o site do curso, converte páginas e documentos (PDF, DOCX, ODT) em texto e resume o mural</td></tr>
+            <tr><th scope="row">Ações</th><td>Pequenos comandos próprios (<code>liac-abrir</code>, <code>liac-volume</code>, <code>liac-tempo</code>, <code>liac-camera</code>, <code>liac-status</code> e outros)</td><td>Únicas ações que o bot pode executar no computador</td></tr>
+            <tr><th scope="row">Computador</th><td><a href="../infraestrutura/#servidor">Dell XPS 8900</a>, Intel Core i7-6700, Linux Mint 22.3</td><td>Executa tudo, exceto o raciocínio do Claude</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Como a voz foi escolhida</h3>
+      <p>Em 26/11/2026, dez vozes em português foram comparadas: sete locais (Piper e Kokoro) e três online, da Microsoft. Para medir a clareza, o próprio Whisper transcreveu as frases faladas por cada voz, e foi contada a taxa de palavras erradas.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Voz</th><th scope="col">Onde roda</th><th scope="col" class="num">Palavras erradas</th><th scope="col">Tempo até começar a falar</th></tr></thead>
+          <tbody>
+            <tr><td>Microsoft (Antonio, Francisca, Thalita)</td><td>online</td><td class="num">5,2%</td><td>1 a 5 s (medido com a Thalita)</td></tr>
+            <tr><td>Kokoro Dora</td><td>local</td><td class="num">6,1%</td><td>4,3 s</td></tr>
+            <tr><td><strong>Piper faber (escolhida)</strong></td><td>local</td><td class="num"><strong>6,3%</strong></td><td><strong>cerca de 0,3 s</strong></td></tr>
+            <tr><td>Piper jeff</td><td>local</td><td class="num">11,3%</td><td>cerca de 0,3 s</td></tr>
+            <tr><td>Piper cadu</td><td>local</td><td class="num">12,9%</td><td>cerca de 0,3 s</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="foot-note">A voz faber ficou quase tão clara quanto as da Microsoft e começa a falar muito mais rápido, sem depender da internet. A voz online continua disponível como alternativa, mas está desligada.</p>
+    </section>
+
+    <!-- ===================== SEGURANÇA ===================== -->
+    <section id="seguranca" class="block" aria-labelledby="titulo-seguranca">
+      <h2 id="titulo-seguranca">Segurança e privacidade</h2>
+      <p class="lead">Um assistente que ouve a sala e controla um computador precisa de limites claros. Estes são os do LIAC bot.</p>
+      <div class="two">
+        <div>
+          <h3>O que ele pode e não pode fazer</h3>
+          <ul class="facts">
+            <li>Só executa uma <strong>lista fechada de comandos</strong>. Qualquer outro pedido é recusado, e ele avisa que a ação não está liberada.</li>
+            <li>Só lê a <strong>foto da câmera</strong> e a <strong>pasta de conhecimento</strong> (site e mural do curso). Os demais arquivos do servidor ficam bloqueados.</li>
+            <li>É orientado a ignorar instruções escritas em páginas da internet, porque elas não vêm de quem fez a pergunta.</li>
+            <li>Atende no máximo <strong>20 perguntas por hora</strong>. Ao atingir o limite, avisa quanto tempo falta.</li>
+          </ul>
+        </div>
+        <div>
+          <h3>O que acontece com a voz e as imagens</h3>
+          <ul class="facts">
+            <li>O áudio do microfone é transcrito <strong>no próprio servidor</strong> e não é gravado. Só fica em disco, temporariamente, o áudio da resposta falada.</li>
+            <li>Para o Claude vai <strong>somente o texto</strong> da pergunta. A foto da câmera só é enviada quando alguém pergunta sobre o laboratório.</li>
+            <li>Ao descrever a foto, o bot <strong>não identifica pessoas</strong> nem comenta aparência, idade ou outras características pessoais.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="note"><strong>Limitações conhecidas:</strong> a transcrição automática pode errar, principalmente nomes de programas (por isso o bot pede para repetir quando a pergunta não faz sentido). Sem internet, ele ainda ouve e fala, mas não consegue pensar na resposta.</div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>LIAC — Laboratório de Inovação e Aplicações Computacionais · Bacharelado em Ciência da Computação</p>
+    <p>Universidade do Estado de Mato Grosso (UNEMAT) · Campus de Alto Araguaia</p>
+    <p>Prof. Me. Juvenal Silva Neto · <a href="mailto:juvenalneto@unemat.br">juvenalneto@unemat.br</a></p>
+  </footer>
+</body>
+</html>
