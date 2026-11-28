@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Experimento do LIAC: cluster de 9 PCs reaproveitados contra um único computador com Intel Core i7.">
+<title>Cluster LIAC contra o i7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: coluna de leitura (~68ch) com figuras mais largas; cada teste é um capítulo com
+   explicação → figura → números → código. Laboratório: superfícies de bancada, tinta azul-ardósia. */
+:root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --fg: #151a24;
+  --muted: #586174;
+  --line: #dce1eb;
+  --accent: #5338c9;
+  --accent-soft: #ece8fc;
+  --code-bg: #eef1f7;
+  --cmd: #1c5fc0;
+  --hot: #c2410c;
+  --s1: #257de0;  /* cluster / processo 1 */
+  --s2: #f47230;  /* i7 com 4 processos / processo 2 */
+  --s3: #00b894;  /* i7 com 8 processos / processo 3 */
+  --s4: #f2a600;  /* processo 4 (lento) */
+  --wait: #b9c0cd;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10131a; --surface: #171b24; --fg: #e7eaf1; --muted: #9ba3b4; --line: #2a3040;
+    --accent: #a896f6; --accent-soft: #241f44; --code-bg: #1c212c; --cmd: #7db4ff; --hot: #f07a45;
+    --s1: #338ced; --s2: #e76624; --s3: #00a888; --s4: #d28e05; --wait: #4a5163;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10131a; --surface: #171b24; --fg: #e7eaf1; --muted: #9ba3b4; --line: #2a3040;
+  --accent: #a896f6; --accent-soft: #241f44; --code-bg: #1c212c; --cmd: #7db4ff; --hot: #f07a45;
+  --s1: #338ced; --s2: #e76624; --s3: #00a888; --s4: #d28e05; --wait: #4a5163;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.62;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.page { max-width: 980px; margin: 0 auto; display: grid; gap: 0; }
+.col { max-width: 700px; width: 100%; margin: 0 auto; min-width: 0; }
+.wide { max-width: 980px; width: 100%; margin: 0 auto; min-width: 0; }
+
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.12; margin: 0; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 800; font-stretch: 112%; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.15rem); font-weight: 750; font-stretch: 108%; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; font-weight: 700; font-stretch: 104%; }
+p { margin: 0; }
+a { color: var(--accent); }
+.eyebrow { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.flow { display: grid; gap: 1rem; }
+.muted { color: var(--muted); }
+strong { font-weight: 600; }
+
+/* Cabeçalho */
+header.hero { padding-block: 56px 28px; display: grid; gap: 18px; }
+.hero .lead { font-size: 1.22rem; color: var(--muted); max-width: 40ch; }
+.ident { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+.ident b { color: var(--fg); font-weight: 600; }
+
+/* Seções */
+section { padding-block: 40px 8px; display: grid; gap: 22px; }
+section > .col > h2 { margin-bottom: 4px; }
+.chap { font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* Resposta curta */
+.answer { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 14px; }
+.answer table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.answer td, .answer th { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.answer th { font-size: 0.78rem; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 500; }
+.answer tr:last-child td { border-bottom: 0; }
+.chip { display: inline-block; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 500; padding: 1px 8px; border-radius: 999px; white-space: nowrap; border: 1.5px solid; }
+.chip.cl { border-color: var(--s1); }
+.chip.i7 { border-color: var(--s2); }
+.chip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Figuras */
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+figcaption { font-size: 0.9rem; color: var(--muted); max-width: 72ch; }
+figcaption b { color: var(--fg); }
+.scroll { overflow-x: auto; }
+.diagram { display: block; width: 100%; min-width: 760px; height: auto; color: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 14px; height: 10px; border-radius: 3px; display: inline-block; }
+.legend i.dash { height: 0; border-top: 2.5px dashed var(--s1); border-radius: 0; }
+.legend i.line { height: 0; border-top: 2.5px solid; border-radius: 0; }
+.chart { width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--font-body); }
+details { font-size: 0.9rem; }
+summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+summary:focus-visible, button:focus-visible, input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.tbl { overflow-x: auto; margin-top: 8px; }
+.tbl table { border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.tbl th, .tbl td { padding: 5px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl th { font-weight: 600; }
+
+/* Caixas didáticas */
+.note { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 14px 16px; border-radius: 0 8px 8px 0; display: grid; gap: 6px; }
+.note h3 { font-size: 1rem; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.two > * { min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+
+/* Glossário */
+dl.gloss { display: grid; grid-template-columns: minmax(130px, 200px) 1fr; gap: 10px 20px; margin: 0; }
+dl.gloss dt { font-weight: 600; }
+dl.gloss dd { margin: 0; color: var(--muted); }
+@media (max-width: 560px) { dl.gloss { grid-template-columns: 1fr; gap: 2px; } dl.gloss dd { margin-bottom: 10px; } }
+
+/* Código */
+pre { margin: 0; background: var(--code-bg); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.84rem; line-height: 1.55; }
+code { font-family: var(--font-mono); font-size: 0.9em; }
+:not(pre) > code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+pre .c { color: var(--muted); }
+pre .p { color: var(--muted); user-select: none; }
+pre .k { color: var(--cmd); font-weight: 500; }
+.codehead { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); margin-bottom: -6px; }
+
+/* Demonstração */
+.demo { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 720px) { .demo { grid-template-columns: 1fr; } }
+.pic { display: grid; grid-template-columns: 1fr 26px; gap: 6px; max-width: 340px; }
+.pic canvas { width: 100%; aspect-ratio: 1; border-radius: 6px; display: block; background: #e9edf5; }
+.pic svg { width: 26px; height: 100%; display: block; border-radius: 4px; }
+.piclabels { display: grid; grid-template-columns: 1fr 26px; gap: 6px; font-size: 0.75rem; color: var(--muted); max-width: 340px; }
+.piclabels span:last-child { writing-mode: horizontal-tb; text-align: center; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { border: 1.5px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 0.9rem; cursor: pointer; background: var(--surface); }
+.seg input:checked + label { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.demo-out { display: grid; gap: 12px; }
+.bigline { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; font-stretch: 106%; }
+
+/* Painéis lado a lado */
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.panels > div { min-width: 0; display: grid; gap: 6px; align-content: start; }
+.panel-title { font-weight: 600; font-size: 0.95rem; }
+
+/* Comunicação */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.tile .q { font-weight: 600; }
+.tile .row { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.tile .row b { font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; }
+.tile .ratio { font-family: var(--font-display); font-size: 2rem; font-weight: 800; font-stretch: 110%; color: var(--accent); line-height: 1; }
+.tile .who { display: inline-flex; align-items: center; gap: 7px; }
+.tile .who i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+/* Tooltip */
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--fg); color: var(--bg); font-size: 0.82rem; line-height: 1.4; padding: 7px 10px; border-radius: 6px; max-width: 260px; box-shadow: 0 4px 14px rgba(0,0,0,.18); font-variant-numeric: tabular-nums; }
+.hit { cursor: default; }
+
+footer { padding-block: 40px 0; }
+footer .col { border-top: 1px solid var(--line); padding-top: 16px; font-size: 0.88rem; color: var(--muted); display: grid; gap: 6px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .seg label { transition: background-color .15s, border-color .15s; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<nav class="col" style="padding-top:20px;font-size:.92rem"><a href="../../../">← Página do professor</a> · <a href="../../../#liac">Laboratório LIAC</a></nav>
+<header class="hero col">
+  <div class="eyebrow">LIAC · Experimento de 27 de novembro de 2026</div>
+  <h1>Nove PCs antigos ou um i7?</h1>
+  <p class="lead">Colocamos para competir um cluster montado com 9 computadores reaproveitados e um único computador moderno. Quem resolve mais rápido? A resposta é “depende”, e esta página mostra exatamente do quê.</p>
+  <div class="ident">
+    <span><b>Prof. Me. Juvenal Silva Neto</b></span>
+    <span>Sistemas Distribuídos · Arquitetura e Organização de Computadores</span>
+    <span>Bacharelado em Ciência da Computação</span>
+    <span>UNEMAT · Campus de Alto Araguaia</span>
+  </div>
+</header>
+
+<section class="col" aria-labelledby="resp">
+  <div class="answer">
+    <h2 id="resp" style="font-size:1.35rem">A resposta curta</h2>
+    <table>
+      <thead><tr><th>Situação</th><th>Quem venceu</th><th>Por quanto</th></tr></thead>
+      <tbody>
+        <tr><td>Muitas contas independentes, com o trabalho entregue aos poucos a quem termina primeiro</td><td><span class="chip cl"><span class="dot" style="background:var(--s1)"></span>cluster</span></td><td class="num">1,85×</td></tr>
+        <tr><td>As mesmas contas, mas com o trabalho dividido em partes iguais</td><td><span class="chip i7"><span class="dot" style="background:var(--s2)"></span>i7</span></td><td class="num">1,1 a 1,3×</td></tr>
+        <tr><td>Simulação que exige conversa constante, em problema pequeno</td><td><span class="chip i7"><span class="dot" style="background:var(--s2)"></span>i7</span></td><td class="num">até 6,7×</td></tr>
+        <tr><td>A mesma simulação em problema grande, com o trabalho ajustado à força de cada PC</td><td><span class="chip cl"><span class="dot" style="background:var(--s1)"></span>cluster</span></td><td class="num">1,55 a 1,7×</td></tr>
+        <tr><td>Trocar mensagens entre as partes do programa</td><td><span class="chip i7"><span class="dot" style="background:var(--s2)"></span>i7</span></td><td class="num">100 a 1 500×</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:.92rem">Regra geral: o cluster ganha quando cada computador pode trabalhar sozinho e recebe uma quantidade de trabalho do tamanho da sua força. O i7 ganha quando as partes do programa precisam conversar muito.</p>
+  </div>
+</section>
+
+<!-- ================= AS DUAS EQUIPES ================= -->
+<section aria-labelledby="equipes">
+  <div class="col flow">
+    <div class="chap">Os competidores</div>
+    <h2 id="equipes">Duas equipes muito diferentes</h2>
+    <p>Pense numa mudança de casa. De um lado, <strong>22 ajudantes medianos espalhados em 9 casas</strong>, que só conversam por telefone. Do outro, <strong>4 ajudantes muito fortes na mesma sala</strong>, que conversam olhando um para o outro. Quem termina primeiro depende de quanto eles precisam combinar entre si.</p>
+  </div>
+  <figure class="wide">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 900 330" role="img" aria-label="À esquerda, 9 computadores do cluster ligados a um switch de rede; à direita, um único processador i7 com 4 núcleos ligados à mesma memória.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:currentColor"/></marker>
+        </defs>
+        <!-- Cluster -->
+        <text x="20" y="24" style="font-size:15px;font-weight:700;fill:currentColor">Cluster LIAC · 9 computadores, 22 processos</text>
+        <g style="stroke:var(--muted);stroke-width:1.5">
+          <line x1="70" y1="88" x2="270" y2="168"/><line x1="160" y1="88" x2="270" y2="168"/><line x1="250" y1="88" x2="270" y2="168"/><line x1="340" y1="88" x2="270" y2="168"/><line x1="430" y1="88" x2="270" y2="168"/>
+          <line x1="115" y1="250" x2="270" y2="190"/><line x1="205" y1="250" x2="270" y2="190"/><line x1="335" y1="250" x2="270" y2="190"/><line x1="425" y1="250" x2="270" y2="190"/>
+        </g>
+        <g id="nodes" style="font-size:12px"></g>
+        <rect x="195" y="158" width="150" height="42" rx="6" style="fill:var(--surface);stroke:currentColor;stroke-width:1.5"/>
+        <text x="270" y="176" text-anchor="middle" style="font-size:12.5px;font-weight:600;fill:currentColor">switch de rede</text>
+        <text x="270" y="192" text-anchor="middle" style="font-size:11.5px;fill:var(--muted)">cabos de 100 Mb/s</text>
+        <text x="20" y="318" style="font-size:12.5px;fill:var(--muted)">Cada PC tem sua própria memória. Para conversar, a mensagem atravessa o cabo: ~60 µs.</text>
+        <!-- Divisória -->
+        <line x1="505" y1="30" x2="505" y2="300" style="stroke:var(--line);stroke-width:1.5"/>
+        <!-- i7 -->
+        <text x="530" y="24" style="font-size:15px;font-weight:700;fill:currentColor">Terminal LIAC · 1 processador i7</text>
+        <rect x="540" y="50" width="330" height="230" rx="10" style="fill:none;stroke:currentColor;stroke-width:1.5"/>
+        <text x="555" y="72" style="font-size:12px;fill:var(--muted)">Intel i7-6700 · 4 núcleos, 2 threads cada</text>
+        <g id="cores"></g>
+        <rect x="560" y="214" width="290" height="44" rx="6" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/>
+        <text x="705" y="233" text-anchor="middle" style="font-size:12.5px;font-weight:600;fill:currentColor">memória compartilhada (16 GB)</text>
+        <text x="705" y="249" text-anchor="middle" style="font-size:11.5px;fill:var(--muted)">todos leem e escrevem no mesmo lugar</text>
+        <text x="530" y="318" style="font-size:12.5px;fill:var(--muted)">Para conversar, basta escrever na memória: menos de 1 µs.</text>
+      </svg>
+    </div>
+    <figcaption><b>O que muda entre as duas equipes é o caminho da conversa.</b> No cluster, cada mensagem sai de um computador, passa pelo switch e chega a outro. No i7, os núcleos dividem a mesma memória, e a “mensagem” é só um dado que um escreve e o outro lê. Os quadradinhos dentro de cada PC são os processos que ele roda; as duas barrinhas de cada núcleo do i7 são as suas 2 threads.</figcaption>
+  </figure>
+  <div class="col">
+    <div class="two">
+      <div class="card">
+        <h3>clusterLiac</h3>
+        <ul>
+          <li>9 desktops reaproveitados, fabricados entre 2007 e 2017</li>
+          <li>22 processos ao todo (a maioria das máquinas tem 2 núcleos)</li>
+          <li>O mais lento é um Pentium de 1,6 GHz (o <code>liac4</code>)</li>
+          <li>Rede de 100 Mb/s em 6 das 9 máquinas</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Terminal LIAC</h3>
+        <ul>
+          <li>1 desktop Dell XPS 8900 de 2015</li>
+          <li>Processador i7-6700: 4 núcleos, 8 threads, até 4 GHz</li>
+          <li>16 GB de memória</li>
+          <li>Testado com 4 processos e com 8</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PALAVRAS ================= -->
+<section aria-labelledby="palavras">
+  <div class="col flow">
+    <div class="chap">Antes de começar</div>
+    <h2 id="palavras">Palavras que vamos usar</h2>
+    <dl class="gloss">
+      <dt>Núcleo</dt><dd>A parte do processador que faz as contas. Cada núcleo trabalha de forma independente, como um ajudante.</dd>
+      <dt>Thread e hyperthreading</dt><dd>O i7 consegue tocar duas tarefas em cada núcleo, aproveitando os momentos em que o núcleo ficaria parado esperando. Por isso ele aparece como 8.</dd>
+      <dt>Processo</dt><dd>Um programa em execução. Dividimos cada problema em vários processos, um por núcleo, que trabalham ao mesmo tempo.</dd>
+      <dt>Cluster</dt><dd>Vários computadores ligados em rede, trabalhando juntos no mesmo problema.</dd>
+      <dt>MPI</dt><dd>A biblioteca que os programas usam para trocar mensagens entre processos, estejam eles no mesmo computador ou em computadores diferentes.</dd>
+      <dt>Latência</dt><dd>Quanto tempo uma mensagem leva para chegar, mesmo sendo minúscula. É como o tempo de discar e alguém atender.</dd>
+      <dt>Banda</dt><dd>Quantos dados passam por segundo depois que a conversa começou. É a largura do cano.</dd>
+      <dt>Balanceamento de carga</dt><dd>Dividir o trabalho de modo que todos terminem juntos. Se um ajudante recebe demais, os outros ficam parados esperando por ele.</dd>
+      <dt>Memória e barramento</dt><dd>A memória (RAM) guarda os dados; o barramento é a estrada entre ela e o processador. Se vários núcleos usam a mesma estrada ao mesmo tempo, ela congestiona.</dd>
+      <dt>Mediana</dt><dd>Rodamos cada teste 5 vezes e usamos o valor do meio. Assim uma rodada estranha não distorce o resultado.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ================= REGRAS ================= -->
+<section aria-labelledby="justo">
+  <div class="col flow">
+    <div class="chap">O método</div>
+    <h2 id="justo">Como fizemos uma disputa justa</h2>
+    <ol>
+      <li><strong>Mesmo programa nos dois lados.</strong> O código-fonte, a versão do MPI (Open MPI 4.1.4) e as opções de compilação são idênticos.</li>
+      <li><strong>Mesma resposta, conferida.</strong> Cada programa calcula uma soma de verificação. Ela deu exatamente igual no cluster e no i7, então os dois fizeram o mesmo trabalho.</li>
+      <li><strong>Cinco repetições de cada medida</strong>, usando a mediana.</li>
+      <li><strong>Nada mais rodando.</strong> O Terminal LIAC tem um assistente de voz (o LIAC bot) que ocupa um terço de um núcleo. Ele foi desligado durante o teste e religado depois. Com ele ligado, os tempos variavam até 15% de uma repetição para outra; sem ele, menos de 1%.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= TESTE 1 ================= -->
+<section aria-labelledby="t1">
+  <div class="col flow">
+    <div class="chap">Teste 1 · contas independentes</div>
+    <h2 id="t1">Desenhar um fractal</h2>
+    <p>O <strong>conjunto de Mandelbrot</strong> é uma figura famosa da matemática. Para pintar cada pixel, o computador repete uma conta simples até o resultado “escapar” ou até desistir. Alguns pixels escapam na primeira tentativa; os pixels pretos, dentro da figura, exigem milhares de repetições.</p>
+    <p>Cada pixel é independente dos outros, então ninguém precisa conversar durante o cálculo. O que importa é <strong>como dividir as linhas da imagem</strong> entre os processos. Testamos três jeitos.</p>
+  </div>
+
+  <figure class="wide" aria-labelledby="demo-cap">
+    <div class="demo">
+      <div>
+        <div class="pic">
+          <canvas id="mandel" width="300" height="300" aria-label="Conjunto de Mandelbrot calculado pelo seu navegador"></canvas>
+          <svg id="owners" viewBox="0 0 1 300" preserveAspectRatio="none" role="img" aria-label="Qual processo calcula cada linha da imagem"></svg>
+        </div>
+        <div class="piclabels"><span>A imagem (calculada agora, no seu navegador)</span><span>quem</span></div>
+      </div>
+      <div class="demo-out">
+        <div class="seg" role="radiogroup" aria-label="Jeito de dividir o trabalho">
+          <input type="radio" name="modo" id="m-blocos" value="blocos" checked><label for="m-blocos">Faixas iguais</label>
+          <input type="radio" name="modo" id="m-ciclico" value="ciclico"><label for="m-ciclico">Linhas alternadas</label>
+          <input type="radio" name="modo" id="m-dinamico" value="dinamico"><label for="m-dinamico">Sob demanda</label>
+        </div>
+        <p id="demo-explica" style="font-size:.95rem"></p>
+        <div class="legend" id="demo-legend"></div>
+        <div class="chart" id="demo-chart"></div>
+        <div><span class="muted" style="font-size:.85rem">Tempo total (quando o último termina)</span><div class="bigline num" id="demo-total"></div></div>
+      </div>
+    </div>
+    <figcaption id="demo-cap"><b>Simulação:</b> 4 processos dividem a imagem. Os processos 1, 2 e 3 são rápidos; o processo 4 é <b>4 vezes mais lento</b>, como o <code>liac4</code> perto das outras máquinas do cluster. A faixa colorida ao lado da imagem mostra qual processo ficou com cada linha. O custo de cada linha vem das contas que o seu navegador acabou de fazer. O tempo está numa escala em que 10 s seria a divisão perfeita.</figcaption>
+  </figure>
+
+  <figure class="wide">
+    <h3>Resultado real: tempo para desenhar a imagem de 6 000 × 6 000 pixels</h3>
+    <div class="legend">
+      <span><i style="background:var(--s1)"></i>Cluster (22 processos)</span>
+      <span><i style="background:var(--s2)"></i>i7 com 4 processos</span>
+      <span><i style="background:var(--s3)"></i>i7 com 8 processos</span>
+    </div>
+    <div class="chart" id="c-mandel"></div>
+    <figcaption>Barra menor é melhor. <b>O mesmo cluster vai de 50,8 s para 7,9 s só mudando o jeito de dividir o trabalho.</b> Com faixas iguais, quem recebe o meio da imagem (a parte mais pesada) atrasa todo mundo. Com linhas alternadas, o peso fica bem distribuído, mas a máquina lenta recebe tanto quanto as rápidas. Sob demanda, cada um pede mais trabalho quando termina, e as máquinas rápidas acabam fazendo mais.</figcaption>
+    <details><summary>Ver os números</summary>
+      <div class="tbl"><table>
+        <thead><tr><th>Divisão</th><th>Cluster (22)</th><th>i7 (4)</th><th>i7 (8)</th></tr></thead>
+        <tbody>
+          <tr><td>Faixas iguais</td><td>50,75 s</td><td>53,72 s</td><td>37,81 s</td></tr>
+          <tr><td>Linhas alternadas</td><td>16,07 s</td><td>27,41 s</td><td>14,80 s</td></tr>
+          <tr><td>Sob demanda</td><td>7,94 s</td><td>27,44 s</td><td>14,71 s</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted" style="margin-top:6px">Mediana de 5 repetições. Variação entre repetições abaixo de 2% em todos os casos.</p>
+    </details>
+  </figure>
+
+  <div class="col flow">
+    <div class="note">
+      <h3>Por que o hyperthreading quase dobrou a velocidade do i7 aqui?</h3>
+      <p>Com 4 processos o i7 levou 27,4 s; com 8, 14,7 s. Normalmente a segunda thread de cada núcleo rende 20 a 30% a mais. Aqui rendeu 86%. O motivo é que cada repetição da conta depende do resultado da anterior, e o núcleo passa boa parte do tempo esperando esse resultado sair. A segunda thread usa exatamente esse tempo ocioso.</p>
+    </div>
+    <p>Neste teste, o que manda é a quantidade de núcleos trabalhando ao mesmo tempo. Somando os 22 processos, o cluster tem cerca de quatro vezes mais “núcleos × gigahertz” que o i7. Por isso ele vence com folga, mas só quando ninguém fica parado esperando.</p>
+    <div class="codehead">mandelbrot.c · o trabalhador pede o próximo pacote antes de terminar o atual</div>
+<pre><code><span class="c">/* Pede o 1º pacote de linhas ao processo 0 e espera a resposta */</span>
+MPI_Send(&amp;vazio, 0, MPI_INT, 0, TAG_PEDIDO, MPI_COMM_WORLD);
+MPI_Recv(&amp;ini, 1, MPI_INT, 0, TAG_TRABALHO, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+while (ini &gt;= 0) {                       <span class="c">/* -1 significa "acabou" */</span>
+    <span class="c">/* já pede o PRÓXIMO pacote; a resposta chega enquanto calcula */</span>
+    MPI_Send(&amp;vazio, 0, MPI_INT, 0, TAG_PEDIDO, MPI_COMM_WORLD);
+    MPI_Irecv(&amp;prox, 1, MPI_INT, 0, TAG_TRABALHO, MPI_COMM_WORLD, &amp;req);
+    for (int y = ini; y &lt; ini + BLOCO; y++)
+        soma += calcula_linha(y);        <span class="c">/* o trabalho de verdade */</span>
+    MPI_Wait(&amp;req, MPI_STATUS_IGNORE);   <span class="c">/* pega o pacote que já chegou */</span>
+    ini = prox;
+}</code></pre>
+    <p class="muted" style="font-size:.92rem">Um erro real do experimento: na primeira versão, o trabalhador só pedia o próximo pacote depois de terminar o atual e ficava parado esperando a resposta. Isso deixou o modo sob demanda 26% mais lento. Pedir antes, como no código acima, resolveu.</p>
+  </div>
+</section>
+
+<!-- ================= TESTE 2 ================= -->
+<section aria-labelledby="t2">
+  <div class="col flow">
+    <div class="chap">Teste 2 · conversa a cada passo</div>
+    <h2 id="t2">Simular o calor numa placa</h2>
+    <p>Imagine uma chapa de metal com a borda de cima a 100 °C e as outras a 0 °C. Como o calor se espalha? O computador divide a chapa numa grade de N × N pontos. A cada passo, <strong>cada ponto vira a média dos seus 4 vizinhos</strong>. Depois de muitos passos, a temperatura se acomoda. Esse método se chama <strong>Jacobi</strong> e é a base de simulações de clima, fluidos e estruturas.</p>
+    <p>Cada processo cuida de uma faixa da chapa. O problema é a fronteira: para calcular a última linha da sua faixa, o processo precisa da primeira linha da faixa do vizinho. Então, <strong>a cada passo, todos trocam as linhas de borda</strong> pela rede.</p>
+  </div>
+
+  <figure class="wide">
+    <div class="scroll">
+      <svg class="diagram" viewBox="0 0 900 312" role="img" aria-label="A chapa dividida em 4 faixas, uma por processo; as linhas de borda entre faixas são trocadas a cada passo; cada ponto vira a média dos 4 vizinhos.">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:currentColor"/></marker>
+        </defs>
+        <text x="40" y="22" style="font-size:14px;font-weight:700;fill:currentColor">A chapa dividida entre 4 processos</text>
+        <g id="stripes"></g>
+        <line x1="60" y1="44" x2="300" y2="44" style="stroke:var(--hot);stroke-width:5"/>
+        <text x="180" y="38" text-anchor="middle" style="font-size:12px;font-weight:600;fill:var(--hot)">borda de cima: 100 °C</text>
+        <text x="180" y="300" text-anchor="middle" style="font-size:12px;fill:var(--muted)">outras bordas: 0 °C</text>
+        <g style="stroke:currentColor;stroke-width:1.6">
+          <line x1="322" y1="96" x2="322" y2="116" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+          <line x1="322" y1="156" x2="322" y2="176" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+          <line x1="322" y1="216" x2="322" y2="236" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+        </g>
+        <text x="334" y="110" style="font-size:12px;fill:currentColor">troca de bordas</text>
+        <text x="334" y="170" style="font-size:12px;fill:currentColor">a cada passo,</text>
+        <text x="334" y="230" style="font-size:12px;fill:currentColor">pela rede</text>
+        <!-- Estêncil -->
+        <text x="560" y="22" style="font-size:14px;font-weight:700;fill:currentColor">A conta de cada ponto</text>
+        <g id="stencil"></g>
+        <text x="680" y="282" text-anchor="middle" style="font-size:12.5px;fill:currentColor">novo = (cima + baixo + esquerda + direita) ÷ 4</text>
+      </svg>
+    </div>
+    <figcaption><b>O cálculo cresce com a área da faixa; a conversa cresce só com a largura.</b> Com N = 1 000 e 22 processos, cada faixa tem só ~45 linhas para calcular e troca 2 linhas de borda. Com N = 20 000, cada faixa tem ~900 linhas, e continua trocando apenas 2. Quanto maior a chapa, menos a conversa pesa.</figcaption>
+  </figure>
+
+  <figure class="wide">
+    <h3>Quem venceu em cada tamanho de chapa</h3>
+    <div class="chart" id="c-ratio"></div>
+    <figcaption>Cada barra compara o melhor tempo do cluster com o melhor tempo do i7 para a mesma chapa. A quantidade total de contas é a mesma em todos os tamanhos (chapas maiores fazem menos passos). <b>O ponto de virada fica perto de N = 8 000.</b> Abaixo disso, a troca de bordas pela rede domina; acima, o cluster aproveita a memória das 9 máquinas trabalhando juntas.</figcaption>
+  </figure>
+
+  <figure class="wide">
+    <h3>Tempo de cada configuração</h3>
+    <div class="legend">
+      <span><i class="line" style="border-color:var(--s1)"></i>Cluster, trabalho ajustado a cada PC</span>
+      <span><i class="dash"></i>Cluster, partes iguais</span>
+      <span><i class="line" style="border-color:var(--s2)"></i>i7 com 4 processos</span>
+    </div>
+    <div class="chart" id="c-jacobi"></div>
+    <figcaption>Linha mais baixa é melhor. O i7 fica em ~18 s em qualquer chapa a partir de N = 4 000: ele chegou ao limite da sua estrada de memória. Com 8 processos o i7 ficou 1 a 3% mais lento (o hyperthreading não ajuda quando o gargalo é a memória), por isso a linha não aparece. <b>Com partes iguais, o cluster nunca venceu.</b></figcaption>
+    <details><summary>Ver os números</summary>
+      <div class="tbl"><table>
+        <thead><tr><th>N</th><th>Passos</th><th>Cluster, partes iguais</th><th>Cluster, ajustado</th><th>i7 (4)</th><th>i7 (8)</th></tr></thead>
+        <tbody id="t-jacobi"></tbody>
+      </table></div>
+      <p class="muted" style="margin-top:6px">Mediana de 5 repetições, em segundos. Entre parênteses, a parte do tempo que o cluster passou trocando bordas ou esperando.</p>
+    </details>
+  </figure>
+
+  <div class="col flow">
+    <h3>O vilão escondido: a espera</h3>
+    <p>Com partes iguais, o cluster parecia gastar 67% do tempo “se comunicando”, mesmo na chapa grande. Medimos o que cada máquina fazia e descobrimos que quase tudo era <strong>espera</strong>: o <code>liac4</code> levava 7,3 s calculando sua faixa enquanto os outros terminavam em 1,5 a 2 s e ficavam parados, aguardando a borda dele para dar o próximo passo.</p>
+  </div>
+
+  <figure class="wide">
+    <div class="legend">
+      <span><i style="background:var(--s1)"></i>calculando</span>
+      <span><i style="background:var(--wait)"></i>esperando ou trocando bordas</span>
+    </div>
+    <div class="panels">
+      <div><div class="panel-title">Partes iguais · tempo total 8,1 s</div><div class="chart" id="c-wait1"></div></div>
+      <div><div class="panel-title">Trabalho ajustado · tempo total 5,3 s</div><div class="chart" id="c-wait2"></div></div>
+    </div>
+    <figcaption>Chapa de N = 20 000, 20 passos, média dos processos de cada máquina. <b>Ajustar o tamanho da faixa à força de cada PC reduziu o tempo em 1,5×.</b> Quem calcula mais rápido recebe mais linhas: o <code>liac6</code> passou a receber cerca de 1 470 linhas por processo, e o <code>liac4</code>, cerca de 350. O cinza que sobra à direita é, agora, principalmente a rede de 100 Mb/s.</figcaption>
+    <details><summary>Ver os números</summary>
+      <div class="tbl"><table>
+        <thead><tr><th>Máquina</th><th>Linhas (iguais)</th><th>Cálculo</th><th>Espera</th><th>Linhas (ajustado)</th><th>Cálculo</th><th>Espera</th></tr></thead>
+        <tbody id="t-wait"></tbody>
+      </table></div>
+    </details>
+  </figure>
+
+  <div class="col flow">
+    <div class="note">
+      <h3>Uma pegadinha da calibração</h3>
+      <p>Primeiro tentamos calcular os pesos pelo tempo de cada processo com partes iguais. Não funcionou: o <code>liac1</code> recebeu 31% mais linhas e ficou 3 vezes mais lento. Com partes iguais, os 4 processos dele passavam a maior parte do tempo esperando e quase nunca calculavam ao mesmo tempo. Com o trabalho equilibrado, os 4 passaram a disputar a mesma estrada de memória. A solução foi medir de novo, recalcular e repetir. Em 3 rodadas o tempo estabilizou.</p>
+    </div>
+    <div class="codehead">jacobi.c · um passo da simulação</div>
+<pre><code><span class="c">/* 1. troca as linhas de borda com os vizinhos de cima e de baixo */</span>
+MPI_Sendrecv(&amp;u[1*C], C, MPI_DOUBLE, cima, 0,
+             &amp;u[(nl+1)*C], C, MPI_DOUBLE, baixo, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+MPI_Sendrecv(&amp;u[nl*C], C, MPI_DOUBLE, baixo, 1,
+             &amp;u[0], C, MPI_DOUBLE, cima, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+<span class="c">/* 2. cada ponto da faixa vira a média dos 4 vizinhos */</span>
+for (long i = 1; i &lt;= nl; i++)
+    for (long j = 1; j &lt;= N; j++)
+        v[i*C + j] = 0.25 * (u[(i-1)*C + j] + u[(i+1)*C + j]
+                           + u[i*C + j-1]   + u[i*C + j+1]);
+
+<span class="c">/* 3. a grade nova vira a atual, e repete */</span>
+double *tmp = u; u = v; v = tmp;</code></pre>
+  </div>
+</section>
+
+<!-- ================= TESTE 3 ================= -->
+<section aria-labelledby="t3">
+  <div class="col flow">
+    <div class="chap">Teste 3 · o custo de conversar</div>
+    <h2 id="t3">Quanto custa uma mensagem</h2>
+    <p>Este teste não resolve nenhum problema: ele só mede a conversa. Um processo manda uma mensagem, o outro devolve, e cronometramos. É o número que explica os dois testes anteriores.</p>
+  </div>
+  <div class="wide tiles">
+    <div class="tile">
+      <div class="q">Quanto tempo uma mensagem curtinha leva para chegar</div>
+      <div class="row"><span class="who"><i style="background:var(--s1)"></i>cluster, entre PCs</span><b>61,5 µs</b></div>
+      <div class="row"><span class="who"><i style="background:var(--s2)"></i>i7</span><b>0,6 µs</b></div>
+      <div class="ratio">~100×</div>
+      <p class="muted" style="font-size:.88rem">µs = microssegundo, um milionésimo de segundo.</p>
+    </div>
+    <div class="tile">
+      <div class="q">Quantos dados passam por segundo</div>
+      <div class="row"><span class="who"><i style="background:var(--s1)"></i>cluster, entre PCs</span><b>11,8 MB/s</b></div>
+      <div class="row"><span class="who"><i style="background:var(--s2)"></i>i7</span><b>7 247 MB/s</b></div>
+      <div class="ratio">~600×</div>
+      <p class="muted" style="font-size:.88rem">Enviar 1 GB levaria cerca de 85 s pela rede e 0,14 s dentro do i7.</p>
+    </div>
+    <div class="tile">
+      <div class="q">Somar um número vindo de cada processo (<code>MPI_Allreduce</code>)</div>
+      <div class="row"><span class="who"><i style="background:var(--s1)"></i>cluster, 22 processos</span><b>1 052 µs</b></div>
+      <div class="row"><span class="who"><i style="background:var(--s2)"></i>i7, 4 processos</span><b>0,7 µs</b></div>
+      <div class="ratio">~1 500×</div>
+      <p class="muted" style="font-size:.88rem">É a operação que um programa usa para perguntar “já terminamos?”.</p>
+    </div>
+  </div>
+  <div class="col flow">
+    <p>11,8 MB/s é exatamente o limite de um cabo de 100 Mb/s (megabits; 8 bits formam 1 byte). Seis das nove máquinas do cluster estão ligadas nessa velocidade. Com rede gigabit, o cluster melhoraria nas chapas pequenas e médias, e o ponto de virada do Teste 2 cairia para um tamanho menor.</p>
+  </div>
+</section>
+
+<!-- ================= CONCLUSÕES ================= -->
+<section aria-labelledby="conc">
+  <div class="col flow">
+    <div class="chap">O que aprendemos</div>
+    <h2 id="conc">Quando usar cada um</h2>
+  </div>
+  <div class="col two">
+    <div class="card">
+      <h3>O cluster compensa quando…</h3>
+      <ul>
+        <li>o problema se divide em pedaços que não precisam conversar;</li>
+        <li>o problema é grande, e cada pedaço tem muito cálculo para pouca troca de dados;</li>
+        <li>os dados já estão em cada máquina, sem precisar viajar pela rede;</li>
+        <li>o trabalho é dividido conforme a força de cada computador;</li>
+        <li>o problema não cabe na memória de uma máquina só.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>A máquina única compensa quando…</h3>
+      <ul>
+        <li>as partes do programa conversam a todo momento;</li>
+        <li>o problema é pequeno;</li>
+        <li>é preciso juntar os resultados com frequência;</li>
+        <li>não há tempo para ajustar a divisão do trabalho;</li>
+        <li>o consumo de energia importa (veja abaixo).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col flow">
+    <h3>O que ainda não sabemos</h3>
+    <ul>
+      <li><strong>Energia.</strong> Nove desktops antigos consomem várias vezes mais eletricidade que o XPS. Mesmo quando o cluster é mais rápido, ele provavelmente gasta mais energia por resultado. Medir isso com uma tomada medidora de consumo é o próximo passo.</li>
+      <li><strong>Rede.</strong> Seis cabos ou portas de switch funcionam a 100 Mb/s, e o computador principal do cluster tem placa de rede gigabit. Corrigir isso mudaria o Teste 2.</li>
+      <li><strong>Um mistério no i7.</strong> Na chapa de N = 2 000, o i7 passa de 33 a 54% do tempo esperando, sempre, enquanto em N = 1 000 e 4 000 fica perto de 10%. A suspeita é algum efeito da memória cache, ainda não investigado.</li>
+      <li><strong>Computadores compartilhados.</strong> No meio do experimento, alguém desligou um dos PCs do cluster pelo próprio teclado, e a rodada teve de ser repetida. Num laboratório real, isso também faz parte da conta.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= REPRODUZIR ================= -->
+<section aria-labelledby="repr">
+  <div class="col flow">
+    <div class="chap">Para quem quiser repetir</div>
+    <h2 id="repr">Os comandos</h2>
+    <p>Os três programas estão em <code>scripts/comparacao/</code> no repositório do clusterLiac. No cluster, o <code>mpirun</code> é chamado a partir do <code>liac1</code>, com a lista de máquinas no arquivo <code>hostfile</code>.</p>
+    <div class="codehead">compilar e distribuir para as 9 máquinas (no liac1)</div>
+<pre><code><span class="p">$ </span><span class="k">cd ~/comparacao</span>
+<span class="p">$ </span><span class="k">./distribuir.sh portavel</span>
+<span class="c">liac1: OK (portavel)
+…
+Compilado (portavel) em todos os nós.</span></code></pre>
+    <div class="codehead">rodar um teste no cluster: 22 processos em 9 máquinas</div>
+<pre><code><span class="p">$ </span><span class="k">mpirun --hostfile ~/hostfile \
+    --mca btl_tcp_if_include &lt;sub-rede-do-cluster&gt; --mca oob_tcp_if_include &lt;sub-rede-do-cluster&gt; \
+    ./mandelbrot -l 6000 -a 6000 -i 5000 -m dinamico</span>
+<span class="c">RESULTADO teste=mandelbrot modo=dinamico P=22 nos=9 … tempo=7.94 … soma=30343322141</span></code></pre>
+    <div class="codehead">o mesmo teste no i7: 8 processos numa máquina só</div>
+<pre><code><span class="p">$ </span><span class="k">mpirun -np 8 --use-hwthread-cpus ./mandelbrot -l 6000 -a 6000 -i 5000 -m dinamico</span>
+<span class="c">RESULTADO teste=mandelbrot modo=dinamico P=8 nos=1 … tempo=14.71 … soma=30343322141</span></code></pre>
+    <p class="muted" style="font-size:.92rem">Repare que a soma no fim é idêntica nas duas máquinas: é a prova de que as duas calcularam a mesma imagem. As opções <code>--mca …</code> obrigam o MPI a usar só a rede cabeada. O script <code>rodar_suite.sh</code> roda a bateria completa, e o <code>analisar.py</code> monta as tabelas.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    <span>Prof. Me. Juvenal Silva Neto · LIAC — Laboratório de Inovação e Aplicações Computacionais</span>
+    <span>Bacharelado em Ciência da Computação · Universidade do Estado de Mato Grosso (UNEMAT) · Campus de Alto Araguaia</span>
+    <span>Material de leitura para as disciplinas de Sistemas Distribuídos e de Arquitetura e Organização de Computadores. Dados medidos em 27/11/2026.</span>
+  </div>
+</footer>
+</div>
+
+<div id="tip" hidden></div>
+
+<script>
+(function () {
+  const NS = "http://www.w3.org/2000/svg";
+  const fmt = (v, d = 1) => v.toFixed(d).replace(".", ",");
+  const S = (tag, attrs, style) => {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    if (style) el.setAttribute("style", style);
+    return el;
+  };
+  const T = (x, y, txt, style, anchor) => {
+    const t = S("text", { x, y, "text-anchor": anchor || "start" }, style || "font-size:12px;fill:var(--fg)");
+    t.textContent = txt;
+    return t;
+  };
+  /* barra horizontal com a ponta de dados arredondada (4 px) e a base reta */
+  const hbar = (x, y, w, h, r = 4) => {
+    r = Math.min(r, w / 2, h / 2);
+    if (w <= 0) return `M${x},${y}h0v${h}h0z`;
+    return `M${x},${y}h${w - r}a${r},${r} 0 0 1 ${r},${r}v${h - 2 * r}a${r},${r} 0 0 1 -${r},${r}h-${w - r}z`;
+  };
+  const hbarL = (x, y, w, h, r = 4) => { /* ponta arredondada à esquerda (barra que cresce para a esquerda) */
+    r = Math.min(r, w / 2, h / 2);
+    return `M${x},${y}h-${w - r}a${r},${r} 0 0 0 -${r},${r}v${h - 2 * r}a${r},${r} 0 0 0 ${r},${r}h${w - r}z`;
+  };
+
+  /* ---------- tooltip ---------- */
+  const tip = document.getElementById("tip");
+  function showTip(html, ev) {
+    tip.innerHTML = html; tip.hidden = false;
+    const pad = 14, r = tip.getBoundingClientRect();
+    let x = ev.clientX + pad, y = ev.clientY + pad;
+    if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - pad;
+    if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - pad;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  document.addEventListener("pointermove", ev => {
+    const el = ev.target.closest && ev.target.closest("[data-tip]");
+    if (el) showTip(el.getAttribute("data-tip"), ev); else if (!ev.target.closest("[data-cross]")) tip.hidden = true;
+  });
+  document.addEventListener("pointerleave", () => { tip.hidden = true; });
+
+  /* ---------- diagrama 1: nós e núcleos ---------- */
+  const nodes = [
+    ["liac1", 70, 4], ["liac2", 160, 4], ["liac3", 250, 2], ["liac4", 340, 2], ["liac5", 430, 2],
+    ["liac6", 115, 2], ["liac7", 205, 2], ["liac8", 335, 2], ["liac9", 425, 2]
+  ];
+  const gN = document.getElementById("nodes");
+  nodes.forEach(([n, cx, k], i) => {
+    const top = i < 5, y = top ? 44 : 250, w = 72, h = 44;
+    gN.appendChild(S("rect", { x: cx - w / 2, y, width: w, height: h, rx: 6 }, "fill:var(--surface);stroke:currentColor;stroke-width:1.5"));
+    gN.appendChild(T(cx, y + 17, n, "font-size:12px;font-weight:600;fill:currentColor", "middle"));
+    const sz = 9, gap = 3, tot = k * sz + (k - 1) * gap;
+    for (let j = 0; j < k; j++)
+      gN.appendChild(S("rect", { x: cx - tot / 2 + j * (sz + gap), y: y + 25, width: sz, height: sz, rx: 2 }, "fill:var(--s1)"));
+    if (n === "liac4") gN.appendChild(T(cx, y - 6, "o mais lento", "font-size:11px;fill:var(--muted)", "middle"));
+  });
+  const gC = document.getElementById("cores");
+  for (let c = 0; c < 4; c++) {
+    const x = 562 + c * 74, y = 90;
+    gC.appendChild(S("rect", { x, y, width: 64, height: 82, rx: 6 }, "fill:var(--surface);stroke:currentColor;stroke-width:1.5"));
+    gC.appendChild(T(x + 32, y + 18, "núcleo " + (c + 1), "font-size:11.5px;font-weight:600;fill:currentColor", "middle"));
+    gC.appendChild(S("rect", { x: x + 10, y: y + 30, width: 20, height: 34, rx: 3 }, "fill:var(--s2)"));
+    gC.appendChild(S("rect", { x: x + 34, y: y + 30, width: 20, height: 34, rx: 3 }, "fill:var(--s3)"));
+    gC.appendChild(S("line", { x1: x + 32, y1: y + 82, x2: x + 32, y2: 214 }, "stroke:var(--accent);stroke-width:1.5"));
+  }
+
+  /* ---------- diagrama 2: faixas e estêncil ---------- */
+  const gS = document.getElementById("stripes");
+  const pc = ["--s1", "--s2", "--s3", "--s4"];
+  for (let p = 0; p < 4; p++) {
+    const y = 46 + p * 60;
+    gS.appendChild(S("rect", { x: 60, y, width: 240, height: 60 }, `fill:var(${pc[p]});fill-opacity:.22;stroke:var(${pc[p]});stroke-width:1.5`));
+    gS.appendChild(T(180, y + 35, "processo " + (p + 1), "font-size:12.5px;font-weight:600;fill:currentColor", "middle"));
+    if (p > 0) gS.appendChild(S("rect", { x: 60, y: y - 5, width: 240, height: 10 }, "fill:currentColor;fill-opacity:.28"));
+  }
+  for (let i = 1; i < 12; i++) gS.appendChild(S("line", { x1: 60 + i * 20, y1: 46, x2: 60 + i * 20, y2: 286 }, "stroke:currentColor;stroke-opacity:.08"));
+  const gT = document.getElementById("stencil"), cx0 = 680, cy0 = 150, s = 56;
+  [[0, -1, "cima"], [0, 1, "baixo"], [-1, 0, "esquerda"], [1, 0, "direita"]].forEach(([dx, dy, lb]) => {
+    const x = cx0 + dx * s * 1.25 - s / 2, y = cy0 + dy * s * 1.25 - s / 2;
+    gT.appendChild(S("rect", { x, y, width: s, height: s, rx: 6 }, "fill:var(--surface);stroke:currentColor;stroke-width:1.5"));
+    gT.appendChild(T(x + s / 2, y + s / 2 + 4, lb, "font-size:12px;fill:currentColor", "middle"));
+    gT.appendChild(S("line", { x1: cx0 + dx * (s * 1.25 - s / 2 - 2), y1: cy0 + dy * (s * 1.25 - s / 2 - 2), x2: cx0 + dx * (s / 2 + 3), y2: cy0 + dy * (s / 2 + 3), "marker-end": "url(#ar2)" }, "stroke:currentColor;stroke-width:1.5"));
+  });
+  gT.appendChild(S("rect", { x: cx0 - s / 2, y: cy0 - s / 2, width: s, height: s, rx: 6 }, "fill:var(--accent-soft);stroke:var(--accent);stroke-width:2"));
+  gT.appendChild(T(cx0, cy0 + 4, "novo", "font-size:12.5px;font-weight:600;fill:currentColor", "middle"));
+
+  /* ---------- gráfico: Mandelbrot real ---------- */
+  const series3 = [
+    { n: "Cluster (22 processos)", c: "--s1" },
+    { n: "i7 com 4 processos", c: "--s2" },
+    { n: "i7 com 8 processos", c: "--s3" }
+  ];
+  const mandelData = [
+    { m: "Faixas iguais", v: [50.75, 53.72, 37.81] },
+    { m: "Linhas alternadas", v: [16.07, 27.41, 14.80] },
+    { m: "Sob demanda", v: [7.94, 27.44, 14.71] }
+  ];
+  function drawMandel(el) {
+    const W = Math.max(300, el.clientWidth), padR = 56, bh = 16, gap = 2, gh = 3 * bh + 2 * gap, top = 6;
+    const xmax = 60, plotW = W - padR - 2, x = v => 1 + v / xmax * plotW;
+    const H = top + mandelData.length * (gh + 40) + 22;
+    const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Tempo para desenhar o Mandelbrot em cada modo de divisão, no cluster e no i7" });
+    for (let t = 0; t <= xmax; t += 10) {
+      svg.appendChild(S("line", { x1: x(t), y1: top, x2: x(t), y2: H - 22 }, "stroke:var(--line);stroke-width:1"));
+      svg.appendChild(T(x(t), H - 6, t + " s", "font-size:11.5px;fill:var(--muted)", "middle"));
+    }
+    mandelData.forEach((g, gi) => {
+      const y0 = top + gi * (gh + 40);
+      svg.appendChild(T(1, y0 + 14, g.m, "font-size:13px;font-weight:600;fill:var(--fg)"));
+      g.v.forEach((v, si) => {
+        const y = y0 + 22 + si * (bh + gap);
+        const p = S("path", { d: hbar(x(0), y, x(v) - x(0), bh), "data-tip": `<b>${g.m}</b><br>${series3[si].n}: ${fmt(v, 2)} s` }, `fill:var(${series3[si].c})`);
+        p.classList.add("hit");
+        svg.appendChild(p);
+        svg.appendChild(T(x(v) + 6, y + 12.5, fmt(v) + " s", "font-size:12px;fill:var(--fg);font-variant-numeric:tabular-nums"));
+      });
+    });
+    el.replaceChildren(svg);
+  }
+
+  /* ---------- gráfico: quem venceu (barras divergentes, escala log) ---------- */
+  const ratioData = [
+    { N: 1000, i7: 12.19, cl: 81.18 }, { N: 2000, i7: 21.67, cl: 80.95 }, { N: 4000, i7: 17.66, cl: 31.83 },
+    { N: 8000, i7: 17.51, cl: 16.84 }, { N: 16000, i7: 17.68, cl: 10.31 }, { N: 20000, i7: 18.05, cl: 11.64 }
+  ];
+  const nfmt = n => n.toLocaleString("pt-BR");
+  function drawRatio(el) {
+    const W = Math.max(320, el.clientWidth), mid = W / 2, half = W / 2 - 58, bh = 18, row = 46, top = 34;
+    const L = r => Math.log2(r) / 3 * half; /* 8× = meia largura */
+    const H = top + ratioData.length * row + 22;
+    const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Quantas vezes um sistema foi mais rápido que o outro em cada tamanho de chapa" });
+    svg.appendChild(T(mid - 8, 14, "◀ i7 mais rápido", "font-size:12.5px;font-weight:600;fill:var(--fg)", "end"));
+    svg.appendChild(T(mid + 8, 14, "cluster mais rápido ▶", "font-size:12.5px;font-weight:600;fill:var(--fg)"));
+    [2, 4, 8].forEach(t => {
+      [-1, 1].forEach(sg => {
+        const xx = mid + sg * L(t);
+        svg.appendChild(S("line", { x1: xx, y1: top - 6, x2: xx, y2: H - 22 }, "stroke:var(--line);stroke-width:1"));
+        svg.appendChild(T(xx, H - 6, t + "×", "font-size:11.5px;fill:var(--muted)", "middle"));
+      });
+    });
+    ratioData.forEach((d, i) => {
+      const y = top + i * row, yb = y + 16;
+      const clWins = d.cl < d.i7, r = clWins ? d.i7 / d.cl : d.cl / d.i7, w = Math.max(3, L(r));
+      const tieTxt = r < 1.1 ? " (empate técnico)" : "";
+      svg.appendChild(T(clWins ? mid - 8 : mid + 8, y + 8, "N = " + nfmt(d.N), "font-size:12px;fill:var(--muted)", clWins ? "end" : "start"));
+      const tipTxt = `<b>Chapa N = ${nfmt(d.N)}</b><br>melhor cluster: ${fmt(d.cl, 2)} s<br>melhor i7: ${fmt(d.i7, 2)} s<br>${clWins ? "cluster" : "i7"} ${fmt(r, 2)}× mais rápido${tieTxt}`;
+      const p = S("path", { d: clWins ? hbar(mid, yb, w, bh) : hbarL(mid, yb, w, bh), "data-tip": tipTxt }, `fill:var(${clWins ? "--s1" : "--s2"})`);
+      p.classList.add("hit");
+      svg.appendChild(p);
+      const lx = clWins ? mid + w + 6 : mid - w - 6;
+      svg.appendChild(T(lx, yb + 13.5, fmt(r) + "×" + tieTxt, "font-size:12.5px;font-weight:600;fill:var(--fg);font-variant-numeric:tabular-nums", clWins ? "start" : "end"));
+    });
+    svg.appendChild(S("line", { x1: mid, y1: top - 6, x2: mid, y2: H - 22 }, "stroke:var(--fg);stroke-width:1.5"));
+    svg.appendChild(T(mid, H - 6, "1×", "font-size:11.5px;fill:var(--muted)", "middle"));
+    el.replaceChildren(svg);
+  }
+
+  /* ---------- gráfico: tempos do Jacobi (linhas) ---------- */
+  const Ns = [1000, 2000, 4000, 8000, 16000, 20000];
+  const iters = [20000, 5000, 1250, 312, 78, 50];
+  const jac = [
+    { n: "Cluster, trabalho ajustado", c: "--s1", dash: false, v: [88.35, 80.95, 31.83, 16.84, 10.31, 11.64] },
+    { n: "Cluster, partes iguais", c: "--s1", dash: true, v: [81.18, 84.79, 35.13, 21.38, 19.53, 20.04] },
+    { n: "i7 com 4 processos", c: "--s2", dash: false, v: [12.19, 22.81, 17.66, 17.51, 17.68, 18.05] }
+  ];
+  const i7_8 = [12.98, 21.67, 17.81, 17.69, 17.93, 18.52];
+  const fracIg = [94, 89, 84, 73, 68, 67], fracAj = [95, 90, 84, 71, 45, 46];
+  function drawJacobi(el) {
+    const W = Math.max(320, el.clientWidth), padL = 40, padR = W < 560 ? 70 : 150, top = 10, ph = 260, H = top + ph + 34;
+    const lx = n => padL + (Math.log(n / 1000) / Math.log(20)) * (W - padL - padR);
+    const y = v => top + ph - v / 90 * ph;
+    const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Tempo da simulação de calor por tamanho de chapa" });
+    for (let t = 0; t <= 90; t += 15) {
+      svg.appendChild(S("line", { x1: padL, y1: y(t), x2: W - padR, y2: y(t) }, "stroke:var(--line);stroke-width:1"));
+      svg.appendChild(T(padL - 6, y(t) + 4, t + " s", "font-size:11.5px;fill:var(--muted)", "end"));
+    }
+    Ns.forEach(n => svg.appendChild(T(lx(n), H - 12, nfmt(n), "font-size:11.5px;fill:var(--muted)", "middle")));
+    svg.appendChild(T((padL + W - padR) / 2, H, "tamanho da chapa (N)", "font-size:11.5px;fill:var(--muted)", "middle"));
+    /* empate em N = 8 000 */
+    svg.appendChild(S("line", { x1: lx(8000), y1: top, x2: lx(8000), y2: top + ph }, "stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4"));
+    svg.appendChild(T(lx(8000) + 6, top + 14, "empate", "font-size:12px;font-weight:600;fill:var(--fg)"));
+    jac.forEach(sr => {
+      const pts = sr.v.map((v, i) => `${lx(Ns[i])},${y(v)}`).join(" ");
+      svg.appendChild(S("polyline", { points: pts }, `fill:none;stroke:var(${sr.c});stroke-width:2;stroke-linejoin:round${sr.dash ? ";stroke-dasharray:6 5" : ""}`));
+      sr.v.forEach((v, i) => svg.appendChild(S("circle", { cx: lx(Ns[i]), cy: y(v), r: 4.5 }, `fill:${sr.dash ? "var(--surface)" : `var(${sr.c})`};stroke:var(${sr.c});stroke-width:2`)));
+    });
+    /* rótulos diretos no fim das linhas, afastados para não colidir */
+    const ends = jac.map(sr => ({ sr, y: y(sr.v[5]) })).sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 15) ends[i].y = ends[i - 1].y + 15;
+    const short = { "Cluster, trabalho ajustado": "cluster ajustado", "Cluster, partes iguais": "cluster iguais", "i7 com 4 processos": "i7 (4)" };
+    ends.forEach(e => svg.appendChild(T(lx(20000) + 10, e.y + 4, W < 560 ? short[e.sr.n] : e.sr.n, "font-size:12px;fill:var(--fg)")));
+    /* camada de hover: uma coluna por N */
+    const guide = S("line", { x1: 0, y1: top, x2: 0, y2: top + ph }, "stroke:var(--fg);stroke-width:1;opacity:0");
+    svg.appendChild(guide);
+    Ns.forEach((n, i) => {
+      const x0 = i === 0 ? padL : (lx(Ns[i - 1]) + lx(n)) / 2, x1 = i === Ns.length - 1 ? W - padR : (lx(n) + lx(Ns[i + 1])) / 2;
+      const r = S("rect", { x: x0, y: top, width: x1 - x0, height: ph, "data-cross": "1" }, "fill:transparent");
+      const html = `<b>N = ${nfmt(n)}</b> (${nfmt(iters[i])} passos)<br>cluster ajustado: ${fmt(jac[0].v[i], 2)} s<br>cluster iguais: ${fmt(jac[1].v[i], 2)} s<br>i7 (4): ${fmt(jac[2].v[i], 2)} s<br>i7 (8): ${fmt(i7_8[i], 2)} s`;
+      r.addEventListener("pointermove", ev => { guide.setAttribute("x1", lx(n)); guide.setAttribute("x2", lx(n)); guide.style.opacity = .35; showTip(html, ev); });
+      r.addEventListener("pointerleave", () => { guide.style.opacity = 0; tip.hidden = true; });
+      svg.appendChild(r);
+    });
+    el.replaceChildren(svg);
+  }
+  document.getElementById("t-jacobi").innerHTML = Ns.map((n, i) =>
+    `<tr><td>${nfmt(n)}</td><td>${nfmt(iters[i])}</td><td>${fmt(jac[1].v[i], 2)} s (${fracIg[i]}%)</td><td>${fmt(jac[0].v[i], 2)} s (${fracAj[i]}%)</td><td>${fmt(jac[2].v[i], 2)} s</td><td>${fmt(i7_8[i], 2)} s</td></tr>`).join("");
+
+  /* ---------- gráfico: cálculo × espera por máquina ---------- */
+  const raw1 = [[909,1.651,4.976],[909,1.627,5.000],[909,1.653,5.277],[909,1.641,5.287],[909,1.967,5.263],[910,1.989,5.245],[909,2.002,5.524],[909,2.052,5.470],[909,1.930,5.871],[909,1.952,5.852],[909,7.203,0.869],[909,7.304,0.728],[909,2.087,5.743],[909,2.131,5.628],[909,1.459,6.052],[909,1.501,5.924],[910,1.919,5.322],[909,1.888,5.247],[909,3.404,3.613],[909,3.307,3.587],[909,4.031,2.812],[909,4.046,2.645]];
+  const raw2 = [[981,2.942,1.496],[981,2.893,1.549],[980,2.868,1.801],[981,2.950,1.721],[697,1.458,3.392],[696,1.461,3.382],[696,1.533,3.450],[696,1.528,3.456],[1400,3.010,2.090],[1400,2.947,2.152],[347,2.806,2.341],[346,2.775,2.371],[998,3.103,2.218],[998,3.207,2.116],[1472,3.166,2.175],[1471,2.732,2.543],[1060,2.423,2.893],[1060,2.391,2.858],[735,2.677,2.595],[734,2.748,2.465],[636,2.842,2.483],[635,2.786,2.162]];
+  const slots = [4, 4, 2, 2, 2, 2, 2, 2, 2];
+  function porMaquina(raw) {
+    let k = 0;
+    return slots.map((n, m) => {
+      const g = raw.slice(k, k + n); k += n;
+      const avg = j => g.reduce((s, r) => s + r[j], 0) / n;
+      return { m: "liac" + (m + 1), linhas: Math.round(avg(0)), calc: avg(1), esp: avg(2) };
+    });
+  }
+  const w1 = porMaquina(raw1), w2 = porMaquina(raw2);
+  function drawWait(el, data, anot) {
+    const W = Math.max(280, el.clientWidth), padL = 46, bh = 18, row = 26, top = 4, xmax = 9;
+    const H = top + data.length * row + 22, pw = W - padL - 8, x = v => padL + v / xmax * pw;
+    const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Tempo calculando e esperando em cada máquina" });
+    for (let t = 0; t <= xmax; t += 3) {
+      svg.appendChild(S("line", { x1: x(t), y1: top, x2: x(t), y2: H - 20 }, "stroke:var(--line);stroke-width:1"));
+      svg.appendChild(T(x(t), H - 5, t + " s", "font-size:11px;fill:var(--muted)", "middle"));
+    }
+    data.forEach((d, i) => {
+      const y = top + i * row;
+      svg.appendChild(T(padL - 6, y + 13.5, d.m, "font-size:12px;fill:var(--fg)", "end"));
+      const tipTxt = `<b>${d.m}</b> · ${nfmt(d.linhas)} linhas por processo<br>calculando: ${fmt(d.calc, 2)} s<br>esperando ou trocando bordas: ${fmt(d.esp, 2)} s`;
+      const a = S("rect", { x: x(0), y, width: x(d.calc) - x(0), height: bh, "data-tip": tipTxt }, "fill:var(--s1)");
+      const b = S("path", { d: hbar(x(d.calc) + 2, y, Math.max(0, x(d.calc + d.esp) - x(d.calc) - 2), bh), "data-tip": tipTxt }, "fill:var(--wait)");
+      a.classList.add("hit"); b.classList.add("hit");
+      svg.appendChild(a); svg.appendChild(b);
+      if (anot && d.m === anot) svg.appendChild(T(x(0) + 6, y + 13.5, "calculando 7,3 s", "font-size:11.5px;font-weight:600;fill:#ffffff"));
+    });
+    el.replaceChildren(svg);
+  }
+  document.getElementById("t-wait").innerHTML = w1.map((d, i) =>
+    `<tr><td>${d.m}</td><td>${nfmt(d.linhas)}</td><td>${fmt(d.calc, 2)} s</td><td>${fmt(d.esp, 2)} s</td><td>${nfmt(w2[i].linhas)}</td><td>${fmt(w2[i].calc, 2)} s</td><td>${fmt(w2[i].esp, 2)} s</td></tr>`).join("");
+
+  /* ---------- demonstração interativa ---------- */
+  const R = 300, MAXIT = 250, cv = document.getElementById("mandel"), ctx = cv.getContext("2d");
+  const custo = new Float64Array(R);
+  (function calcula() {
+    const img = ctx.createImageData(R, R), d = img.data;
+    for (let py = 0; py < R; py++) {
+      const ci = -1.5 + 3 * (py + 0.5) / R; let soma = 0;
+      for (let px = 0; px < R; px++) {
+        const cr = -2 + 3 * (px + 0.5) / R; let zr = 0, zi = 0, k = 0;
+        while (k < MAXIT) { const a = zr * zr, b = zi * zi; if (a + b > 4) break; zi = 2 * zr * zi + ci; zr = a - b + cr; k++; }
+        soma += k + 1;
+        const o = 4 * (py * R + px);
+        if (k === MAXIT) { d[o] = 20; d[o + 1] = 26; d[o + 2] = 38; }
+        else { const t = Math.sqrt(k / MAXIT); d[o] = 233 - 180 * t; d[o + 1] = 237 - 150 * t; d[o + 2] = 245 - 60 * t; }
+        d[o + 3] = 255;
+      }
+      custo[py] = soma;
+    }
+    ctx.putImageData(img, 0, 0);
+  })();
+  const vel = [1, 1, 1, 0.25], P = 4, PAC = 4;
+  const total = custo.reduce((a, b) => a + b, 0), ideal = total / vel.reduce((a, b) => a + b, 0), esc = 10 / ideal;
+  function simula(modo) {
+    const dono = new Int8Array(R), t = [0, 0, 0, 0];
+    if (modo === "blocos") for (let y = 0; y < R; y++) dono[y] = Math.min(P - 1, Math.floor(y * P / R));
+    else if (modo === "ciclico") for (let y = 0; y < R; y++) dono[y] = y % P;
+    else for (let ini = 0; ini < R; ini += PAC) {
+      let p = 0; for (let q = 1; q < P; q++) if (t[q] < t[p]) p = q;
+      for (let y = ini; y < Math.min(R, ini + PAC); y++) { dono[y] = p; t[p] += custo[y] / vel[p]; }
+    }
+    const tp = [0, 0, 0, 0], lin = [0, 0, 0, 0];
+    for (let y = 0; y < R; y++) { tp[dono[y]] += custo[y] / vel[dono[y]]; lin[dono[y]]++; }
+    return { dono, tp: tp.map(v => v * esc), lin };
+  }
+  const sims = { blocos: simula("blocos"), ciclico: simula("ciclico"), dinamico: simula("dinamico") };
+  const tmax = Math.max(...Object.values(sims).flatMap(s => s.tp));
+  const nomesP = ["Processo 1", "Processo 2", "Processo 3", "Processo 4 (lento)"];
+  document.getElementById("demo-legend").innerHTML = nomesP.map((n, p) => `<span><i style="background:var(${pc[p]})"></i>${n}</span>`).join("");
+  const textos = {
+    blocos: "Cada processo recebe uma faixa contínua com 1/4 das linhas. As faixas do meio contêm a parte preta da figura, que custa muito mais.",
+    ciclico: "As linhas são distribuídas uma para cada processo, em rodízio. O peso fica bem misturado, mas o processo lento recebe tanto quanto os outros.",
+    dinamico: "Os processos pedem pacotes de 4 linhas sempre que terminam o anterior. Quem é rápido pede mais vezes."
+  };
+  function drawDemo(modo) {
+    const s = sims[modo], own = document.getElementById("owners");
+    own.replaceChildren();
+    let ini = 0;
+    for (let y = 1; y <= R; y++) if (y === R || s.dono[y] !== s.dono[ini]) {
+      own.appendChild(S("rect", { x: 0, y: ini, width: 1, height: y - ini }, `fill:var(${pc[s.dono[ini]]})`)); ini = y;
+    }
+    document.getElementById("demo-explica").textContent = textos[modo];
+    const el = document.getElementById("demo-chart"), W = Math.max(260, el.clientWidth), padL = 1, bh = 16, row = 40, H = 4 * row + 22;
+    const x = v => padL + v / (tmax * 1.04) * (W - padL - 4);
+    const svg = S("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Tempo de cada processo na simulação" });
+    svg.appendChild(S("line", { x1: x(10), y1: 0, x2: x(10), y2: 4 * row }, "stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4"));
+    svg.appendChild(T(x(10), H - 6, "ideal: 10 s", "font-size:11.5px;fill:var(--muted)", "middle"));
+    s.tp.forEach((v, p) => {
+      const y = p * row;
+      svg.appendChild(T(padL, y + 12, `${nomesP[p]} · ${s.lin[p]} linhas · ${fmt(v)} s`, "font-size:12px;fill:var(--fg);font-variant-numeric:tabular-nums"));
+      const b = S("path", { d: hbar(x(0), y + 17, x(v) - x(0), bh), "data-tip": `<b>${nomesP[p]}</b><br>${s.lin[p]} linhas · ${fmt(v)} s` }, `fill:var(${pc[p]})`);
+      b.classList.add("hit"); svg.appendChild(b);
+    });
+    el.replaceChildren(svg);
+    const tot = Math.max(...s.tp);
+    document.getElementById("demo-total").textContent = `${fmt(tot)} s` + (tot < 10.6 ? "  ·  quase perfeito" : `  ·  ${fmt(tot / 10)}× o ideal`);
+  }
+  let modoAtual = "blocos";
+  document.querySelectorAll('input[name="modo"]').forEach(r => r.addEventListener("change", () => { modoAtual = r.value; drawDemo(modoAtual); }));
+
+  /* ---------- desenho e redesenho ---------- */
+  function drawAll() {
+    drawMandel(document.getElementById("c-mandel"));
+    drawRatio(document.getElementById("c-ratio"));
+    drawJacobi(document.getElementById("c-jacobi"));
+    drawWait(document.getElementById("c-wait1"), w1, "liac4");
+    drawWait(document.getElementById("c-wait2"), w2, null);
+    drawDemo(modoAtual);
+  }
+  drawAll();
+  let rt, larg = document.querySelector(".page").clientWidth;
+  const ro = new ResizeObserver(() => {
+    const w = document.querySelector(".page").clientWidth;
+    if (w === larg) return;
+    larg = w; clearTimeout(rt); rt = setTimeout(drawAll, 80);
+  });
+  ro.observe(document.querySelector(".page"));
+})();
+</script>
+</body>
+</html>
